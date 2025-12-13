@@ -7,18 +7,24 @@ import QuizCard from './components/QuizCard';
 import ResultsView from './components/ResultsView';
 import SignupModal from './components/SignupModal';
 import Dashboard from './components/Dashboard'; 
-import HomeView from './components/HomeView';
 import BottomNav from './components/BottomNav';
 import BonusView from './components/BonusView';
 import TryoutView from './components/TryoutView';
 import Button from './components/Button';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewState>('HOME');
+  const [view, setView] = useState<ViewState>('QUIZ');
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [user, setUser] = useState<User | null>({...MOCK_USER, streak: 3});
   const [showSignupModal, setShowSignupModal] = useState(false);
+
+  const handleStartQuiz = () => {
+    const newSession = QuizService.createSession();
+    setSession(newSession);
+    setCurrentQuestionIdx(0);
+    setView('QUIZ');
+  };
 
   useEffect(() => {
     const savedSession = QuizService.loadSession();
@@ -33,15 +39,11 @@ const App: React.FC = () => {
         setSession(calculated);
         setView('RESULTS');
       }
+    } else {
+      // Auto-start quiz if no session exists
+      handleStartQuiz();
     }
   }, []);
-
-  const handleStartQuiz = () => {
-    const newSession = QuizService.createSession();
-    setSession(newSession);
-    setCurrentQuestionIdx(0);
-    setView('QUIZ');
-  };
 
   const handleOptionSelect = (optionId: string) => {
     if (!session) return;
@@ -75,10 +77,20 @@ const App: React.FC = () => {
     alert("Account created! Progress saved.");
   };
 
+  const handleLogoClick = () => {
+    if (session && session.completedAt) {
+      setView('RESULTS');
+    } else if (session) {
+      setView('QUIZ');
+    } else {
+      handleStartQuiz();
+    }
+  };
+
   // --- HEADER COMPONENT ---
   const Header = () => (
     <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('HOME')}>
+      <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
         <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
             <div className="w-4 h-4 bg-brand-lime rounded-full"></div>
         </div>
@@ -86,7 +98,7 @@ const App: React.FC = () => {
       </div>
 
       <nav className="hidden md:flex items-center gap-8 font-bold text-sm uppercase tracking-wide">
-        <button onClick={() => setView('HOME')} className={`hover:text-gray-600 transition-colors ${view === 'HOME' ? 'text-black' : 'text-gray-400'}`}>Explore</button>
+        <button onClick={handleLogoClick} className={`hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Practice</button>
         <button onClick={() => setView('BONUS')} className={`hover:text-gray-600 transition-colors ${view === 'BONUS' ? 'text-black' : 'text-gray-400'}`}>Marketplace</button>
         <button onClick={() => setView('TRYOUT')} className={`hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
         <button onClick={() => setView('PROFILE')} className={`hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Stats</button>
@@ -102,8 +114,6 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (view) {
-      case 'HOME':
-        return <HomeView user={user} onStartQuiz={handleStartQuiz} onNavigate={setView} />;
       case 'BONUS':
         return <BonusView />;
       case 'TRYOUT':
@@ -137,7 +147,9 @@ const App: React.FC = () => {
           <ResultsView session={session} onSignupClick={() => setShowSignupModal(true)} onRetryClick={handleStartQuiz} />
         );
       default:
-        return <HomeView user={user} onStartQuiz={handleStartQuiz} onNavigate={setView} />;
+        // Fallback for any unexpected state, though QUIZ is default
+        if (session) return renderContent(); 
+        return null;
     }
   };
 
@@ -150,8 +162,8 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
 
-      {/* Mobile Bottom Nav - Only if not QUIZ */}
-      {view !== 'QUIZ' && view !== 'SIGNUP' && (
+      {/* Mobile Bottom Nav - Show on all views except SIGNUP */}
+      {view !== 'SIGNUP' && (
         <div className="md:hidden">
            <BottomNav currentView={view} onChange={setView} />
         </div>

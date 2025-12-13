@@ -19,7 +19,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
   const lastSession = history[0];
 
   return (
-    <div className="flex flex-col w-full animate-fade-in">
+    <div className="flex flex-col w-full animate-fade-in pb-24 md:pb-0">
       
       {/* HEADER SECTION */}
       <div className="p-8 border-b border-black bg-white">

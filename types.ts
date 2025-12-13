@@ -26,7 +26,7 @@ export interface UserSession {
   completedAt?: number;
 }
 
-export type ViewState = 'HOME' | 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'SIGNUP';
+export type ViewState = 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'SIGNUP';
 
 export interface User {
   id: string;

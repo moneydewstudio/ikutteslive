@@ -40,7 +40,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
       </div>
 
       {/* Right: Options */}
-      <div className="md:w-1/2 bg-white flex flex-col justify-center p-6 md:p-12 overflow-y-auto">
+      <div className="md:w-1/2 bg-white flex flex-col justify-center p-6 pb-24 md:p-12 overflow-y-auto">
          <div className="space-y-3 max-w-md mx-auto w-full">
             {question.options.map((option) => {
                 const isSelected = selectedOptionId === option.id;

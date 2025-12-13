@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Zap, Trophy, User } from 'lucide-react';
+import { PenTool, Zap, Trophy, User } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface BottomNavProps {
@@ -9,7 +9,7 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
   const navItems = [
-    { id: 'HOME', icon: Home, label: 'Home' },
+    { id: 'QUIZ', icon: PenTool, label: 'Quiz' },
     { id: 'BONUS', icon: Zap, label: 'Bonus' },
     { id: 'TRYOUT', icon: Trophy, label: 'Tryout' },
     { id: 'PROFILE', icon: User, label: 'Stats' },
@@ -19,7 +19,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black p-4 pb-6 z-50">
       <div className="flex justify-between items-center max-w-sm mx-auto px-4">
         {navItems.map((item) => {
-          const isActive = currentView === item.id;
+          const isActive = currentView === item.id || (item.id === 'QUIZ' && currentView === 'RESULTS');
           const Icon = item.icon;
           
           return (
