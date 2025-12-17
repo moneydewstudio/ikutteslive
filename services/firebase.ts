@@ -1,4 +1,4 @@
-import { initializeApp, getApp, getApps } from "firebase/app";
+import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
 
 /**
  * Firebase Configuration.
@@ -14,7 +14,8 @@ const firebaseConfig = {
 };
 
 // Singleton pattern to ensure only one instance exists
-let app;
+let app: FirebaseApp;
+
 try {
   if (getApps().length === 0) {
     app = initializeApp(firebaseConfig);
