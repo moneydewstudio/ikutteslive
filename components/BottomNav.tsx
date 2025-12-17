@@ -9,10 +9,10 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
   const navItems = [
-    { id: 'QUIZ', icon: PenTool, label: 'Quiz' },
+    { id: 'QUIZ', icon: PenTool, label: 'Kuis' },
     { id: 'BONUS', icon: Zap, label: 'Bonus' },
     { id: 'TRYOUT', icon: Trophy, label: 'Tryout' },
-    { id: 'PROFILE', icon: User, label: 'Stats' },
+    { id: 'PROFILE', icon: User, label: 'Statistik' },
   ];
 
   return (

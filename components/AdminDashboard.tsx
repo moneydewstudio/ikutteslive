@@ -29,7 +29,7 @@ const AdminDashboard: React.FC = () => {
 
       setQuestions(prev => [newQuestion, ...prev]);
     } catch (err) {
-      setError("Failed to generate question. Check API Key.");
+      setError("Gagal membuat soal. Cek API Key.");
     } finally {
       setIsGenerating(false);
     }
@@ -38,7 +38,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Content Admin</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Admin Konten</h1>
         <div className="flex gap-2">
             <Button variant="outline" onClick={() => handleGenerate('TIU')} isLoading={isGenerating}>
               <Wand2 className="w-4 h-4 mr-2" />
@@ -50,7 +50,7 @@ const AdminDashboard: React.FC = () => {
             </Button>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Manual Add
+              Tambah Manual
             </Button>
         </div>
       </div>
@@ -65,10 +65,9 @@ const AdminDashboard: React.FC = () => {
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Subject</th>
-              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Question</th>
-              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Diff</th>
-              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Mapel</th>
+              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Pertanyaan</th>
+              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -83,11 +82,8 @@ const AdminDashboard: React.FC = () => {
                   <p className="truncate font-medium text-gray-900">{q.text}</p>
                   <p className="truncate text-xs text-gray-500 mt-1">{q.explanation}</p>
                 </td>
-                <td className="p-4 text-sm text-gray-600">
-                   {Array.from({ length: q.difficulty }).map((_, i) => '★').join('')}
-                </td>
                 <td className="p-4">
-                  <button className="text-gray-400 hover:text-blue-600">Edit</button>
+                  <button className="text-gray-400 hover:text-blue-600">Ubah</button>
                 </td>
               </tr>
             ))}

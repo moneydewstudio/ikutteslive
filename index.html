@@ -4,35 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ikuttes - CPNS Practice</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #FDF8F3;
-        color: #111111;
-      }
-      /* Custom scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #FDF8F3;
-        border-left: 1px solid #000;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #000;
-        border: 2px solid #FDF8F3;
-        border-radius: 0;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #333;
-      }
-      
-      .border-b-1 { border-bottom-width: 1px; }
-      .border-r-1 { border-right-width: 1px; }
-    </style>
+    
+    <!-- 1. Tailwind CSS CDN (Styling Only) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Custom Tailwind Config -->
     <script>
       tailwind.config = {
         theme: {
@@ -40,9 +17,9 @@
             colors: {
               bg: '#FDF8F3',
               brand: {
-                lime: '#D4F938',    // Key OpenArt Lime
-                purple: '#D8B4FE',  // Soft Purple
-                pink: '#FFD6F6',    // Soft Pink
+                lime: '#D4F938',
+                purple: '#D8B4FE',
+                pink: '#FFD6F6',
                 orange: '#FF9F1C',
                 black: '#111111',
                 cream: '#FDF8F3',
@@ -69,23 +46,63 @@
         }
       }
     </script>
-  <script type="importmap">
+
+    <!-- 3. Custom CSS Utilities -->
+    <style type="text/tailwindcss">
+      @layer utilities {
+        .border-b-1 { border-bottom-width: 1px; }
+        .border-r-1 { border-right-width: 1px; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
+        .animate-scale-in { animation: scaleIn 0.3s ease-out; }
+        .animate-slide-in-right { animation: slideInRight 0.3s ease-out; }
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes scaleIn {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+
+      @keyframes slideInRight {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FDF8F3;
+        color: #111111;
+      }
+    </style>
+<script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.32.0",
-    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "million/react": "https://esm.sh/million@3.1.11/react?external=react,react-dom",
-    "million/": "https://esm.sh/million@^3.1.11/"
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "drizzle-orm/": "https://esm.sh/drizzle-orm@^0.45.1/",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

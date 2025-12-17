@@ -26,12 +26,13 @@ export interface UserSession {
   completedAt?: number;
 }
 
-export type ViewState = 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'SIGNUP';
+export type ViewState = 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'SIGNUP' | 'AD_INTERSTITIAL';
 
 export interface User {
-  id: string;
+  id: string; // Firebase UID
   email?: string;
   isPro: boolean;
   name?: string;
   streak: number;
+  premiumUntil?: number;
 }

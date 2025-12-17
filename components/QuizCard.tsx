@@ -7,6 +7,7 @@ interface QuizCardProps {
   onSelectOption: (optionId: string) => void;
   questionIndex: number;
   totalQuestions: number;
+  hideSubjectLabel?: boolean;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({ 
@@ -14,33 +15,28 @@ const QuizCard: React.FC<QuizCardProps> = ({
   selectedOptionId, 
   onSelectOption,
   questionIndex,
-  totalQuestions
+  totalQuestions,
+  hideSubjectLabel = false
 }) => {
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
       
       {/* Left: Question Content */}
-      <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-brand-cream border-b md:border-b-0 md:border-r border-black overflow-y-auto">
+      <div className="md:w-1/2 p-4 md:p-6 flex flex-col justify-center bg-brand-cream border-b md:border-b-0 md:border-r border-black overflow-y-auto">
          <div className="mb-6">
-            <span className="inline-block px-3 py-1 border border-black bg-white text-xs font-black uppercase tracking-widest mb-4">
-                {question.subject}
-            </span>
-            <h2 className="text-2xl md:text-4xl font-black leading-tight">
+            {!hideSubjectLabel && (
+              <span className="inline-block px-3 py-1 border border-black bg-white text-xs font-black uppercase tracking-widest mb-4">
+                  {question.subject}
+              </span>
+            )}
+            <p className="text-xl md:text-2xl font-bold leading-relaxed">
                 {question.text}
-            </h2>
-         </div>
-         <div className="flex gap-2">
-            <span className="text-xs font-bold text-gray-500">Difficulty:</span>
-            <div className="flex">
-                {[1,2,3,4,5].map(i => (
-                    <div key={i} className={`w-2 h-2 rounded-full mx-0.5 ${i <= question.difficulty ? 'bg-black' : 'bg-gray-300'}`} />
-                ))}
-            </div>
+            </p>
          </div>
       </div>
 
       {/* Right: Options */}
-      <div className="md:w-1/2 bg-white flex flex-col justify-center p-6 pb-24 md:p-12 overflow-y-auto">
+      <div className="md:w-1/2 bg-white flex flex-col justify-center p-4 pb-24 md:p-6 overflow-y-auto">
          <div className="space-y-3 max-w-md mx-auto w-full">
             {question.options.map((option) => {
                 const isSelected = selectedOptionId === option.id;
@@ -73,4 +69,4 @@ const QuizCard: React.FC<QuizCardProps> = ({
   );
 };
 
-export default QuizCard;
+export default React.memo(QuizCard);

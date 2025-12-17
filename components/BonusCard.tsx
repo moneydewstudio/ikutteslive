@@ -22,21 +22,21 @@ const BonusCard: React.FC<BonusCardProps> = ({ pack }) => {
         <div>
             <div className="flex justify-between items-start mb-4">
                 <span className="text-xs font-black border border-black px-2 py-0.5 rounded-full bg-white">{pack.subject}</span>
-                {pack.price === 'Locked' ? <Lock className="w-5 h-5 opacity-50" /> : <Star className="w-5 h-5 fill-black" />}
+                {pack.price === 'Terkunci' ? <Lock className="w-5 h-5 opacity-50" /> : <Star className="w-5 h-5 fill-black" />}
             </div>
             <h3 className="text-2xl font-black leading-tight mb-1">{pack.title}</h3>
-            <p className="text-sm font-medium opacity-70">{pack.questions} Questions • {pack.difficulty}</p>
+            <p className="text-sm font-medium opacity-70">{pack.questions} Soal</p>
         </div>
 
         <div className="mt-4">
-            {pack.price === 'Locked' ? (
+            {pack.price === 'Terkunci' ? (
                 <div className="flex items-center justify-between text-gray-400">
-                   <span className="font-bold text-sm">Level 5 Required</span>
+                   <span className="font-bold text-sm">Butuh Level 5</span>
                    <Lock className="w-4 h-4" />
                 </div>
             ) : (
                 <Button fullWidth size="sm" variant="black" className="justify-between group-hover:bg-gray-800">
-                   Claim Pack <ArrowUpRight className="w-4 h-4" />
+                   Klaim Paket <ArrowUpRight className="w-4 h-4" />
                 </Button>
             )}
         </div>
