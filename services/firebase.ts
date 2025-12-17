@@ -14,22 +14,6 @@ const firebaseConfig = {
 };
 
 // Singleton pattern to ensure only one instance exists
-let app: FirebaseApp;
-
-try {
-  if (getApps().length === 0) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
-  }
-} catch (error) {
-  console.error("Firebase Initialization Error:", error);
-  // Fallback to getApp if initialization failed due to duplicate existence
-  try {
-    app = getApp();
-  } catch (e) {
-    throw error;
-  }
-}
+const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 export { app };

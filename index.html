@@ -5,86 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ikuttes - CPNS Practice</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- 1. Tailwind CSS CDN (Styling Only) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 2. Custom Tailwind Config -->
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              bg: '#FDF8F3',
-              brand: {
-                lime: '#D4F938',
-                purple: '#D8B4FE',
-                pink: '#FFD6F6',
-                orange: '#FF9F1C',
-                black: '#111111',
-                cream: '#FDF8F3',
-                gray: '#F3F4F6'
-              },
-              feedback: {
-                red: '#FF4444',
-                green: '#00CC66',
-              }
-            },
-            boxShadow: {
-              'neo': '4px 4px 0px 0px rgba(0,0,0,1)',
-              'neo-sm': '2px 2px 0px 0px rgba(0,0,0,1)',
-              'neo-lg': '6px 6px 0px 0px rgba(0,0,0,1)',
-            },
-            borderWidth: {
-              '1': '1px',
-              '3': '3px',
-            },
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            }
-          }
-        }
-      }
-    </script>
-
-    <!-- 3. Custom CSS Utilities -->
-    <style type="text/tailwindcss">
-      @layer utilities {
-        .border-b-1 { border-bottom-width: 1px; }
-        .border-r-1 { border-right-width: 1px; }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
-        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
-        .animate-scale-in { animation: scaleIn 0.3s ease-out; }
-        .animate-slide-in-right { animation: slideInRight 0.3s ease-out; }
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      
-      @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes scaleIn {
-        from { transform: scale(0.9); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-      }
-
-      @keyframes slideInRight {
-        from { transform: translateX(100%); }
-        to { transform: translateX(0); }
-      }
-
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #FDF8F3;
-        color: #111111;
-      }
-    </style>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
@@ -100,7 +21,7 @@
   }
 }
 </script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

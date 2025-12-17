@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-// import './index.css'; // Removed: Styling is handled by CDN in index.html
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
