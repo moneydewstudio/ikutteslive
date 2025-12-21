@@ -3,6 +3,7 @@ import { UserSession } from '../types';
 import Button from './Button';
 import { ChevronDown, ChevronUp, Check, X, Share2, RefreshCw } from 'lucide-react';
 import { getQuestionsByIds } from '../services/quizService';
+import { getExplanation } from '../services/backend';
 
 interface ResultsViewProps {
   session: UserSession;
@@ -12,13 +13,34 @@ interface ResultsViewProps {
 
 const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRetryClick }) => {
   const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
+  const [expState, setExpState] = useState<Record<string, { status: 'idle' | 'loading' | 'ready' | 'locked' | 'error'; text?: string }>>({});
   
   const questions = getQuestionsByIds(session.questionIds);
   const correctAnswers = session.score;
   const totalQuestions = questions.length;
   
+  const fetchExplanationIfNeeded = async (id: string) => {
+    const state = expState[id]?.status || 'idle';
+    if (state === 'ready' || state === 'locked' || state === 'loading') return;
+    setExpState((s) => ({ ...s, [id]: { status: 'loading' } }));
+    try {
+      const res = await getExplanation(id);
+      if ('explanation' in res) {
+        setExpState((s) => ({ ...s, [id]: { status: 'ready', text: res.explanation } }));
+      } else if ('status' in res) {
+        setExpState((s) => ({ ...s, [id]: { status: 'locked' } }));
+      } else {
+        setExpState((s) => ({ ...s, [id]: { status: 'error' } }));
+      }
+    } catch {
+      setExpState((s) => ({ ...s, [id]: { status: 'error' } }));
+    }
+  };
+
   const toggleQuestion = (id: string) => {
-    setOpenQuestionId(openQuestionId === id ? null : id);
+    const next = openQuestionId === id ? null : id;
+    setOpenQuestionId(next);
+    if (next) fetchExplanationIfNeeded(next);
   };
 
   return (
@@ -116,7 +138,24 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
 
                           <div>
                               <span className="font-black uppercase text-xs block mb-1 text-gray-500">Penjelasan</span>
-                              <p className="leading-relaxed">{q.explanation}</p>
+                              {(() => {
+                                  const st = expState[q.id]?.status || 'idle';
+                                  if (st === 'ready') {
+                                    return <p className="leading-relaxed">{expState[q.id]?.text}</p>;
+                                  }
+                                  if (st === 'locked') {
+                                    return (
+                                      <div className="flex items-center justify-between gap-3 p-3 border border-black bg-white">
+                                        <p className="text-sm font-medium">Fitur Premium. Tingkatkan akun untuk melihat pembahasan.</p>
+                                        <Button variant="black" size="sm" onClick={onSignupClick}>Naikkan Akun</Button>
+                                      </div>
+                                    );
+                                  }
+                                  if (st === 'loading') {
+                                    return <p className="text-sm text-gray-500">Memuat pembahasan...</p>;
+                                  }
+                                  return <p className="text-sm text-gray-500">Pembahasan tersedia untuk pengguna serius.</p>;
+                              })()}
                           </div>
                       </div>
                     </div>

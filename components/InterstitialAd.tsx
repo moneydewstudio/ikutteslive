@@ -89,9 +89,7 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
            </div>
        </div>
        
-       <p className="text-white/40 text-xs mt-8 font-medium text-center max-w-xs">
-           Iklan membantu kami menjaga Ikuttes tetap gratis untuk semua orang.
-       </p>
+
     </div>
   );
 };
