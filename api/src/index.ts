@@ -29,7 +29,7 @@ app.get('/health', (c) => c.json({ ok: true }));
 
 app.get('/db/ping', async (c) => {
   try {
-    const db = getDb(c.env);
+    const db = await getDb(c.env);
     const result = await db.execute("SELECT 'pong'::text as response");
     return c.json({ ok: true, response: (result.rows?.[0] as { response: string } | undefined)?.response ?? null });
   } catch (error) {
@@ -42,7 +42,7 @@ app.post('/auth/sync', async (c) => {
   if (!user) return c.json({ error: 'unauthorized' }, 401);
 
   try {
-    const db = getDb(c.env);
+    const db = await getDb(c.env);
     const existing = await db
       .select({ id: users.id, isPremium: users.isPremium })
       .from(users)
@@ -71,7 +71,7 @@ app.get('/questions/random', async (c) => {
   const category = c.req.query('category') as 'TIU' | 'TWK' | 'TKP' | undefined;
 
   try {
-    const db = getDb(c.env);
+    const db = await getDb(c.env);
     const base = db
       .select({
         id: questions.id,
@@ -146,7 +146,7 @@ app.get('/questions/random', async (c) => {
 app.get('/explanations/:id', requirePremium, async (c) => {
   const id = c.req.param('id');
   try {
-    const db = getDb(c.env);
+    const db = await getDb(c.env);
     const res = await db
       .select({ explanation: questions.explanation })
       .from(questions)
