@@ -33,7 +33,7 @@ export const withUserContext: MiddlewareHandler<AppEnv> = async (c, next) => {
     // Try DB lookup to enrich with premium flag; if DB unavailable, default false
     let is_premium = false;
     try {
-      const db = getDb(c.env as unknown as { DATABASE_URL: string });
+      const db = await getDb({ NEON_DATABASE_URL: c.env.NEON_DATABASE_URL });
       const res = await db.select({ isPremium: users.isPremium }).from(users).where(eq(users.id, uid)).limit(1);
       if (res.length > 0) is_premium = !!res[0].isPremium;
     } catch {
