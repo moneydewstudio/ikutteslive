@@ -16,8 +16,8 @@ import { cors } from 'hono/cors';
 import type { AppEnv } from './types';
 import { withUserContext, requirePremium } from './middleware/auth';
 import { getDb } from './db';
-import { users, questions, options } from './schema';
-import { eq, inArray } from 'drizzle-orm';
+import { users, questions, questionOptions, questionCategories, questionExplanations } from './schema';
+import { eq, inArray, desc } from 'drizzle-orm';
 
 const app = new Hono<AppEnv>();
 
@@ -75,35 +75,39 @@ app.get('/questions/random', async (c) => {
     const base = db
       .select({
         id: questions.id,
-        subject: questions.subject,
+        subject: questionCategories.code,
         difficulty: questions.difficulty,
-        text: questions.text,
-        image_url: questions.imageUrl,
+        text: questions.stem,
       })
-      .from(questions);
+      .from(questions)
+      .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id));
 
-    const query = category ? base.where(eq(questions.subject, category)) : base;
+    const query = category ? base.where(eq(questionCategories.code, category)) : base;
 
     const rows = await query.limit(limit);
     const ids = rows.map((r) => r.id);
 
-    let opts: { questionId: string; id: string; text: string }[] = [];
+    let opts: { questionId: string; label: string; text: string }[] = [];
     if (ids.length) {
       const result = await db
-        .select({ questionId: options.questionId, id: options.id, text: options.text })
-        .from(options)
-        .where(inArray(options.questionId, ids));
-      opts = result as unknown as { questionId: string; id: string; text: string }[];
+        .select({ questionId: questionOptions.questionId, label: questionOptions.label, text: questionOptions.text })
+        .from(questionOptions)
+        .where(inArray(questionOptions.questionId, ids));
+      opts = result as unknown as { questionId: string; label: string; text: string }[];
     }
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
     for (const o of opts) {
       if (!grouped[o.questionId]) grouped[o.questionId] = [];
-      grouped[o.questionId].push({ id: o.id, text: o.text });
+      grouped[o.questionId].push({ id: o.label.toLowerCase(), text: o.text });
     }
 
     const payload = rows.map((r) => ({
-      ...r,
+      id: r.id,
+      subject: (r.subject as unknown as string) ?? null,
+      difficulty: r.difficulty,
+      text: r.text,
+      image_url: null,
       options: grouped[r.id] ?? [],
     }));
 
@@ -148,12 +152,13 @@ app.get('/explanations/:id', requirePremium, async (c) => {
   try {
     const db = await getDb(c.env);
     const res = await db
-      .select({ explanation: questions.explanation })
-      .from(questions)
-      .where(eq(questions.id, id))
+      .select({ content: questionExplanations.content, tier: questionExplanations.tier })
+      .from(questionExplanations)
+      .where(eq(questionExplanations.questionId, id))
+      .orderBy(desc(questionExplanations.tier))
       .limit(1);
     if (!res.length) return c.json({ error: 'not_found' }, 404);
-    return c.json(res[0]);
+    return c.json({ explanation: res[0].content, tier: res[0].tier });
   } catch {
     return c.json({ error: 'unavailable' }, 503);
   }
