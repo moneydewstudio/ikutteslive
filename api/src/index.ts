@@ -17,7 +17,7 @@ import type { AppEnv } from './types';
 import { withUserContext, requirePremium } from './middleware/auth';
 import { getDb } from './db';
 import { users, questions, questionOptions, questionCategories, questionExplanations } from './schema';
-import { eq, inArray, desc } from 'drizzle-orm';
+import { eq, inArray, desc, sql } from 'drizzle-orm';
 
 const app = new Hono<AppEnv>();
 
@@ -34,6 +34,27 @@ app.get('/db/ping', async (c) => {
     return c.json({ ok: true, response: (result.rows?.[0] as { response: string } | undefined)?.response ?? null });
   } catch (error) {
     return c.json({ ok: false, error: error instanceof Error ? error.message : 'unknown error' }, 500);
+  }
+});
+
+app.get('/db/describe/:table', async (c) => {
+  const table = c.req.param('table');
+  const allowed = new Set(['questions', 'question_options', 'question_categories', 'question_explanations']);
+  if (!allowed.has(table)) {
+    return c.json({ error: 'not_found' }, 404);
+  }
+
+  try {
+    const db = await getDb(c.env);
+    const result = await db.execute(
+      `SELECT column_name, data_type, is_nullable
+       FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = '${table}'
+       ORDER BY ordinal_position`
+    );
+    return c.json({ table, columns: result.rows ?? [] });
+  } catch (error) {
+    return c.json({ error: 'unavailable', message: error instanceof Error ? error.message : String(error) }, 503);
   }
 });
 
@@ -77,7 +98,7 @@ app.get('/questions/random', async (c) => {
         id: questions.id,
         subject: questionCategories.code,
         difficulty: questions.difficulty,
-        text: questions.stem,
+        text: sql<string>`coalesce(${questions.stem}, ${questions.questionText})`,
       })
       .from(questions)
       .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id));
@@ -87,63 +108,56 @@ app.get('/questions/random', async (c) => {
     const rows = await query.limit(limit);
     const ids = rows.map((r) => r.id);
 
-    let opts: { questionId: string; label: string; text: string }[] = [];
+    let opts: { questionId: number; optionKey: string; optionText: string; isCorrect: boolean | null }[] = [];
     if (ids.length) {
       const result = await db
-        .select({ questionId: questionOptions.questionId, label: questionOptions.label, text: questionOptions.text })
+        .select({
+          questionId: questionOptions.questionId,
+          optionKey: questionOptions.optionKey,
+          optionText: questionOptions.optionText,
+          isCorrect: questionOptions.isCorrect,
+        })
         .from(questionOptions)
         .where(inArray(questionOptions.questionId, ids));
-      opts = result as unknown as { questionId: string; label: string; text: string }[];
+      opts = result as unknown as { questionId: number; optionKey: string; optionText: string; isCorrect: boolean | null }[];
     }
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
+    const correctByQuestion: Record<string, string | null> = {};
     for (const o of opts) {
-      if (!grouped[o.questionId]) grouped[o.questionId] = [];
-      grouped[o.questionId].push({ id: o.label.toLowerCase(), text: o.text });
+      const qid = String(o.questionId);
+      const optionId = String(o.optionKey).trim().toLowerCase();
+      if (!grouped[qid]) grouped[qid] = [];
+      grouped[qid].push({ id: optionId, text: o.optionText });
+      if (o.isCorrect && !correctByQuestion[qid]) {
+        correctByQuestion[qid] = optionId;
+      }
     }
 
-    const payload = rows.map((r) => ({
-      id: r.id,
-      subject: (r.subject as unknown as string) ?? null,
-      difficulty: r.difficulty,
-      text: r.text,
-      image_url: null,
-      options: grouped[r.id] ?? [],
-    }));
+    const payload = rows.map((r) => {
+      const questionId = String(r.id);
+      const options = grouped[questionId] ?? [];
+      const correctId = correctByQuestion[questionId] ?? (options[0]?.id ?? null);
+
+      return {
+        id: questionId,
+        subject: (r.subject as unknown as string) ?? null,
+        difficulty: r.difficulty,
+        text: r.text,
+        image_url: null,
+        options,
+        correct_option_id: correctId,
+        explanation: '',
+      };
+    });
 
     return c.json(payload);
-  } catch {
-    // Fallback demo data without explanations
-    return c.json([
-      {
-        id: 'demo1',
-        subject: 'TIU',
-        difficulty: 3,
-        text: '1 + 1 = ?',
-        image_url: null,
-        options: [
-          { id: 'a', text: '1' },
-          { id: 'b', text: '2' },
-          { id: 'c', text: '3' },
-          { id: 'd', text: '4' },
-          { id: 'e', text: '5' },
-        ],
-      },
-      {
-        id: 'demo2',
-        subject: 'TWK',
-        difficulty: 2,
-        text: 'Ibu kota Indonesia?',
-        image_url: null,
-        options: [
-          { id: 'a', text: 'Bandung' },
-          { id: 'b', text: 'Jakarta' },
-          { id: 'c', text: 'Surabaya' },
-          { id: 'd', text: 'Medan' },
-          { id: 'e', text: 'Makassar' },
-        ],
-      },
-    ]);
+  } catch (e) {
+    console.error('Error in /questions/random:', e);
+    return c.json({
+      error: 'unavailable',
+      message: e instanceof Error ? e.message : String(e),
+    }, 503);
   }
 });
 

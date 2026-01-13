@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { UserSession } from '../types';
 import Button from './Button';
 import { ChevronDown, ChevronUp, Check, X, Share2, RefreshCw } from 'lucide-react';
-import { getQuestionsByIds } from '../services/quizService';
+import { getQuestionsForSession } from '../services/quizService';
 import { getExplanation } from '../services/backend';
 
 interface ResultsViewProps {
@@ -15,7 +15,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
   const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
   const [expState, setExpState] = useState<Record<string, { status: 'idle' | 'loading' | 'ready' | 'locked' | 'error'; text?: string }>>({});
   
-  const questions = getQuestionsByIds(session.questionIds);
+  const questions = getQuestionsForSession(session);
   const correctAnswers = session.score;
   const totalQuestions = questions.length;
   

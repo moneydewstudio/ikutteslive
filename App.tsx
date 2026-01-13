@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
 
   // AUTH LISTENER
   useEffect(() => {
@@ -66,11 +67,16 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const handleStartQuiz = () => {
-    const newSession = QuizService.createSession();
-    setSession(newSession);
-    setCurrentQuestionIdx(0);
-    setView('QUIZ');
+  const handleStartQuiz = async () => {
+    setIsQuizLoading(true);
+    try {
+      const newSession = await QuizService.createSessionFromApi(5);
+      setSession(newSession);
+      setCurrentQuestionIdx(0);
+      setView('QUIZ');
+    } finally {
+      setIsQuizLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -212,8 +218,17 @@ const App: React.FC = () => {
         return <Dashboard user={user || { id: '', isPro: false, streak: 0 }} history={QuizService.getHistory()} onStartQuiz={handleStartQuiz} />;
       case 'QUIZ':
         if (!session) return null;
-        const questions = QuizService.getQuestionsByIds(session.questionIds);
-        if (questions.length === 0) return null;
+        const questions = QuizService.getQuestionsForSession(session);
+        if (questions.length === 0) {
+          if (isQuizLoading) {
+            return (
+              <div className="flex-1 flex items-center justify-center">
+                <span className="font-medium text-sm text-gray-500">Memuat soal...</span>
+              </div>
+            );
+          }
+          return null;
+        }
         const currentQ = questions[currentQuestionIdx];
         return (
           <div className="flex flex-col h-[calc(100vh-80px)] w-full">

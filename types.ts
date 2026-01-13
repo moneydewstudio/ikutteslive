@@ -20,6 +20,7 @@ export interface UserSession {
   id: string;
   answers: Record<string, string>; // question_id -> selected_option_id
   questionIds: string[];
+  questions?: Question[];
   score: number;
   readiness: number;
   percentile: number;
