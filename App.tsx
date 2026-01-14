@@ -70,10 +70,14 @@ const App: React.FC = () => {
   const handleStartQuiz = async () => {
     setIsQuizLoading(true);
     try {
+      // TEAM_001: prevent unhandled promise rejection when API fetch fails in production
       const newSession = await QuizService.createSessionFromApi(5);
       setSession(newSession);
       setCurrentQuestionIdx(0);
       setView('QUIZ');
+    } catch (e) {
+      console.error('Failed to start quiz:', e);
+      alert('Gagal memuat soal. Periksa koneksi Anda dan coba lagi.');
     } finally {
       setIsQuizLoading(false);
     }
