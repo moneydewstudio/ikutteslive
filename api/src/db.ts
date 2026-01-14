@@ -7,6 +7,7 @@ type Bindings = {
 };
 
 export const getDb = async (env: Bindings) => {
+  await ensureDatabase(env);
   const sql = neon(env.NEON_DATABASE_URL);
   return drizzle(sql, { schema });
 };
