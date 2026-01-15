@@ -19,6 +19,8 @@ import { getDb } from './db';
 import { users, questions, questionOptions, questionCategories, questionExplanations } from './schema';
 import { eq, inArray, desc } from 'drizzle-orm';
 
+// TEAM_001: add server-side logging to diagnose intermittent Neon connectivity/query failures
+
 const app = new Hono<AppEnv>();
 
 // Attach user context for all requests (non-blocking if token missing/invalid)
@@ -56,6 +58,7 @@ app.post('/auth/sync', async (c) => {
 
     return c.json({ userId: user.id, is_premium: !!existing[0].isPremium });
   } catch (e) {
+    console.error('TEAM_001 /auth/sync failed', e);
     return c.json({ error: 'unavailable' }, 503);
   }
 });
@@ -77,7 +80,7 @@ app.get('/questions/random', async (c) => {
         id: questions.id,
         subject: questionCategories.code,
         difficulty: questions.difficulty,
-        text: questions.stem,
+        text: questions.questionText,
       })
       .from(questions)
       .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id));
@@ -87,35 +90,37 @@ app.get('/questions/random', async (c) => {
     const rows = await query.limit(limit);
     const ids = rows.map((r) => r.id);
 
-    let opts: { questionId: string; label: string; text: string; isCorrect: boolean | null }[] = [];
+    let opts: { questionId: number; optionKey: string; optionText: string; isCorrect: boolean | null }[] = [];
     if (ids.length) {
       const result = await db
         .select({
           questionId: questionOptions.questionId,
-          label: questionOptions.label,
-          text: questionOptions.text,
+          optionKey: questionOptions.optionKey,
+          optionText: questionOptions.optionText,
           isCorrect: questionOptions.isCorrect,
         })
         .from(questionOptions)
         .where(inArray(questionOptions.questionId, ids));
-      opts = result as unknown as { questionId: string; label: string; text: string; isCorrect: boolean | null }[];
+      opts = result as unknown as { questionId: number; optionKey: string; optionText: string; isCorrect: boolean | null }[];
     }
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
     const correctByQuestion: Record<string, string | null> = {};
     for (const o of opts) {
-      const optionId = o.label.toLowerCase();
-      if (!grouped[o.questionId]) grouped[o.questionId] = [];
-      grouped[o.questionId].push({ id: optionId, text: o.text });
-      if (o.isCorrect && !correctByQuestion[o.questionId]) {
-        correctByQuestion[o.questionId] = optionId;
+      const questionKey = String(o.questionId);
+      const optionId = String(o.optionKey).toLowerCase();
+      if (!grouped[questionKey]) grouped[questionKey] = [];
+      grouped[questionKey].push({ id: optionId, text: o.optionText });
+      if (o.isCorrect && !correctByQuestion[questionKey]) {
+        correctByQuestion[questionKey] = optionId;
       }
     }
 
     const payload = rows.map((r) => {
       const questionId = r.id;
-      const options = grouped[questionId] ?? [];
-      const correctId = correctByQuestion[questionId] ?? (options[0]?.id ?? null);
+      const questionKey = String(questionId);
+      const options = grouped[questionKey] ?? [];
+      const correctId = correctByQuestion[questionKey] ?? (options[0]?.id ?? null);
 
       return {
         id: questionId,
@@ -130,7 +135,8 @@ app.get('/questions/random', async (c) => {
     });
 
     return c.json(payload);
-  } catch {
+  } catch (e) {
+    console.error('TEAM_001 /questions/random failed', e);
     // Fallback demo data without explanations
     return c.json({ error: 'unavailable' }, 503);
   }
@@ -138,16 +144,20 @@ app.get('/questions/random', async (c) => {
 
 app.get('/explanations/:id', requirePremium, async (c) => {
   const id = c.req.param('id');
+  const questionId = Number(id);
+  if (!Number.isFinite(questionId)) {
+    return c.json({ error: 'bad_request' }, 400);
+  }
   try {
     const db = await getDb(c.env);
     const res = await db
-      .select({ content: questionExplanations.content, tier: questionExplanations.tier })
+      .select({ explanationText: questionExplanations.explanationText, level: questionExplanations.level })
       .from(questionExplanations)
-      .where(eq(questionExplanations.questionId, id))
-      .orderBy(desc(questionExplanations.tier))
+      .where(eq(questionExplanations.questionId, questionId))
+      .orderBy(desc(questionExplanations.id))
       .limit(1);
     if (!res.length) return c.json({ error: 'not_found' }, 404);
-    return c.json({ explanation: res[0].content, tier: res[0].tier });
+    return c.json({ explanation: res[0].explanationText, tier: res[0].level });
   } catch {
     return c.json({ error: 'unavailable' }, 503);
   }

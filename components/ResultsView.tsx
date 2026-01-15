@@ -5,6 +5,8 @@ import { ChevronDown, ChevronUp, Check, X, Share2, RefreshCw } from 'lucide-reac
 import { getQuestionsForSession } from '../services/quizService';
 import { getExplanation } from '../services/backend';
 
+// TEAM_001: render results from session-embedded API questions instead of placeholder pool
+
 interface ResultsViewProps {
   session: UserSession;
   onSignupClick: () => void;

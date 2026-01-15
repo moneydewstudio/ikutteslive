@@ -16,6 +16,8 @@ export interface Question {
   image_url?: string;
 }
 
+// TEAM_001: store question snapshots in sessions so Latihan can be DB-backed without refetching
+
 export interface UserSession {
   id: string;
   answers: Record<string, string>; // question_id -> selected_option_id

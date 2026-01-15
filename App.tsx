@@ -13,6 +13,8 @@ import TryoutView from './components/TryoutView';
 import InterstitialAd from './components/InterstitialAd';
 import Button from './components/Button';
 
+// TEAM_001: switch Latihan session creation to API-backed questions (Neon via Worker)
+
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('QUIZ');
   const [session, setSession] = useState<UserSession | null>(null);
@@ -70,14 +72,10 @@ const App: React.FC = () => {
   const handleStartQuiz = async () => {
     setIsQuizLoading(true);
     try {
-      // TEAM_001: prevent unhandled promise rejection when API fetch fails in production
       const newSession = await QuizService.createSessionFromApi(5);
       setSession(newSession);
       setCurrentQuestionIdx(0);
       setView('QUIZ');
-    } catch (e) {
-      console.error('Failed to start quiz:', e);
-      alert('Gagal memuat soal. Periksa koneksi Anda dan coba lagi.');
     } finally {
       setIsQuizLoading(false);
     }

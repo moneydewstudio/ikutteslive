@@ -1,4 +1,6 @@
-import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, char } from 'drizzle-orm/pg-core';
+
+// TEAM_001: align Drizzle schema with the actual Neon DB tables/columns to prevent 503 query failures
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(), // Firebase UID
@@ -25,44 +27,39 @@ export const questionSubcategories = pgTable('question_subcategories', {
 
 export const questions = pgTable('questions', {
   id: integer('id').primaryKey(),
-  topicId: integer('topic_id').notNull(),
-  subtopicId: integer('subtopic_id').notNull(),
-  questionText: text('question_text').notNull(),
+  topicId: integer('topic_id'),
+  subtopicId: integer('subtopic_id'),
+  questionText: text('question_text'),
+  difficulty: integer('difficulty').notNull(),
+  questionType: text('question_type'),
+  timeLimitSeconds: integer('time_limit_seconds'),
+  source: text('source'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }),
+
+  // legacy / future-proof columns present in DB
   code: text('code'),
   categoryId: integer('category_id').references(() => questionCategories.id),
   subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id),
-  difficulty: integer('difficulty').notNull(),
   stem: text('stem'),
-  questionType: text('question_type').notNull(),
-  timeLimitSeconds: integer('time_limit_seconds'),
-  source: text('source'),
   yearTag: integer('year_tag'),
-  isActive: boolean('is_active').default(true).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const questionOptions = pgTable('question_options', {
   id: integer('id').primaryKey(),
   questionId: integer('question_id').references(() => questions.id).notNull(),
-  optionKey: text('option_key').notNull(),
+  optionKey: char('option_key', { length: 1 }).notNull(),
   optionText: text('option_text').notNull(),
   weight: integer('weight'),
   isCorrect: boolean('is_correct'),
+  createdAt: timestamp('created_at', { withTimezone: true }),
 });
 
 export const questionExplanations = pgTable('question_explanations', {
   id: integer('id').primaryKey(),
   questionId: integer('question_id').references(() => questions.id).notNull(),
-  tier: integer('tier').notNull(),
-  content: text('content').notNull(),
-});
-
-export const attempts = pgTable('attempts', {
-  id: integer('id').primaryKey(),
-  userId: text('user_id').references(() => users.id),
-  questionId: integer('question_id').references(() => questions.id).notNull(),
-  selectedOptionId: text('selected_option_id').notNull(),
-  isCorrect: boolean('is_correct').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  level: text('level').notNull(),
+  explanationText: text('explanation_text').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }),
 });

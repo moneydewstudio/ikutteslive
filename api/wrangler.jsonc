@@ -4,15 +4,15 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "ikuttes",
+	"name": "api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-12-19",
 	"observability": {
 		"enabled": true
 	},
 	"vars": {
-		"FIREBASE_PROJECT_ID": "ikuttes-64d28",
-		"NEON_DATABASE_URL": "postgresql://neondb_owner:npg_IiMFKka4o6pw@ep-polished-rain-a1fl6wek-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+		// TEAM_001: do not commit database credentials; set NEON_DATABASE_URL via `wrangler secret put`
+		"FIREBASE_PROJECT_ID": "ikuttes-64d28"
 	}
 	/**
 	 * Smart Placement

@@ -2,6 +2,8 @@ import { Question, UserSession } from '../types';
 import { QUESTIONS_POOL } from '../constants';
 import { apiFetch } from './apiClient';
 
+// TEAM_001: make practice sessions use API-fetched questions (Neon via Worker) and store a session snapshot
+
 const SESSION_KEY = 'ikuttes_session_v1';
 const HISTORY_KEY = 'ikuttes_history_v1';
 

@@ -51,13 +51,7 @@ export const authService = {
   },
 
   getIdToken: async (): Promise<string | null> => {
-    // TEAM_001: avoid crashing API calls when token retrieval fails (adblock/network)
-    try {
-      return auth.currentUser ? await auth.currentUser.getIdToken() : null;
-    } catch (e) {
-      console.warn('getIdToken failed:', e);
-      return null;
-    }
+    return auth.currentUser ? await auth.currentUser.getIdToken() : null;
   },
 
   signInWithGoogle: async (): Promise<void> => {
