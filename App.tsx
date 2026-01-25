@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ViewState, UserSession, User } from './types';
 import * as QuizService from './services/quizService';
 import { authService } from './services/authService';
@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import BottomNav from './components/BottomNav';
 import BonusView from './components/BonusView';
 import TryoutView from './components/TryoutView';
+import DrillsView from './components/DrillsView';
 import InterstitialAd from './components/InterstitialAd';
 import Button from './components/Button';
 
@@ -69,17 +70,37 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const handleStartQuiz = async () => {
+  // TEAM_004: use server-defined daily quiz (rotates at 00:00 UTC+07) as the default Latihan session
+  const handleStartQuiz = useCallback(async () => {
     setIsQuizLoading(true);
     try {
-      const newSession = await QuizService.createSessionFromApi(5);
+      const newSession = await QuizService.createDailySessionFromApi();
       setSession(newSession);
       setCurrentQuestionIdx(0);
       setView('QUIZ');
     } finally {
       setIsQuizLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!session?.refreshAt) return;
+    const ms = session.refreshAt - Date.now();
+    if (!Number.isFinite(ms)) return;
+
+    if (ms <= 0) {
+      QuizService.clearSession();
+      void handleStartQuiz();
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      QuizService.clearSession();
+      void handleStartQuiz();
+    }, ms);
+
+    return () => window.clearTimeout(timer);
+  }, [session?.refreshAt, handleStartQuiz]);
 
   useEffect(() => {
     const savedSession = QuizService.loadSession();
@@ -189,11 +210,14 @@ const App: React.FC = () => {
         <span className="font-black text-xl tracking-tight">Ikuttes</span>
       </div>
 
-      <nav className="hidden md:flex items-center gap-8 font-bold text-sm uppercase tracking-wide">
-        <button onClick={handleLogoClick} className={`hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Latihan</button>
-        <button onClick={() => setView('BONUS')} className={`hover:text-gray-600 transition-colors ${view === 'BONUS' ? 'text-black' : 'text-gray-400'}`}>Bonus</button>
-        <button onClick={() => setView('TRYOUT')} className={`hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
-        <button onClick={() => setView('PROFILE')} className={`hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Statistik</button>
+      {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}
+      <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide">
+        <button onClick={handleLogoClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Latihan</button>
+        {/* TEAM_005: add daily drills entrypoint */}
+        <button onClick={() => setView('DRILLS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}>Drill</button>
+        <button onClick={() => setView('BONUS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' ? 'text-black' : 'text-gray-400'}`}>Bonus</button>
+        <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
+        <button onClick={() => setView('PROFILE')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Statistik</button>
       </nav>
 
       <div>
@@ -214,6 +238,8 @@ const App: React.FC = () => {
     switch (view) {
       case 'BONUS':
         return <BonusView />;
+      case 'DRILLS':
+        return <DrillsView onSignupClick={() => setShowSignupModal(true)} />;
       case 'TRYOUT':
         return <TryoutView />;
       case 'PROFILE':

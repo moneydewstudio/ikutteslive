@@ -104,13 +104,14 @@ Frontend locks are cosmetic only.
 * Practice questions
 * Random drills
 * Basic score feedback
+* Tryout (SKD) — free in Phase I, but implemented paywall-ready (server-side switch)
 
 **GATED (Dormant Paywall)**
 
 * Answer explanations
 * Weak-topic analysis
 * Percentile / rank vs Indonesia
-* Full exam simulation
+* Full exam simulation (future) — enable gating via server-side switch when monetization is activated
 * Score history
 * Ad‑free experience
 
@@ -152,6 +153,18 @@ Never rely on frontend checks.
 
   * "Fitur ini akan tersedia untuk pengguna serius"
   * "Segera hadir"
+
+### 2.6.1 UI Memo: Resizing font size
+
+TEAM_009: To resize font size globally, prefer changing the base font size in `index.css` (e.g., `html { font-size: ... }`).
+TEAM_009: For local adjustments, use Tailwind `text-*` utilities; only extend `tailwind.config.js` font scales if a new design-wide type scale is required.
+
+### 2.6.2 Statistik (Premium) — Tryout history + radar analytics
+
+TEAM_009: Riwayat Tryout + 3 radar charts (TWK/TIU/TKP) are premium-gated; endpoints `/tryout/history` and `/analytics/*` must require premium server-side.
+TEAM_009: Radar scope is tryout-only (persist only from `POST /exam/:examId/submit`); schema should allow future `source_type` extension.
+TEAM_009: TKP metric is non-binary: per-item contribution = `selected_weight / max_weight`; subtopic ability = average ratio, displayed as percentage (×100). Do not use “correct/incorrect” wording for TKP in UI.
+TEAM_009: Riwayat Tryout rows should be clickable and open a minimal detail view (date + TWK/TIU/TKP/total).
 
 ---
 

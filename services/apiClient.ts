@@ -1,8 +1,10 @@
 import { authService } from './authService';
 
-const API_BASE = (import.meta as any)?.env?.VITE_API_BASE || 'http://localhost:8787';
+// TEAM_007: always target the deployed Worker when VITE_API_BASE is missing (no localhost fallback)
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://ikuttes.robimaulanaspsi.workers.dev';
 
 export async function apiFetch(path: string, init: RequestInit = {}) {
+  if (!API_BASE) throw new Error('VITE_API_BASE is not configured');
   const token = await authService.getIdToken();
   const headers = new Headers(init.headers || {});
   headers.set('Content-Type', 'application/json');

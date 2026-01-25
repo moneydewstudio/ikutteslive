@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, char } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, char, serial } from 'drizzle-orm/pg-core';
 
 // TEAM_001: align Drizzle schema with the actual Neon DB tables/columns to prevent 503 query failures
 
@@ -62,4 +62,29 @@ export const questionExplanations = pgTable('question_explanations', {
   level: text('level').notNull(),
   explanationText: text('explanation_text').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }),
+});
+
+// TEAM_009: persist tryout submissions for premium-gated history and subtopic radar analytics (tryout-only scope)
+
+export const tryoutAttempts = pgTable('tryout_attempts', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  total: integer('total').notNull(),
+  twk: integer('twk').notNull(),
+  tiu: integer('tiu').notNull(),
+  tkp: integer('tkp').notNull(),
+  passed: boolean('passed'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const tryoutAttemptItems = pgTable('tryout_attempt_items', {
+  id: serial('id').primaryKey(),
+  attemptId: text('attempt_id').references(() => tryoutAttempts.id).notNull(),
+  questionId: integer('question_id').references(() => questions.id).notNull(),
+  categoryCode: text('category_code'),
+  subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id),
+  isCorrect: boolean('is_correct'),
+  selectedWeight: integer('selected_weight'),
+  maxWeight: integer('max_weight'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

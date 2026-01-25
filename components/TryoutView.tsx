@@ -1,27 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Calendar, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2 } from 'lucide-react';
 import Button from './Button';
 import QuizCard from './QuizCard';
 import { Question } from '../types';
+import * as QuizService from '../services/quizService';
 
-// Mock Data Generator for Tryout (Fallback Strategy)
-const generateTryoutQuestions = (): Question[] => {
-  return Array.from({ length: 30 }).map((_, i) => ({
-    id: `to_${i + 1}`,
-    subject: i < 10 ? 'TWK' : i < 20 ? 'TIU' : 'TKP',
-    difficulty: 3,
-    text: `[Simulasi ${i + 1}] Dalam hal terjadi kekosongan Wakil Presiden, selambat-lambatnya dalam jangka waktu beberapa hari Majelis Permusyawaratan Rakyat menyelenggarakan sidang untuk memilih Wakil Presiden?`,
-    options: [
-      { id: 'a', text: '60 hari' },
-      { id: 'b', text: '90 hari' },
-      { id: 'c', text: '30 hari' },
-      { id: 'd', text: '70 hari' },
-      { id: 'e', text: '20 hari' }
-    ],
-    correct_option_id: 'a',
-    explanation: 'Sesuai UUD 1945 Pasal 8 ayat 2.'
-  }));
-};
+// TEAM_004: connect Tryout (SKD) UI to server endpoints (free now; paywall-ready server-side)
+
+// TEAM_008: use the same QuizService+apiFetch pattern as daily quiz/drills for tryout start/fetch/submit
 
 interface ScoreResult {
   totalScore: number;
@@ -73,67 +59,141 @@ const TryoutView: React.FC = () => {
   const [isStarted, setIsStarted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [examId, setExamId] = useState<string | null>(null);
+  const [endsAt, setEndsAt] = useState<number | null>(null);
+  const submitInFlightRef = useRef(false);
   
   // Simulation State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(100 * 60); // 100 minutes in seconds
   const [isMobileGridOpen, setIsMobileGridOpen] = useState(false);
   
   // Result State
   const [result, setResult] = useState<ScoreResult | null>(null);
 
-  // FETCHING STRATEGY: Firestore First -> Fallback to Generator
-  useEffect(() => {
-    if (isStarted && !result && questions.length === 0) {
-      const fetchQuestions = async () => {
-        setIsLoading(true);
-        try {
-          // 1. Production Check
-          const isProduction = process.env.NODE_ENV === 'production';
+  const resetTryout = useCallback(() => {
+    setResult(null);
+    setIsStarted(false);
+    setQuestions([]);
+    setAnswers({});
+    setCurrentIndex(0);
+    setIsMobileGridOpen(false);
+    setExamId(null);
+    setEndsAt(null);
+    setTimeLeft(100 * 60);
+  }, []);
 
-          if (isProduction) {
-            // Placeholder for Firestore Logic
-            // await db.collection('tryouts').doc('active').get();
-            
-            // Simulating network request failure for demo purposes to trigger fallback
-            // In real app: remove the throw and implement actual fetch
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            throw new Error("Firestore unavailable in demo environment");
-          } else {
-            // 2. Demo Environment: Simulate delay for realism
-            await new Promise(resolve => setTimeout(resolve, 800));
-            setQuestions(generateTryoutQuestions());
-          }
-        } catch (error) {
-          console.warn("Fetching failed or in demo mode, using fallback generator.", error);
-          // 3. Fallback Strategy
-          setQuestions(generateTryoutQuestions());
-        } finally {
-          setIsLoading(false);
-        }
-      };
+  const submitTryout = useCallback(async () => {
+    if (!examId) return;
+    if (submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
 
-      fetchQuestions();
+    setIsLoading(true);
+    try {
+      const { res: submitRes, data } = await QuizService.submitTryoutFromApi(examId, answers);
+
+      if (submitRes.status === 403) {
+        alert('Fitur Premium akan tersedia untuk pengguna serius. Segera hadir!');
+        return;
+      }
+
+      if (!submitRes.ok) {
+        throw new Error('Failed to submit tryout');
+      }
+
+      if (!data) {
+        throw new Error('Invalid submit payload');
+      }
+
+      const totalScore = Number(data?.total ?? 0);
+      const twk = Number(data?.sections?.TWK ?? 0);
+      const tiu = Number(data?.sections?.TIU ?? 0);
+      const tkp = Number(data?.sections?.TKP ?? 0);
+      const correctTwk = Number(data?.meta?.correctCount?.TWK ?? 0);
+      const correctTiu = Number(data?.meta?.correctCount?.TIU ?? 0);
+      const passed = !!data?.passed;
+
+      setResult({
+        totalScore: Number.isFinite(totalScore) ? totalScore : 0,
+        details: {
+          twk: Number.isFinite(twk) ? twk : 0,
+          tiu: Number.isFinite(tiu) ? tiu : 0,
+          tkp: Number.isFinite(tkp) ? tkp : 0,
+        },
+        correctCount: (Number.isFinite(correctTwk) ? correctTwk : 0) + (Number.isFinite(correctTiu) ? correctTiu : 0),
+        totalQuestions: questions.length,
+        passed,
+      });
+      setIsMobileGridOpen(false);
+    } catch (e: any) {
+      console.error('TEAM_004 submit tryout failed', e);
+      alert('Gagal submit tryout. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
+      submitInFlightRef.current = false;
     }
-  }, [isStarted, result, questions.length]);
+  }, [examId, answers, questions.length]);
+
+  const startTryout = useCallback(async () => {
+    setIsStarted(true);
+    setIsLoading(true);
+
+    try {
+      const { res: startRes, data: startData } = await QuizService.startTryoutFromApi();
+      if (startRes.status === 403) {
+        alert('Fitur Premium akan tersedia untuk pengguna serius. Segera hadir!');
+        resetTryout();
+        return;
+      }
+      if (!startRes.ok) throw new Error('Failed to start tryout');
+
+      if (!startData) {
+        throw new Error('Invalid exam start payload');
+      }
+
+      const newExamId = String(startData?.examId ?? '');
+      const newEndsAt = Number(startData?.endsAt ?? 0);
+      if (!newExamId || !Number.isFinite(newEndsAt) || newEndsAt <= 0) {
+        throw new Error('Invalid exam start payload');
+      }
+
+      setExamId(newExamId);
+      setEndsAt(newEndsAt);
+      setAnswers({});
+      setCurrentIndex(0);
+      setResult(null);
+
+      const initialTimeLeft = Math.max(0, Math.floor((newEndsAt - Date.now()) / 1000));
+      setTimeLeft(initialTimeLeft);
+
+      const { res: qRes, questions: fetchedQuestions } = await QuizService.fetchTryoutQuestionsFromApi(newExamId);
+      if (!qRes.ok) throw new Error('Failed to fetch tryout questions');
+      if (!fetchedQuestions.length) throw new Error('Empty tryout question set');
+      setQuestions(fetchedQuestions);
+    } catch (e: any) {
+      console.error('TEAM_004 start tryout failed', e);
+      alert('Gagal memuat soal tryout. Silakan coba lagi.');
+      resetTryout();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [resetTryout]);
 
   // TIMER LOGIC
   useEffect(() => {
-    if (isStarted && !result && !isLoading && questions.length > 0) {
+    if (isStarted && !result && !isLoading && endsAt && questions.length > 0) {
       const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 0) {
-            clearInterval(timer);
-            // Auto-submit logic could be triggered here
-            return 0;
-          }
-          return prev - 1;
-        });
+        const newLeft = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
+        setTimeLeft(newLeft);
+        if (newLeft <= 0) {
+          clearInterval(timer);
+          void submitTryout();
+        }
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [isStarted, result, isLoading, questions.length]);
+  }, [isStarted, result, isLoading, questions.length, endsAt, submitTryout]);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -176,44 +236,10 @@ const TryoutView: React.FC = () => {
     return { answered, unread: total - answered, unanswered: 0 }; 
   }, [answers, questions.length]);
 
-  const calculateScore = useCallback(() => {
-    let twk = 0;
-    let tiu = 0;
-    let tkp = 0;
-    let correct = 0;
-
-    questions.forEach(q => {
-      const userAnswer = answers[q.id];
-      if (userAnswer === q.correct_option_id) {
-        correct++;
-        // CPNS Logic: 5 points per correct answer
-        if (q.subject === 'TWK') twk += 5;
-        if (q.subject === 'TIU') tiu += 5;
-        if (q.subject === 'TKP') tkp += 5; 
-      }
-    });
-
-    // Mock Passing Grade Logic
-    const passed = twk >= 30 && tiu >= 30 && tkp >= 30; // Simplified thresholds
-
-    setResult({
-      totalScore: twk + tiu + tkp,
-      details: { twk, tiu, tkp },
-      correctCount: correct,
-      totalQuestions: questions.length,
-      passed
-    });
-    setIsMobileGridOpen(false);
-  }, [questions, answers]);
-
   const handleRetry = useCallback(() => {
-    setResult(null);
-    setIsStarted(false);
-    setQuestions([]); // Clear questions to force re-fetch
-    setAnswers({});
-    setCurrentIndex(0);
-    setTimeLeft(30 * 60);
-  }, []);
+    resetTryout();
+    void startTryout();
+  }, [resetTryout, startTryout]);
 
   // --- RENDER ---
 
@@ -232,10 +258,10 @@ const TryoutView: React.FC = () => {
                          Tryout<br/>Akbar
                      </h1>
                      <p className="font-bold text-lg mb-8 max-w-md">
-                         Simulasi skala penuh. 30 soal. 30 menit. 
+                         Simulasi skala penuh. 110 soal. 100 menit.
                          Uji diri Anda dengan antarmuka CAT standar BKN.
                      </p>
-                     <Button size="lg" variant="black" withArrow onClick={() => setIsStarted(true)}>
+                     <Button size="lg" variant="black" withArrow onClick={startTryout}>
                          Mulai Simulasi
                      </Button>
                  </div>
@@ -326,7 +352,7 @@ const TryoutView: React.FC = () => {
                      <Button variant="outline" onClick={handleRetry}>
                         <RefreshCw className="w-4 h-4 mr-2" /> Ulangi
                      </Button>
-                     <Button variant="black" onClick={() => setIsStarted(false)}>
+                     <Button variant="black" onClick={resetTryout}>
                         Tutup
                      </Button>
                   </div>
@@ -338,7 +364,7 @@ const TryoutView: React.FC = () => {
       {/* 1. Header */}
       <div className="bg-white border-b border-black shadow-sm h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-20">
          <h2 className="font-bold text-lg md:text-xl truncate mr-4">
-            Try Out TWK (Tes Wawasan Kebangsaan) 26 
+            Tryout SKD
             <span className="ml-2 text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded">No. {currentIndex + 1}</span>
          </h2>
          <div className="text-xl md:text-2xl font-bold text-red-600 font-mono tracking-widest bg-red-50 px-3 py-1 rounded border border-red-100">
@@ -429,7 +455,7 @@ const TryoutView: React.FC = () => {
              
              {/* Submit Button (Desktop) */}
              <div className="p-4 border-t border-black bg-white">
-                <SubmitButton onClick={calculateScore} />
+                <SubmitButton onClick={submitTryout} />
              </div>
           </div>
 
@@ -463,7 +489,7 @@ const TryoutView: React.FC = () => {
 
                       {/* Submit Button (Mobile) */}
                       <div className="p-4 border-t border-black bg-white">
-                         <SubmitButton onClick={calculateScore} />
+                         <SubmitButton onClick={submitTryout} />
                       </div>
                   </div>
               </div>

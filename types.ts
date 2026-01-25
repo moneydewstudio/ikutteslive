@@ -23,13 +23,18 @@ export interface UserSession {
   answers: Record<string, string>; // question_id -> selected_option_id
   questionIds: string[];
   questions?: Question[];
+  // TEAM_004: persist daily-quiz metadata so sessions can be invalidated at Jakarta midnight
+  dayKey?: string;
+  refreshAt?: number;
+  // TEAM_005: store daily drill category for single-category rotation sessions
+  drillCategory?: 'TIU' | 'TWK' | 'TKP';
   score: number;
   readiness: number;
   percentile: number;
   completedAt?: number;
 }
 
-export type ViewState = 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'SIGNUP' | 'AD_INTERSTITIAL';
+export type ViewState = 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'DRILLS' | 'SIGNUP' | 'AD_INTERSTITIAL';
 
 export interface User {
   id: string; // Firebase UID

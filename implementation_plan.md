@@ -61,6 +61,62 @@
 
 ---
 
+### 2.3 `GET /quiz/daily`
+
+**Purpose:** Serve the daily quiz question set.
+
+**Logic:**
+
+* Daily quiz rotates at **00:00 UTC+07 (Jakarta time)**.
+* The server is the source of truth for "today" (frontend should not compute day boundaries itself).
+* Enforce subject mix:
+  * TWK: 1
+  * TIU: 2
+  * TKP: 2
+* Questions must exclude explanations.
+
+**Response (proposed)**
+
+```json
+{
+  "dayKey": "2026-01-19",
+  "refreshAt": 1737222000000,
+  "questions": [
+    { "id": 123, "subject": "TWK", "difficulty": 2, "text": "...", "options": [{"id":"a","text":"..."}], "correct_option_id": "", "explanation": "" }
+  ]
+}
+```
+
+---
+
+### 2.4 `GET /drills/daily`
+
+**Purpose:** Serve the global daily drill set (same for all users).
+
+**Logic:**
+
+* Daily drills rotate at **00:00 UTC+07 (Jakarta time)**.
+* The server is the source of truth for "today".
+* **10 questions per day**.
+* **Single-category rotation** by day (global cycle: TWK → TIU → TKP).
+* Replay is allowed (same day returns the same question set).
+* Questions must exclude explanations.
+
+**Response (proposed)**
+
+```json
+{
+  "dayKey": "2026-01-19",
+  "refreshAt": 1737222000000,
+  "category": "TWK",
+  "questions": [
+    { "id": 123, "subject": "TWK", "difficulty": 2, "text": "...", "options": [{"id":"a","text":"..."}], "correct_option_id": "", "explanation": "" }
+  ]
+}
+```
+
+---
+
 ## 3. Gated Explanation Endpoints (DORMANT PAYWALL)
 
 ### 3.1 `GET /explanations/:questionId`
@@ -109,13 +165,107 @@ return q[0];
 
 ---
 
-## 6. Exam Simulation (GATED)
+## 6. Tryout (SKD) (FREE; Paywall-Ready)
 
 ### 6.1 `POST /exam/start`
 
-**Purpose:** Initialize full-length exam.
+**Purpose:** Initialize SKD tryout (full-length simulation).
 
-**Middleware:** `requirePremium`
+**Middleware (Phase I):** `withUserContext`
+
+**Dormant paywall note**
+
+* Tryout is **free for now**, but the API should be implemented so it can be switched to **premium-gated later** without changing the UI/flows.
+* Proposed mechanism: a single server-side flag (env/config) that turns on premium enforcement for tryout endpoints.
+
+**SKD Specs (confirmed)**
+
+* Total questions: 110
+* Distribution:
+  * TWK: 30
+  * TIU: 35
+  * TKP: 45
+* Time limit: 100 minutes
+
+**Subtopic distribution rule**
+
+* For each category (TWK/TIU/TKP), distribute questions as evenly as possible across `question_subcategories`.
+* Target: each subcategory receives either `floor(quota / subcategoryCount)` or `ceil(quota / subcategoryCount)` questions.
+
+**Response (proposed)**
+
+* `200`:
+
+```json
+{
+  "examId": "<opaque_token>",
+  "type": "SKD",
+  "startsAt": 1730000000000,
+  "endsAt": 1730006000000,
+  "durationSeconds": 6000,
+  "questionCount": 110
+}
+```
+
+**Notes**
+
+* Do **not** return correct answers in the start response.
+* `examId` should be treated as an opaque identifier by the frontend (implementation may sign it server-side).
+* Use a follow-up endpoint to fetch question content.
+
+---
+
+### 6.2 `GET /exam/:examId/questions`
+
+**Purpose:** Fetch the question set for an exam session.
+
+**Middleware (Phase I):** `withUserContext`
+
+**Logic:**
+
+* Load the stored question IDs for `examId` in the stored order.
+* Return questions with options.
+* Exclude:
+  * `correct_option_id`
+  * explanations
+
+---
+
+### 6.3 `POST /exam/:examId/submit`
+
+**Purpose:** Submit exam answers and compute score.
+
+**Middleware (Phase I):** `withUserContext`
+
+**Request (proposed)**
+
+```json
+{
+  "answers": {
+    "123": "a",
+    "124": "c"
+  }
+}
+```
+
+**Scoring (proposed)**
+
+* TWK/TIU:
+  * correct = 5
+  * wrong/blank = 0
+* TKP:
+  * score = selected option `question_options.weight` (expected 1–5)
+  * blank = 0
+
+**Response (proposed)**
+
+```json
+{
+  "total": 450,
+  "sections": { "TWK": 120, "TIU": 145, "TKP": 185 },
+  "meta": { "correctCount": { "TWK": 24, "TIU": 29 } }
+}
+```
 
 ---
 
