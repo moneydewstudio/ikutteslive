@@ -108,23 +108,6 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick }) => {
 
   return (
     <div className="flex flex-col w-full h-[calc(100vh-80px)] animate-fade-in">
-      <div className="p-6 border-b border-black bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">Drill Harian</h1>
-            <p className="text-sm text-gray-500 font-medium">
-              10 soal • Kategori {session.drillCategory ?? 'TIU'} • Berganti setiap hari (00:00 WIB)
-            </p>
-          </div>
-          <button
-            onClick={refreshSession}
-            className="px-4 py-2 border border-black text-xs font-black uppercase tracking-wider hover:bg-black hover:text-white transition-colors"
-          >
-            Ulangi Drill
-          </button>
-        </div>
-      </div>
-
       <div className="w-full h-1 bg-gray-200">
         <div
           className="h-full bg-brand-lime transition-all duration-300 ease-out"

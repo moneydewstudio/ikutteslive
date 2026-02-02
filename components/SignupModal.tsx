@@ -2,12 +2,14 @@ import React from 'react';
 import Button from './Button';
 import { X } from 'lucide-react';
 
+// TEAM_012: prevent duplicate popup attempts by exposing loading state
 interface SignupModalProps {
   onClose: () => void;
   onConfirm: () => void;
+  isLoading?: boolean;
 }
 
-const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm }) => {
+const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm, isLoading = false }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -28,10 +30,11 @@ const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm }) => {
           <div className="space-y-3">
             <button 
               onClick={onConfirm}
-              className="w-full flex items-center justify-center space-x-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors"
+              className="w-full flex items-center justify-center space-x-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isLoading}
             >
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-              <span>Lanjut dengan Google</span>
+              <span>{isLoading ? 'Memproses...' : 'Lanjut dengan Google'}</span>
             </button>
             
             <div className="relative">
@@ -49,7 +52,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm }) => {
                 placeholder="Masukkan email Anda" 
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
               />
-              <Button type="submit" fullWidth>
+              <Button type="submit" fullWidth isLoading={isLoading} disabled={isLoading}>
                 Buat Akun
               </Button>
             </form>

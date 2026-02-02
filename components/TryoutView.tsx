@@ -315,8 +315,9 @@ const TryoutView: React.FC = () => {
   // Safety check if loading failed or array empty
   if (!currentQ && !isLoading) return <div className="p-8">Gagal memuat soal. Silakan refresh.</div>;
 
+  // TEAM_013: allow Tryout overlay to scroll on mobile only (desktop keeps fixed layout)
   return (
-    <div className="fixed inset-0 z-[100] bg-gray-100 flex flex-col font-sans overflow-hidden">
+    <div className="fixed inset-0 z-[100] bg-gray-100 flex flex-col font-sans overflow-y-auto md:overflow-hidden">
       
       {/* RESULT MODAL */}
       {result && (
@@ -379,7 +380,8 @@ const TryoutView: React.FC = () => {
           <div className="flex-1 flex flex-col min-w-0 bg-gray-50">
               
               {/* Reusing QuizCard for Content */}
-              <div className="flex-1 relative border-b border-black md:border-b-0 min-h-0">
+              {/* TEAM_011: ensure QuizCard panes can scroll by keeping the wrapper flexible */}
+              <div className="flex-1 relative border-b border-black md:border-b-0 min-h-0 overflow-hidden">
                   <QuizCard 
                       question={currentQ}
                       selectedOptionId={answers[currentQ.id]}

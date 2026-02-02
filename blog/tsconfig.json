@@ -1,0 +1,7 @@
+{
+  "// TEAM_010: Astro strict TypeScript config": "",
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "types": ["astro/client"]
+  }
+}

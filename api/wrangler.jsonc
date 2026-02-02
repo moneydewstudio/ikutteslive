@@ -12,8 +12,8 @@
 	},
 	"vars": {
 		// TEAM_001: do not commit database credentials; set NEON_DATABASE_URL via `wrangler secret put`
-		"FIREBASE_PROJECT_ID": "ikuttes-64d28",
-		"NEON_DATABASE_URL": "postgresql://neondb_owner:npg_IiMFKka4o6pw@ep-polished-rain-a1fl6wek-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+		// TEAM_012: align Worker JWT verification with the canonical Firebase project
+		"FIREBASE_PROJECT_ID": "ikuttes"
 
 	}
 	/**

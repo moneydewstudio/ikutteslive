@@ -1,0 +1,54 @@
+---
+// TEAM_010: blog home (hub index)
+import HubLayout from '../layouts/HubLayout.astro';
+import Shell from '../components/global/Shell.astro';
+import CtaCard from '../components/global/CtaCard.astro';
+import { buildCanonicalUrl, buildCollectionPageSchema, buildOrganizationSchema, buildSiteSchema, buildBreadcrumbSchema } from '../lib/utils/seo';
+import { setCacheControl, HUB_CACHE_CONTROL } from '../lib/utils/cache';
+
+setCacheControl(Astro.response.headers, HUB_CACHE_CONTROL);
+
+const canonical = buildCanonicalUrl('/');
+const title = 'Ikuttes Blog — CPNS TIU, TWK, TKP';
+const description = 'Panduan CPNS yang langsung mengarah ke latihan harian: TIU, TWK, dan TKP.';
+
+const schema = [
+  buildSiteSchema(),
+  buildOrganizationSchema(),
+  buildBreadcrumbSchema([{ name: 'Ikuttes Blog', path: '/' }]),
+  buildCollectionPageSchema({ title, description, path: '/' }),
+];
+---
+
+<HubLayout title={title} description={description} canonical={canonical} schema={schema}>
+  <Shell>
+    <div class="grid gap-8">
+      <section class="border-3 border-black bg-white p-6 shadow-neo">
+        <h1 class="text-2xl font-extrabold">Belajar CPNS, langsung ke latihan</h1>
+        <p class="mt-3 text-sm text-black/80">
+          Pilih hub materi di bawah, baca ringkasnya, lalu kerjakan Daily Quiz di Ikuttes.
+        </p>
+      </section>
+
+      <CtaCard style="hard" />
+
+      <section class="grid gap-4 sm:grid-cols-3">
+        <a href="/tiu" class="border-3 border-black bg-brand-lime p-5 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none">
+          <div class="text-xs font-black uppercase tracking-wider">Hub</div>
+          <div class="mt-2 text-lg font-extrabold">TIU</div>
+          <div class="mt-2 text-sm text-black/80">Verbal, numerik, logika — strategi cepat.</div>
+        </a>
+        <a href="/twk" class="border-3 border-black bg-brand-pink p-5 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none">
+          <div class="text-xs font-black uppercase tracking-wider">Hub</div>
+          <div class="mt-2 text-lg font-extrabold">TWK</div>
+          <div class="mt-2 text-sm text-black/80">Pancasila, UUD 1945, NKRI, Bhinneka.</div>
+        </a>
+        <a href="/tkp" class="border-3 border-black bg-brand-purple p-5 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none">
+          <div class="text-xs font-black uppercase tracking-wider">Hub</div>
+          <div class="mt-2 text-lg font-extrabold">TKP</div>
+          <div class="mt-2 text-sm text-black/80">Soal situasional dengan penilaian berbobot.</div>
+        </a>
+      </section>
+    </div>
+  </Shell>
+</HubLayout>

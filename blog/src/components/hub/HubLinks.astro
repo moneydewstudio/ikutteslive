@@ -1,0 +1,29 @@
+---
+// TEAM_010: hub internal links list
+
+type Item = {
+  href: string;
+  title: string;
+  updatedAt?: string | null;
+};
+
+type Props = {
+  items: Item[];
+};
+
+const { items } = Astro.props;
+---
+
+<div class="grid gap-3 sm:grid-cols-2">
+  {items.map((item) => (
+    <a
+      href={item.href}
+      class="block border-3 border-black bg-white p-4 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+    >
+      <div class="text-sm font-extrabold leading-snug">{item.title}</div>
+      {item.updatedAt ? (
+        <div class="mt-1 text-xs text-black/60">Update: {item.updatedAt}</div>
+      ) : null}
+    </a>
+  ))}
+</div>

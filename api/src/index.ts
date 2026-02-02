@@ -31,6 +31,27 @@ import { SignJWT, jwtVerify } from 'jose';
 
 // TEAM_001: add server-side logging to diagnose intermittent Neon connectivity/query failures
 
+// TEAM_013: scoring helper for tryout submissions; exported for unit tests
+export const resolveCorrectOptionKey = (
+  opts: Array<{ key: string; isCorrect: boolean | null; weight: number | null }>
+): string | null => {
+  const explicit = opts.find((o) => !!o.isCorrect);
+  if (explicit) return explicit.key;
+
+  let bestKey: string | null = null;
+  let bestWeight = -Infinity;
+  for (const o of opts) {
+    const w = Number(o.weight);
+    // TEAM_013: treat weights as meaningful only when present and positive
+    if (!Number.isFinite(w) || w <= 0) continue;
+    if (w > bestWeight) {
+      bestWeight = w;
+      bestKey = o.key;
+    }
+  }
+  return bestKey;
+};
+
 const app = new Hono<AppEnv>();
 
 // TEAM_004: rotate daily quiz at 00:00 UTC+07 (Jakarta time) using a stable day key
@@ -822,7 +843,8 @@ app.post('/exam/:examId/submit', async (c) => {
     const questionMetaRows = await db
       .select({
         id: questions.id,
-        code: questionCategories.code,
+        // TEAM_013: category codes are often missing in `question_categories.code`; fall back to `questions.question_type` and normalize case
+        code: subjectSelect,
         subcategoryId: questions.subcategoryId,
       })
       .from(questions)
@@ -832,7 +854,8 @@ app.post('/exam/:examId/submit', async (c) => {
     const metaById = new Map<number, { code: string; subcategoryId: number | null }>();
     for (const r of questionMetaRows as any[]) {
       metaById.set(Number(r.id), {
-        code: String(r.code || ''),
+        // TEAM_013: ensure downstream comparisons use `TWK|TIU|TKP`
+        code: String(r.code || '').toUpperCase(),
         subcategoryId: r.subcategoryId == null ? null : Number(r.subcategoryId),
       });
     }
@@ -875,13 +898,21 @@ app.post('/exam/:examId/submit', async (c) => {
 
     for (const qid of ids) {
       const meta = metaById.get(qid);
-      const code = String(meta?.code || '');
+      // TEAM_013: avoid all-zero scoring when question category metadata is missing
+      const rawCode = String(meta?.code || '').toUpperCase();
       const subcategoryId = meta?.subcategoryId ?? null;
 
       const selected = (answers[String(qid)] ?? '').toLowerCase();
       if (!selected) continue;
 
       const opts = optionsByQuestion[String(qid)] ?? [];
+
+      const hasWeights = opts.some((o) => {
+        const w = Number(o.weight);
+        return Number.isFinite(w) && w > 0;
+      });
+      const hasExplicitCorrect = opts.some((o) => !!o.isCorrect);
+      const code = rawCode === 'TWK' || rawCode === 'TIU' || rawCode === 'TKP' ? rawCode : hasWeights && !hasExplicitCorrect ? 'TKP' : 'TIU';
 
       if (code === 'TKP') {
         const found = opts.find((o) => o.key === selected);
@@ -905,13 +936,17 @@ app.post('/exam/:examId/submit', async (c) => {
         continue;
       }
 
-      const isCorrect = !!opts.find((o) => o.key === selected && o.isCorrect);
+      // TEAM_013: some datasets don't populate `is_correct`; fall back to max weight option as the correct key
+      const correctKey = resolveCorrectOptionKey(opts);
+      const isCorrect = !!correctKey && selected === correctKey;
       if (isCorrect) {
         if (code === 'TWK') {
-          twk += 5;
+          // TEAM_013: score as correct-count (1 point per correct) for TWK/TIU
+          twk += 1;
           twkCorrect += 1;
         } else if (code === 'TIU') {
-          tiu += 5;
+          // TEAM_013: score as correct-count (1 point per correct) for TWK/TIU
+          tiu += 1;
           tiuCorrect += 1;
         }
       }
@@ -927,7 +962,8 @@ app.post('/exam/:examId/submit', async (c) => {
     }
 
     const total = twk + tiu + tkp;
-    const passed = twk >= 65 && tiu >= 80 && tkp >= 166;
+    // TEAM_013: passing grade thresholds for TWK/TIU are scaled down from point-based scoring (65/80) to correct-count scoring (13/16)
+    const passed = twk >= 13 && tiu >= 16 && tkp >= 166;
 
     // TEAM_009: persist tryout attempt + per-question items (best-effort; do not fail submission if persistence fails)
     const user = c.get('user');

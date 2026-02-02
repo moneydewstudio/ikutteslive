@@ -1,0 +1,57 @@
+/* TEAM_010: Blog global styles mirrored from root */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #FDF8F3;
+  color: #111111;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FDF8F3;
+  border-left: 1px solid #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #000;
+  border: 2px solid #FDF8F3;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+
+@layer utilities {
+  .border-b-1 { border-bottom-width: 1px; }
+  .border-r-1 { border-right-width: 1px; }
+  .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+  .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
+  .animate-scale-in { animation: scaleIn 0.3s ease-out; }
+  .animate-slide-in-right { animation: slideInRight 0.3s ease-out; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}

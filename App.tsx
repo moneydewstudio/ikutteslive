@@ -13,6 +13,7 @@ import TryoutView from './components/TryoutView';
 import DrillsView from './components/DrillsView';
 import InterstitialAd from './components/InterstitialAd';
 import Button from './components/Button';
+import { syncAuth } from './services/backend';
 
 // TEAM_001: switch Latihan session creation to API-backed questions (Neon via Worker)
 
@@ -23,6 +24,8 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  // TEAM_012: prevent duplicate Google popup attempts on localhost
+  const [isSignupLoading, setIsSignupLoading] = useState(false);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
 
   // AUTH LISTENER
@@ -40,6 +43,23 @@ const App: React.FC = () => {
           isPro: false,
           streak: 0 // Will be fetched from backend in later steps
         });
+
+        // TEAM_012: sync auth state to backend (Neon) and hydrate premium flag
+        if (!authUser.isAnonymous) {
+          try {
+            const synced = await syncAuth();
+            const nextIsPro = !!synced?.is_premium;
+            setUser((prev) => {
+              if (!prev) return prev;
+              if (prev.id !== authUser.uid) return prev;
+              if (prev.isPro === nextIsPro) return prev;
+              return { ...prev, isPro: nextIsPro };
+            });
+          } catch (e) {
+            console.warn('TEAM_012 /auth/sync failed; premium status will default to free', e);
+          }
+        }
+
         setIsAuthLoading(false);
       } else {
         // No user found. Attempt Anonymous Sign-in.
@@ -161,6 +181,8 @@ const App: React.FC = () => {
   };
 
   const handleSignupConfirm = async () => {
+    if (isSignupLoading) return;
+    setIsSignupLoading(true);
     try {
       await authService.signInWithGoogle();
       setShowSignupModal(false);
@@ -184,6 +206,7 @@ const App: React.FC = () => {
         alert("Gagal masuk: " + (err.message || "Terjadi kesalahan"));
       }
     }
+    setIsSignupLoading(false);
   };
 
   const handleLogout = async () => {
@@ -291,7 +314,8 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
       <Header />
-      <main className="flex-1 flex flex-col w-full">
+      {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
+      <main className="flex-1 flex flex-col w-full min-h-0">
         {renderContent()}
       </main>
       {view !== 'AD_INTERSTITIAL' && (
@@ -300,7 +324,11 @@ const App: React.FC = () => {
         </div>
       )}
       {showSignupModal && (
-        <SignupModal onClose={() => setShowSignupModal(false)} onConfirm={handleSignupConfirm} />
+        <SignupModal
+          onClose={() => setShowSignupModal(false)}
+          onConfirm={handleSignupConfirm}
+          isLoading={isSignupLoading}
+        />
       )}
     </div>
   );

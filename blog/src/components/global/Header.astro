@@ -1,0 +1,19 @@
+---
+// TEAM_010: blog header with hub navigation
+import { HUB_SLUGS } from '../../lib/constants';
+---
+
+<header class="border-b-3 border-black bg-brand-cream">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+    <a href="/" class="font-extrabold tracking-tight">
+      Ikuttes Blog
+    </a>
+    <nav class="flex items-center gap-4 text-sm font-semibold">
+      {HUB_SLUGS.map((hub) => (
+        <a href={`/${hub}`} class="underline-offset-4 hover:underline">
+          {hub.toUpperCase()}
+        </a>
+      ))}
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,64 @@
+---
+// TEAM_010: base HTML layout with dynamic SEO metadata and schema
+import '../styles/global.css';
+import { buildRobotsContent } from '../lib/utils/seo';
+
+type Props = {
+  title: string;
+  description?: string | null;
+  canonical: string;
+  noindex?: boolean;
+  ogType?: string;
+  schema?: unknown[];
+};
+
+const {
+  title,
+  description = null,
+  canonical,
+  noindex = false,
+  ogType = 'website',
+  schema = [],
+} = Astro.props;
+
+const robots = buildRobotsContent(noindex);
+const ogImage = 'https://blog.ikuttes.online/og-default.svg';
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{title}</title>
+    {description ? <meta name="description" content={description} /> : null}
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={robots} />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    {description ? <meta property="og:description" content={description} /> : null}
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    {description ? <meta name="twitter:description" content={description} /> : null}
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    {schema.map((value) => (
+      <script type="application/ld+json" set:html={JSON.stringify(value)} />
+    ))}
+  </head>
+  <body class="min-h-screen bg-bg text-brand-black">
+    <slot />
+  </body>
+</html>

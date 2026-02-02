@@ -1,0 +1,26 @@
+---
+// TEAM_010: CTA component for funnel to main app
+import { getCtaConfig, type CtaStyle } from '../../lib/utils/cta';
+
+type Props = {
+  style: CtaStyle;
+};
+
+const { style } = Astro.props;
+const cta = getCtaConfig(style);
+const accent = style === 'hard' ? 'bg-brand-lime' : 'bg-brand-pink';
+---
+
+<section class={`border-3 border-black ${accent} shadow-neo p-5`}>
+  <div class="text-xs font-black uppercase tracking-wider">{cta.eyebrow}</div>
+  <h2 class="mt-2 text-lg font-extrabold">{cta.title}</h2>
+  <p class="mt-2 text-sm text-black/80">{cta.description}</p>
+  <div class="mt-4">
+    <a
+      href={cta.href}
+      class="inline-flex items-center justify-center border-3 border-black bg-white px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+    >
+      {cta.buttonLabel}
+    </a>
+  </div>
+</section>
