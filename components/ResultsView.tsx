@@ -108,7 +108,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
                          {idx + 1}
                       </span>
                       <div>
-                          <p className={`font-bold text-lg ${isCorrect ? 'text-black' : 'text-red-500'}`}>
+                          <p className={`font-bold text-base md:text-lg ${isCorrect ? 'text-black' : 'text-red-500'}`}>
                               {isCorrect ? 'Benar' : 'Salah'}
                           </p>
                           <p className="text-sm text-gray-500 font-medium truncate max-w-[200px] md:max-w-md">
@@ -120,11 +120,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
                   </button>
                   
                   {isOpen && (
-                    <div className="p-6 pt-0 pl-20 max-w-3xl">
+                    <div className="p-6 pt-0 pl-6 md:pl-20 max-w-3xl">
                       <div className="p-6 bg-brand-cream border border-black text-sm space-y-4">
                           <div>
                               <span className="font-black uppercase text-xs block mb-1 text-gray-500">Pertanyaan</span>
-                              <p className="font-bold text-lg">{q.text}</p>
+                              <p className="font-bold text-sm md:text-lg">{q.text}</p>
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

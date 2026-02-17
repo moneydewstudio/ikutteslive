@@ -846,17 +846,21 @@ app.post('/exam/:examId/submit', async (c) => {
         // TEAM_013: category codes are often missing in `question_categories.code`; fall back to `questions.question_type` and normalize case
         code: subjectSelect,
         subcategoryId: questions.subcategoryId,
+        subtopicId: questions.subtopicId,
       })
       .from(questions)
       .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
       .where(inArray(questions.id, ids));
 
-    const metaById = new Map<number, { code: string; subcategoryId: number | null }>();
+    const metaById = new Map<number, { code: string; subcategoryId: number | null; subtopicId: number | null }>();
     for (const r of questionMetaRows as any[]) {
+      const rawSubcategoryId = r.subcategoryId == null ? null : Number(r.subcategoryId);
+      const rawSubtopicId = r.subtopicId == null ? null : Number(r.subtopicId);
       metaById.set(Number(r.id), {
         // TEAM_013: ensure downstream comparisons use `TWK|TIU|TKP`
         code: String(r.code || '').toUpperCase(),
-        subcategoryId: r.subcategoryId == null ? null : Number(r.subcategoryId),
+        subcategoryId: Number.isFinite(rawSubcategoryId) ? rawSubcategoryId : null,
+        subtopicId: Number.isFinite(rawSubtopicId) ? rawSubtopicId : null,
       });
     }
 
@@ -900,7 +904,9 @@ app.post('/exam/:examId/submit', async (c) => {
       const meta = metaById.get(qid);
       // TEAM_013: avoid all-zero scoring when question category metadata is missing
       const rawCode = String(meta?.code || '').toUpperCase();
-      const subcategoryId = meta?.subcategoryId ?? null;
+      // TEAM_014: fall back to questions.subtopic_id so radar analytics uses question_subcategories consistently
+      const subcategoryId = meta?.subcategoryId ?? meta?.subtopicId ?? null;
+      // TODO(TEAM_014): manually verify tryout submission populates radar data after deploying
 
       const selected = (answers[String(qid)] ?? '').toLowerCase();
       if (!selected) continue;

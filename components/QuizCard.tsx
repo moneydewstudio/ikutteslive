@@ -20,24 +20,26 @@ const QuizCard: React.FC<QuizCardProps> = ({
 }) => {
   return (
     // TEAM_011: restore split scrolling and set a 35/65 desktop ratio so answers have more space
+    // TEAM_014: prevent mobile answer overlap by bounding question height and letting answers scroll
+    // TODO(TEAM_014): verify on mobile that answers no longer overlap question content
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden pb-24 md:pb-0">
       
       {/* Left: Question Content */}
-      <div className="md:w-[35%] p-4 md:p-6 flex flex-col justify-center bg-brand-cream border-b md:border-b-0 md:border-r border-black overflow-y-auto min-h-0">
+      <div className="md:w-[35%] p-4 md:p-6 flex flex-none md:flex-initial flex-col justify-start md:justify-center bg-brand-cream border-b md:border-b-0 md:border-r border-black overflow-y-auto max-h-[35vh] md:max-h-none min-h-0">
          <div className="mb-4 md:mb-6">
             {!hideSubjectLabel && (
               <span className="inline-block px-3 py-1 border border-black bg-white text-xs font-black uppercase tracking-widest mb-4">
                   {question.subject}
               </span>
             )}
-            <p className="text-base md:text-lg font-bold leading-snug">
+            <p className="text-sm md:text-lg font-bold leading-snug">
                 {question.text}
             </p>
          </div>
       </div>
 
       {/* Right: Options */}
-      <div className="md:w-[65%] bg-white flex flex-col justify-center p-4 md:p-6 overflow-y-auto min-h-0">
+      <div className="md:w-[65%] bg-white flex flex-1 md:flex-none flex-col justify-start p-4 md:p-6 overflow-y-auto min-h-0">
          <div className="grid grid-cols-1 gap-2 md:gap-3 max-w-none mx-auto w-full">
             {question.options.map((option) => {
                 const isSelected = selectedOptionId === option.id;
