@@ -8,6 +8,7 @@
     "node_modules",
     "api",
     "tests",
+    "blog",
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "**/*.test.ts",
