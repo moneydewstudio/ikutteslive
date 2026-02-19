@@ -53,7 +53,8 @@ const recent = hubRecord
   : [];
 
 const items = recent.map((row) => ({
-  href: `/${row.hub}/${row.slug}`,
+  // TEAM_015: blog is served under /blog
+  href: `/blog/${row.hub}/${row.slug}`,
   title: row.title,
   updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString().slice(0, 10) : null,
 }));

@@ -228,7 +228,7 @@ const App: React.FC = () => {
     <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
       <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
         <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 bg-brand-lime rounded-full"></div>
+          <div className="w-4 h-4 bg-brand-lime rounded-full"></div>
         </div>
         <span className="font-black text-xl tracking-tight">Ikuttes</span>
       </div>
@@ -241,17 +241,19 @@ const App: React.FC = () => {
         <button onClick={() => setView('BONUS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' ? 'text-black' : 'text-gray-400'}`}>Bonus</button>
         <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
         <button onClick={() => setView('PROFILE')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Statistik</button>
+        {/* TEAM_015: link to Astro blog served under /blog */}
+        <a href="/blog" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
       </nav>
 
       <div>
         {user && !user.name?.includes('Tamu') ? (
-           <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
-              Profil Saya
-           </Button>
+          <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
+            Profil Saya
+          </Button>
         ) : (
-           <Button variant="black" size="sm" onClick={() => setShowSignupModal(true)} isLoading={isAuthLoading}>
-              Masuk
-           </Button>
+          <Button variant="black" size="sm" onClick={() => setShowSignupModal(true)} isLoading={isAuthLoading}>
+            Masuk
+          </Button>
         )}
       </div>
     </header>

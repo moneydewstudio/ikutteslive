@@ -5,7 +5,7 @@ import { getDb } from '../../lib/db/client';
 import { getProgrammaticPagesForSitemap, getProgrammaticPageCount } from '../../lib/db/queries';
 import { getRuntimeEnv } from '../../lib/utils/runtime';
 import { buildSitemapXml } from '../../lib/utils/sitemap';
-import { BLOG_SITE_URL } from '../../lib/constants';
+import { BLOG_BASE_PATH, BLOG_SITE_URL } from '../../lib/constants';
 import { SITEMAP_CACHE_CONTROL, setCacheControl } from '../../lib/utils/cache';
 
 const MAX_URLS_PER_SITEMAP = 50000;
@@ -30,7 +30,8 @@ export const GET: APIRoute = async (context) => {
   const rows = await getProgrammaticPagesForSitemap(db, offset, MAX_URLS_PER_SITEMAP);
 
   const entries = rows.map((row) => ({
-    loc: `${BLOG_SITE_URL}/${row.hub}/${row.slug}`,
+    // TEAM_015: blog is served under /blog
+    loc: `${BLOG_SITE_URL}${BLOG_BASE_PATH}/${row.hub}/${row.slug}`,
     lastmod: row.updatedAt ? row.updatedAt.toISOString() : undefined,
   }));
 

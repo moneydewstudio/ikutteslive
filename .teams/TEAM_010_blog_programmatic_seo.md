@@ -1,7 +1,7 @@
 # TEAM_010 — Blog SSR programmatic SEO (Astro)
 
 ## Summary
-Implement the Astro SSR blog at `blog.ikuttes.online` with Neon-backed programmatic SEO pages, dynamic metadata, schema, caching, and hub/article routing per locked requirements.
+Implement the Astro SSR blog at `blog.ikuttes.my.id` with Neon-backed programmatic SEO pages, dynamic metadata, schema, caching, and hub/article routing per locked requirements.
 
 ## Context (SSOT)
 - Project execution checklist: `checklist.md`
@@ -31,7 +31,7 @@ Implement the Astro SSR blog at `blog.ikuttes.online` with Neon-backed programma
   - `/:hub/:slug`
   - `404` catch-all
 - TEAM_010: Implemented SEO foundations:
-  - Dynamic `title`, `description`, `canonical` (always `blog.ikuttes.online`), `robots`, OG/Twitter.
+  - Dynamic `title`, `description`, `canonical` (always `blog.ikuttes.my.id`), `robots`, OG/Twitter.
   - JSON-LD schemas: `WebSite`, `Organization`, `BreadcrumbList`, plus page-type schemas.
 - TEAM_010: Implemented dynamic sitemap endpoints:
   - `/sitemap.xml` (sitemap index)

@@ -22,7 +22,9 @@ const {
 } = Astro.props;
 
 const robots = buildRobotsContent(noindex);
-const ogImage = 'https://blog.ikuttes.online/og-default.svg';
+// TEAM_015: blog is served under the main domain path (/blog)
+const ogImage = 'https://ikuttes.my.id/blog/og-default.svg';
+
 ---
 
 <!doctype html>

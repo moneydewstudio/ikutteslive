@@ -1,6 +1,7 @@
 // TEAM_010: SEO utilities for metadata, canonicals, and schema
 
 import type { FaqItem } from '../blogContent';
+import { BLOG_BASE_PATH, BLOG_SITE_URL } from '../constants';
 
 export type BreadcrumbItem = {
   name: string;
@@ -15,12 +16,18 @@ export type SeoConfig = {
   ogType?: string;
 };
 
-const SITE_URL = 'https://blog.ikuttes.online';
+// TEAM_015: blog is served under the main domain path (/blog)
+const SITE_URL = BLOG_SITE_URL;
 
 const normalizePath = (path: string) => (path.startsWith('/') ? path : `/${path}`);
 
+const withBasePath = (path: string) => {
+  if (path === '/') return BLOG_BASE_PATH;
+  return `${BLOG_BASE_PATH}${normalizePath(path)}`;
+};
+
 export const buildCanonicalUrl = (path: string): string => {
-  return new URL(normalizePath(path), SITE_URL).toString();
+  return new URL(withBasePath(path), SITE_URL).toString();
 };
 
 export const shouldNoIndex = (wordCount: number, description?: string | null): boolean => {

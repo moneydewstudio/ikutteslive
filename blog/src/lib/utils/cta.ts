@@ -11,7 +11,7 @@ export type CtaConfig = {
   href: string;
 };
 
-const CTA_LINK = 'https://ikuttes.online/';
+const CTA_LINK = 'https://ikuttes.my.id/';
 
 export const getCtaConfig = (style: CtaStyle): CtaConfig => {
   if (style === 'hard') {
