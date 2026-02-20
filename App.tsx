@@ -242,7 +242,7 @@ const App: React.FC = () => {
         <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
         <button onClick={() => setView('PROFILE')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Statistik</button>
         {/* TEAM_015: link to Astro blog served under /blog */}
-        <a href="/blog" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
+        <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
       </nav>
 
       <div>

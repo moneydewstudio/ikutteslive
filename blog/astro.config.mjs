@@ -6,7 +6,7 @@ import tailwind from '@astrojs/tailwind';
 export default defineConfig({
   // TEAM_015: serve the blog under the main domain path (/blog) instead of a separate subdomain
   site: 'https://ikuttes.my.id',
-  base: '/blog',
+  base: '/blog/',
   output: 'server',
   adapter: cloudflare(),
   integrations: [
