@@ -57,6 +57,16 @@ export const getProgrammaticPage = async (
   return normalizePage(rows[0]);
 };
 
+export const getProgrammaticPageBySlug = async (
+  db: BlogDb,
+  slug: string,
+): Promise<ProgrammaticPageRecord | null> => {
+  // TEAM_017: flat blog route (/blog/:slug) fetches page by globally-unique slug
+  const rows = await db.select().from(programmaticPages).where(eq(programmaticPages.slug, slug)).limit(1);
+  if (!rows.length) return null;
+  return normalizePage(rows[0]);
+};
+
 export const getRecentProgrammaticPagesForHub = async (
   db: BlogDb,
   hub: string,
@@ -71,6 +81,59 @@ export const getRecentProgrammaticPagesForHub = async (
     })
     .from(programmaticPages)
     .where(eq(programmaticPages.hub, hub))
+    .orderBy(desc(programmaticPages.updatedAt))
+    .limit(limit);
+
+  return rows.map((row) => ({
+    hub: row.hub,
+    slug: row.slug,
+    title: row.title,
+    updatedAt: row.updatedAt ?? null,
+  }));
+};
+
+export const getRelatedProgrammaticPagesForHub = async (
+  db: BlogDb,
+  hub: string,
+  excludeSlug: string,
+  limit: number,
+): Promise<Array<Pick<ProgrammaticPageRecord, 'hub' | 'slug' | 'title' | 'updatedAt'>>> => {
+  // TEAM_017: internal linking — related pages in the same hub
+  const rows = await db
+    .select({
+      hub: programmaticPages.hub,
+      slug: programmaticPages.slug,
+      title: programmaticPages.title,
+      updatedAt: programmaticPages.updatedAt,
+    })
+    .from(programmaticPages)
+    .where(and(eq(programmaticPages.hub, hub), sql`${programmaticPages.slug} <> ${excludeSlug}`))
+    .orderBy(desc(programmaticPages.updatedAt))
+    .limit(limit);
+
+  return rows.map((row) => ({
+    hub: row.hub,
+    slug: row.slug,
+    title: row.title,
+    updatedAt: row.updatedAt ?? null,
+  }));
+};
+
+export const getRecentProgrammaticPages = async (
+  db: BlogDb,
+  excludeId: string,
+  limit: number,
+): Promise<Array<Pick<ProgrammaticPageRecord, 'hub' | 'slug' | 'title' | 'updatedAt'>>> => {
+  // TEAM_017: internal linking — cross-hub recent pages
+  const rows = await db
+    .select({
+      hub: programmaticPages.hub,
+      slug: programmaticPages.slug,
+      title: programmaticPages.title,
+      updatedAt: programmaticPages.updatedAt,
+    })
+    .from(programmaticPages)
+    .where(sql`${programmaticPages.id} <> ${excludeId}`)
     .orderBy(desc(programmaticPages.updatedAt))
     .limit(limit);
 

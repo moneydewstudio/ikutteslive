@@ -31,8 +31,11 @@ export const buildCanonicalUrl = (path: string): string => {
 };
 
 export const shouldNoIndex = (wordCount: number, description?: string | null): boolean => {
-  if (!description) return true;
-  return wordCount < 200;
+  // TEAM_017: stronger programmatic SEO guardrails to reduce thin-content indexing risk
+  const normalizedDescription = (description ?? '').trim();
+  if (!normalizedDescription) return true;
+  if (normalizedDescription.length < 80) return true;
+  return wordCount < 300;
 };
 
 export const buildRobotsContent = (noindex?: boolean): string => {

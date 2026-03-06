@@ -30,8 +30,8 @@ export const GET: APIRoute = async (context) => {
   const rows = await getProgrammaticPagesForSitemap(db, offset, MAX_URLS_PER_SITEMAP);
 
   const entries = rows.map((row) => ({
-    // TEAM_015: blog is served under /blog
-    loc: `${BLOG_SITE_URL}${BLOG_BASE_PATH}/${row.hub}/${row.slug}`,
+    // TEAM_017: flat posts are served at /blog/:slug
+    loc: `${BLOG_SITE_URL}${BLOG_BASE_PATH}/${row.slug}`,
     lastmod: row.updatedAt ? row.updatedAt.toISOString() : undefined,
   }));
 

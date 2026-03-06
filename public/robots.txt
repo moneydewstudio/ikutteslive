@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /auth/
+
+Sitemap: https://ikuttes.my.id/sitemap.xml
+Sitemap: https://ikuttes.my.id/blog/sitemap.xml

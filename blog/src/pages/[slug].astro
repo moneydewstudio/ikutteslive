@@ -1,0 +1,221 @@
+---
+// TEAM_017: programmatic page (flat route /:slug)
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+import Shell from '../components/global/Shell.astro';
+import ContentBlocks from '../components/article/ContentBlocks.astro';
+import RelatedLinks from '../components/article/RelatedLinks.astro';
+import CtaCard from '../components/global/CtaCard.astro';
+import HubLinks from '../components/hub/HubLinks.astro';
+
+import { getRuntimeEnv } from '../lib/utils/runtime';
+import { getDb } from '../lib/db/client';
+import {
+  getProgrammaticPageBySlug,
+  getRecentProgrammaticPages,
+  getRelatedProgrammaticPagesForHub,
+  getHubBySlug,
+  getRecentProgrammaticPagesForHub,
+} from '../lib/db/queries';
+
+import {
+  buildArticleSchema,
+  buildBreadcrumbSchema,
+  buildCollectionPageSchema,
+  buildFaqSchema,
+  buildOrganizationSchema,
+  buildSiteSchema,
+  buildWebPageSchema,
+  normalizeSeoConfig,
+  shouldNoIndex,
+} from '../lib/utils/seo';
+
+import { extractFaqPairs, getBlocksWordCount, injectCtaBlock } from '../lib/blogContent';
+import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL } from '../lib/utils/cache';
+import { HUB_SLUGS } from '../lib/constants';
+
+setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
+
+const slug = Astro.params.slug;
+
+if (!slug) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not found';
+}
+
+const env = getRuntimeEnv(Astro.locals);
+const db = getDb(env);
+const isHub = Boolean(slug && HUB_SLUGS.includes(slug as (typeof HUB_SLUGS)[number]));
+const hubRecord = isHub && slug ? await getHubBySlug(db, slug) : null;
+const page = !isHub && slug ? await getProgrammaticPageBySlug(db, slug) : null;
+
+if (isHub && !hubRecord) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not found';
+}
+
+if (!isHub && !page) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not found';
+}
+
+const canonicalPath = isHub
+  ? `/${hubRecord?.slug ?? slug ?? ''}`
+  : page
+    ? `/${page.slug}`
+    : Astro.url.pathname;
+
+const blocks = page ? injectCtaBlock(page.contentBlocks, page.intent) : [];
+const wordCount = getBlocksWordCount(blocks);
+
+const seo = isHub
+  ? normalizeSeoConfig({
+      title: hubRecord?.title ?? 'Hub',
+      description: hubRecord?.metaDescription ?? null,
+      canonicalPath,
+      noindex: false,
+      ogType: 'website',
+    })
+  : page
+    ? normalizeSeoConfig({
+        title: page.title,
+        description: page.metaDescription,
+        canonicalPath,
+        noindex: shouldNoIndex(wordCount, page.metaDescription),
+        ogType: 'article',
+      })
+    : normalizeSeoConfig({
+        title: 'Artikel',
+        description: null,
+        canonicalPath,
+        noindex: true,
+        ogType: 'article',
+      });
+
+const faqs = extractFaqPairs(blocks);
+
+const schema = isHub
+  ? [
+      buildSiteSchema(),
+      buildOrganizationSchema(),
+      buildBreadcrumbSchema([
+        { name: 'Ikuttes Blog', path: '/' },
+        { name: (hubRecord?.slug ?? slug ?? '').toUpperCase(), path: canonicalPath },
+      ]),
+      buildCollectionPageSchema({
+        title: seo.title,
+        description: seo.description ?? null,
+        path: canonicalPath,
+      }),
+    ].filter(Boolean)
+  : [
+      buildSiteSchema(),
+      buildOrganizationSchema(),
+      buildBreadcrumbSchema([
+        { name: 'Ikuttes Blog', path: '/' },
+        { name: (page?.hub ?? '').toUpperCase(), path: `/${page?.hub ?? ''}` },
+        { name: page?.h1 ?? slug ?? '', path: canonicalPath },
+      ]),
+      buildWebPageSchema({ title: seo.title, description: seo.description ?? null, path: canonicalPath }),
+      buildArticleSchema({
+        title: seo.title,
+        description: seo.description ?? null,
+        path: canonicalPath,
+        updatedAt: page?.updatedAt ?? null,
+      }),
+    ].filter(Boolean);
+
+const faqSchema = !isHub ? buildFaqSchema(faqs) : null;
+if (faqSchema) schema.push(faqSchema);
+
+const relatedSameHubRows = page
+  ? await getRelatedProgrammaticPagesForHub(db, page.hub, page.slug, 6)
+  : [];
+
+const relatedSameHub = relatedSameHubRows.map((row) => ({
+  href: `/blog/${row.slug}`,
+  title: row.title,
+  updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString().slice(0, 10) : null,
+}));
+
+const alsoReadRows = page ? await getRecentProgrammaticPages(db, page.id, 6) : [];
+const alsoRead = alsoReadRows
+  .filter((row) => row.hub !== page?.hub)
+  .slice(0, 4)
+  .map((row) => ({
+    href: `/blog/${row.slug}`,
+    title: row.title,
+    updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString().slice(0, 10) : null,
+  }));
+
+const hubItemsRows = hubRecord ? await getRecentProgrammaticPagesForHub(db, hubRecord.slug, 12) : [];
+const hubItems = hubItemsRows.map((row) => ({
+  href: `/blog/${row.slug}`,
+  title: row.title,
+  updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString().slice(0, 10) : null,
+}));
+---
+
+{isHub ? (
+  <ArticleLayout
+    title={seo.title}
+    description={seo.description ?? null}
+    canonical={seo.canonical}
+    noindex={seo.noindex}
+    schema={schema}
+  >
+    <Shell>
+      <div class="grid gap-8">
+        <section class="border-3 border-black bg-white p-6 shadow-neo">
+          <h1 class="text-2xl font-extrabold">{seo.title}</h1>
+          {seo.description ? <p class="mt-3 text-sm text-black/80">{seo.description}</p> : null}
+        </section>
+
+        <CtaCard style="hard" />
+
+        <section>
+          <h2 class="text-lg font-extrabold">Artikel terbaru</h2>
+          <p class="mt-2 text-sm text-black/70">Pilih materi lalu langsung latihan di Daily Quiz.</p>
+          <div class="mt-5">
+            <HubLinks items={hubItems} />
+          </div>
+        </section>
+      </div>
+    </Shell>
+  </ArticleLayout>
+) : (
+  <ArticleLayout
+    title={seo.title}
+    description={seo.description ?? null}
+    canonical={seo.canonical}
+    noindex={seo.noindex}
+    schema={schema}
+  >
+    <Shell>
+      <article class="grid gap-6">
+        <header class="border-3 border-black bg-white p-6 shadow-neo">
+          <div class="text-xs font-black uppercase tracking-wider">{(page?.hub ?? '').toUpperCase()}</div>
+          <h1 class="mt-2 text-2xl font-extrabold">{page?.h1 ?? seo.title}</h1>
+          {seo.description ? <p class="mt-3 text-sm text-black/80">{seo.description}</p> : null}
+        </header>
+
+        <ContentBlocks blocks={blocks} />
+
+        <RelatedLinks title="Artikel terkait" items={relatedSameHub} />
+        <RelatedLinks title="Baca juga" items={alsoRead} />
+
+        <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
+          <h2 class="text-lg font-extrabold">Lanjutkan latihan</h2>
+          <p class="mt-2 text-sm text-black/80">Jangan berhenti di teori. Latihan singkat setiap hari lebih efektif.</p>
+          <div class="mt-4">
+            <a
+              class="inline-flex items-center justify-center border-3 border-black bg-brand-lime px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+              href="https://ikuttes.my.id/"
+            >
+              Mulai Daily Quiz
+            </a>
+          </div>
+        </section>
+      </article>
+    </Shell>
+  </ArticleLayout>
+)}

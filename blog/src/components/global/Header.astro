@@ -1,19 +1,78 @@
 ---
 // TEAM_010: blog header with hub navigation
-import { HUB_SLUGS } from '../../lib/constants';
+// TEAM_016: align blog header with SPA header styling + nav, and hide on scroll down
 ---
 
-<header class="border-b-3 border-black bg-brand-cream">
-  <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-    <a href="/blog/" class="font-extrabold tracking-tight">
-      Ikuttes Blog
+<header
+  id="site-header"
+  class="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full transition-transform duration-300"
+>
+  <div class="flex items-center gap-2 cursor-pointer">
+    <a href="/" class="flex items-center gap-2">
+      <div class="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+        <div class="w-4 h-4 bg-brand-lime rounded-full"></div>
+      </div>
+      <span class="font-black text-xl tracking-tight">Ikuttes</span>
     </a>
-    <nav class="flex items-center gap-4 text-sm font-semibold">
-      {HUB_SLUGS.map((hub) => (
-        <a href={`/blog/${hub}`} class="underline-offset-4 hover:underline">
-          {hub.toUpperCase()}
-        </a>
-      ))}
-    </nav>
+  </div>
+
+  <nav
+    class="flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide overflow-x-auto whitespace-nowrap max-w-[60vw] md:max-w-none"
+    aria-label="Main navigation"
+  >
+    <a href="/?view=QUIZ" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Latihan</a>
+    <a href="/?view=DRILLS" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Drill</a>
+    <a href="/?view=BONUS" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Bonus</a>
+    <a href="/?view=TRYOUT" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Tryout</a>
+    <a href="/?view=PROFILE" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Statistik</a>
+    <a href="/blog/" class="px-2 py-1 hover:text-gray-600 transition-colors text-black">Blog</a>
+  </nav>
+
+  <div>
+    <a
+      href="/"
+      class="inline-flex items-center justify-center font-bold transition-all duration-200 focus:outline-none disabled:opacity-70 disabled:pointer-events-none active:scale-[0.98] bg-brand-black text-white hover:bg-gray-800 border border-transparent px-4 py-2 text-sm"
+    >
+      Masuk
+    </a>
   </div>
 </header>
+
+<script is:inline>
+  // TEAM_016: hide the header when scrolling down, show when scrolling up
+  (() => {
+    const header = document.getElementById('site-header');
+    if (!header) return;
+
+    let lastScrollY = window.scrollY;
+    let isHidden = false;
+
+    const setHidden = (nextHidden) => {
+      if (nextHidden === isHidden) return;
+      isHidden = nextHidden;
+      header.classList.toggle('-translate-y-full', isHidden);
+    };
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastScrollY;
+      const goingDown = delta > 0;
+
+      if (y < 24) {
+        setHidden(false);
+        lastScrollY = y;
+        return;
+      }
+
+      if (goingDown && delta > 4) {
+        setHidden(true);
+      } else if (!goingDown && delta < -4) {
+        setHidden(false);
+      }
+
+      lastScrollY = y;
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+</script>

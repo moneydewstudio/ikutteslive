@@ -1,0 +1,10 @@
+# Ikuttes — LLM access
+site: https://ikuttes.my.id
+
+# Primary Content
+allow: /blog/
+allow: /tryout/
+
+# Entry points
+sitemap: https://ikuttes.my.id/sitemap.xml
+robots: https://ikuttes.my.id/robots.txt

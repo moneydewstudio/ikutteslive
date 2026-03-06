@@ -28,6 +28,25 @@ const App: React.FC = () => {
   const [isSignupLoading, setIsSignupLoading] = useState(false);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
 
+  // TEAM_016: allow deep-linking into SPA sections via URL param (e.g. /?view=DRILLS)
+  useEffect(() => {
+    const applyViewFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('view');
+      if (!raw) return;
+
+      const next = raw.toUpperCase() as ViewState;
+      const allowed: ViewState[] = ['QUIZ', 'DRILLS', 'BONUS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL'];
+      if (!allowed.includes(next)) return;
+
+      setView(next);
+    };
+
+    applyViewFromUrl();
+    window.addEventListener('popstate', applyViewFromUrl);
+    return () => window.removeEventListener('popstate', applyViewFromUrl);
+  }, []);
+
   // AUTH LISTENER
   useEffect(() => {
     let isMounting = true;
