@@ -30,16 +30,15 @@ import {
 } from '../lib/utils/seo';
 
 import { extractFaqPairs, getBlocksWordCount, injectCtaBlock } from '../lib/blogContent';
-import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL } from '../lib/utils/cache';
+import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL, NOT_FOUND_CACHE_CONTROL } from '../lib/utils/cache';
 import { HUB_SLUGS } from '../lib/constants';
-
-setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
 
 const slug = Astro.params.slug;
 
 if (!slug) {
   Astro.response.status = 404;
   Astro.response.statusText = 'Not found';
+  setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
 }
 
 const env = getRuntimeEnv(Astro.locals);
@@ -51,11 +50,18 @@ const page = !isHub && slug ? await getProgrammaticPageBySlug(db, slug) : null;
 if (isHub && !hubRecord) {
   Astro.response.status = 404;
   Astro.response.statusText = 'Not found';
+  setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
 }
 
 if (!isHub && !page) {
   Astro.response.status = 404;
   Astro.response.statusText = 'Not found';
+  setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
+}
+
+// Set normal caching only for successful responses
+if ((isHub && hubRecord) || (!isHub && page)) {
+  setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
 }
 
 const canonicalPath = isHub

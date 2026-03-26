@@ -1,29 +1,98 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BonusCard, { Pack } from './BonusCard';
+import { User } from '../types';
+import * as QuizService from '../services/quizService';
 
-const BonusView: React.FC = () => {
-  const packs: Pack[] = [
-      { id: 1, title: 'Penguasaan Logika', subject: 'TIU', questions: 20, difficulty: 'Sulit', price: 'Gratis', color: 'bg-brand-pink' },
-      { id: 2, title: 'Wawasan Kebangsaan V1', subject: 'TWK', questions: 15, difficulty: 'Sedang', price: 'Terkunci', color: 'bg-white' },
-      { id: 3, title: 'Kepribadian Plus', subject: 'TKP', questions: 25, difficulty: 'Mudah', price: 'Terkunci', color: 'bg-white' },
-      { id: 4, title: 'Simulasi Ujian', subject: 'ALL', questions: 100, difficulty: 'Campuran', price: 'Terkunci', color: 'bg-white' },
-      { id: 5, title: 'Kecepatan Matematika', subject: 'TIU', questions: 10, difficulty: 'Sulit', price: 'Terkunci', color: 'bg-white' },
-      { id: 6, title: 'Ahli Sejarah', subject: 'TWK', questions: 20, difficulty: 'Sedang', price: 'Terkunci', color: 'bg-white' },
-  ];
+type DrillCategory = 'TIU' | 'TWK' | 'TKP';
+
+interface BonusViewProps {
+  user: User | null;
+  onStartDrill: (category: DrillCategory) => void;
+}
+
+// TEAM_018: repurpose Bonus page into Drills entry (3 cards with free/premium gating)
+const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
+  const [todayCategory, setTodayCategory] = useState<DrillCategory | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      setIsLoading(true);
+      try {
+        const daily = await QuizService.fetchDailyDrillsFromApi();
+        if (!cancelled) setTodayCategory(daily.category);
+      } catch (e) {
+        console.error('TEAM_018 failed to load daily drill category', e);
+        if (!cancelled) setTodayCategory(null);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const isPremium = !!user?.isPro;
+
+  const isUnlocked = useCallback(
+    (category: DrillCategory) => {
+      if (isPremium) return true;
+      if (!todayCategory) return false;
+      return category === todayCategory;
+    },
+    [isPremium, todayCategory]
+  );
+
+  const packs: Pack[] = useMemo(() => {
+    const make = (id: number, category: DrillCategory, title: string, color: string): Pack => ({
+      id,
+      title,
+      subject: category,
+      questions: 10,
+      difficulty: 'Harian',
+      price: isUnlocked(category) ? 'Gratis' : 'Terkunci',
+      color: isUnlocked(category) ? color : 'bg-white',
+    });
+
+    return [
+      make(1, 'TIU', 'Drill TIU', 'bg-brand-pink'),
+      make(2, 'TWK', 'Drill TWK', 'bg-brand-cream'),
+      make(3, 'TKP', 'Drill TKP', 'bg-brand-lime'),
+    ];
+  }, [isUnlocked]);
 
   return (
     <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
       
       {/* Header */}
       <div className="p-8 border-b border-black bg-brand-cream">
-         <h1 className="text-5xl font-black uppercase tracking-tight mb-4">Toko Bonus</h1>
-         <p className="text-lg max-w-xl">Buka paket soal khusus untuk target kelemahan Anda. Kumpulkan semuanya untuk memaksimalkan kesiapan Anda.</p>
+         <h1 className="text-5xl font-black uppercase tracking-tight mb-4">Drills</h1>
+         <p className="text-lg max-w-xl">Latihan fokus per kategori. Untuk akun Gratis, hanya 1 drill terbuka per hari.</p>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {isLoading && (
+            <div className="p-6 border-b border-black md:border-r bg-white flex items-center justify-center h-64">
+              <span className="font-medium text-sm text-gray-500">Memuat drills...</span>
+            </div>
+          )}
           {packs.map((pack) => (
-              <BonusCard key={pack.id} pack={pack} />
+              <BonusCard
+                key={pack.id}
+                pack={pack}
+                onClick={() => {
+                  const category = pack.subject as DrillCategory;
+                  if (!isUnlocked(category)) {
+                    alert('Gunakan akun Premium untuk buka semua drills');
+                    return;
+                  }
+                  onStartDrill(category);
+                }}
+              />
           ))}
       </div>
     </div>

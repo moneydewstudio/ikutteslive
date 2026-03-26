@@ -4,12 +4,15 @@ import ResultsView from './ResultsView';
 import { UserSession } from '../types';
 import * as QuizService from '../services/quizService';
 
+type DrillCategory = 'TIU' | 'TWK' | 'TKP';
+
 interface DrillsViewProps {
   onSignupClick: () => void;
+  category?: DrillCategory;
 }
 
 // TEAM_005: daily drills view (10 questions, single-category rotation, global per Jakarta day)
-const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick }) => {
+const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category }) => {
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +20,10 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick }) => {
   const startDrills = useCallback(async () => {
     setIsLoading(true);
     try {
-      const newSession = await QuizService.createDailyDrillSessionFromApi();
+      // TEAM_018: when a category is selected (premium picker), request that category for today's daily drill set
+      const newSession = category
+        ? await QuizService.createDailyDrillSessionFromApiByCategory(category)
+        : await QuizService.createDailyDrillSessionFromApi();
       setSession(newSession);
       setCurrentQuestionIdx(0);
     } catch (e) {
@@ -26,7 +32,7 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [category]);
 
   const refreshSession = useCallback(() => {
     QuizService.clearDrillSession();
@@ -37,16 +43,25 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick }) => {
 
   useEffect(() => {
     const saved = QuizService.loadDrillSession();
-    if (saved) {
-      setSession(saved);
-      const answeredCount = Object.keys(saved.answers).length;
-      if (!saved.completedAt && answeredCount < saved.questionIds.length) {
-        setCurrentQuestionIdx(answeredCount);
-      }
-    } else {
+    if (!saved) {
       void startDrills();
+      return;
     }
-  }, [startDrills]);
+
+    // TEAM_018: resume only if the saved session matches the requested category (or no category requested)
+    const savedCategory = (saved.drillCategory ?? null) as DrillCategory | null;
+    if (category && savedCategory && savedCategory !== category) {
+      QuizService.clearDrillSession();
+      void startDrills();
+      return;
+    }
+
+    setSession(saved);
+    const answeredCount = Object.keys(saved.answers).length;
+    if (!saved.completedAt && answeredCount < saved.questionIds.length) {
+      setCurrentQuestionIdx(answeredCount);
+    }
+  }, [category, startDrills]);
 
   useEffect(() => {
     if (!session?.refreshAt) return;

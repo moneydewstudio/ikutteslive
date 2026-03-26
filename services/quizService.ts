@@ -137,13 +137,19 @@ export const fetchDailyQuizFromApi = async (): Promise<{
   };
 };
 
-export const fetchDailyDrillsFromApi = async (): Promise<{
+export const fetchDailyDrillsFromApi = async (
+  categoryParam?: 'TIU' | 'TWK' | 'TKP'
+): Promise<{
   dayKey: string;
   refreshAt: number;
   category: 'TIU' | 'TWK' | 'TKP';
   questions: Question[];
 }> => {
-  const res = await apiFetch('/drills/daily');
+  const params = new URLSearchParams();
+  if (categoryParam) params.set('category', categoryParam);
+  const qs = params.toString();
+
+  const res = await apiFetch(`/drills/daily${qs ? `?${qs}` : ''}`);
   if (!res.ok) {
     throw new Error('Failed to fetch daily drills');
   }
@@ -192,6 +198,31 @@ export const createDailyDrillSessionFromApi = async (): Promise<UserSession> => 
     dayKey,
     refreshAt,
     drillCategory: category,
+    questionIds: questions.map((q) => q.id),
+    questions,
+    answers: {},
+    score: 0,
+    readiness: 0,
+    percentile: 0,
+  };
+  saveDrillSession(session);
+  return session;
+};
+
+// TEAM_018: allow starting today's drill session for a specific category (premium drill picker)
+export const createDailyDrillSessionFromApiByCategory = async (
+  category: 'TIU' | 'TWK' | 'TKP'
+): Promise<UserSession> => {
+  const { dayKey, refreshAt, category: actualCategory, questions } = await fetchDailyDrillsFromApi(category);
+  if (!questions.length) {
+    throw new Error('Empty daily drills set');
+  }
+
+  const session: UserSession = {
+    id: crypto.randomUUID(),
+    dayKey,
+    refreshAt,
+    drillCategory: actualCategory,
     questionIds: questions.map((q) => q.id),
     questions,
     answers: {},

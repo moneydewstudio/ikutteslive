@@ -17,11 +17,14 @@ import { syncAuth } from './services/backend';
 
 // TEAM_001: switch Latihan session creation to API-backed questions (Neon via Worker)
 
+type DrillCategory = 'TIU' | 'TWK' | 'TKP';
+
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('QUIZ');
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [user, setUser] = useState<User | null>(null);
+  const [selectedDrillCategory, setSelectedDrillCategory] = useState<DrillCategory | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   // TEAM_012: prevent duplicate Google popup attempts on localhost
@@ -36,7 +39,7 @@ const App: React.FC = () => {
       if (!raw) return;
 
       const next = raw.toUpperCase() as ViewState;
-      const allowed: ViewState[] = ['QUIZ', 'DRILLS', 'BONUS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL'];
+      const allowed: ViewState[] = ['QUIZ', 'BONUS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL'];
       if (!allowed.includes(next)) return;
 
       setView(next);
@@ -246,18 +249,14 @@ const App: React.FC = () => {
   const Header = () => (
     <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
       <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
-        <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-          <div className="w-4 h-4 bg-brand-lime rounded-full"></div>
-        </div>
-        <span className="font-black text-xl tracking-tight">Ikuttes</span>
+        <img src="/full logo.png" alt="Ikuttes" className="h-8 w-auto" />
       </div>
 
       {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}
       <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide">
         <button onClick={handleLogoClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Latihan</button>
-        {/* TEAM_005: add daily drills entrypoint */}
-        <button onClick={() => setView('DRILLS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}>Drill</button>
-        <button onClick={() => setView('BONUS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' ? 'text-black' : 'text-gray-400'}`}>Bonus</button>
+        {/* TEAM_018: repurpose BONUS tab into Drills entry; DRILLS view is internal runner */}
+        <button onClick={() => setView('BONUS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' ? 'text-black' : 'text-gray-400'}`}>Drills</button>
         <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
         <button onClick={() => setView('PROFILE')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Statistik</button>
         {/* TEAM_015: link to Astro blog served under /blog */}
@@ -281,9 +280,18 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (view) {
       case 'BONUS':
-        return <BonusView />;
+        return (
+          <BonusView
+            user={user}
+            onStartDrill={(category) => {
+              // TEAM_018: store selected category and navigate into the drill runner
+              setSelectedDrillCategory(category);
+              setView('DRILLS');
+            }}
+          />
+        );
       case 'DRILLS':
-        return <DrillsView onSignupClick={() => setShowSignupModal(true)} />;
+        return <DrillsView onSignupClick={() => setShowSignupModal(true)} category={selectedDrillCategory ?? undefined} />;
       case 'TRYOUT':
         return <TryoutView />;
       case 'PROFILE':

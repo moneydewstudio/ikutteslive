@@ -67,6 +67,9 @@ const getJakartaDayKey = (nowMs: number) => {
 };
 // TEAM_005: use Jakarta-shifted day index for global daily drill category rotation
 const getJakartaDayIndex = (nowMs: number) => Math.floor((nowMs + JAKARTA_OFFSET_MS) / DAY_MS);
+// TEAM_018: anchor drills rotation so Apr 1st serves TIU, Apr 2nd TWK, Apr 3rd TKP (Jakarta calendar)
+const DRILLS_ROTATION_ANCHOR_JAKARTA_UTC_MS = Date.UTC(2026, 3, 1, 0, 0, 0) - JAKARTA_OFFSET_MS;
+const DRILLS_ROTATION_ANCHOR_DAY_INDEX = getJakartaDayIndex(DRILLS_ROTATION_ANCHOR_JAKARTA_UTC_MS);
 const getJakartaNextMidnightMs = (nowMs: number) => {
   const shifted = new Date(nowMs + JAKARTA_OFFSET_MS);
   const y = shifted.getUTCFullYear();
@@ -146,8 +149,15 @@ app.get('/drills/daily', async (c) => {
   const dayKey = getJakartaDayKey(nowMs);
   const refreshAt = getJakartaNextMidnightMs(nowMs);
   const dayIndex = getJakartaDayIndex(nowMs);
-  const categories = ['TWK', 'TIU', 'TKP'] as const;
-  const category = categories[dayIndex % categories.length];
+  const categories = ['TIU', 'TWK', 'TKP'] as const;
+
+  // TEAM_018: allow premium users to request any category for today via query param
+  const requestedRaw = String(c.req.query('category') ?? '').toUpperCase();
+  const requested = requestedRaw === 'TIU' || requestedRaw === 'TWK' || requestedRaw === 'TKP' ? requestedRaw : null;
+
+  // TEAM_018: default daily category is rotation anchored to Apr 1st (TIU) in Jakarta time
+  const rotatedIndex = ((dayIndex - DRILLS_ROTATION_ANCHOR_DAY_INDEX) % categories.length + categories.length) % categories.length;
+  const category = (requested ?? categories[rotatedIndex]) as (typeof categories)[number];
 
   try {
     const db = await getDb(c.env);
@@ -429,13 +439,14 @@ app.get('/questions/random', async (c) => {
         .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
         .where(activeQuestionWhere);
 
-    let rows = category ? await makeBase().where(categoryWhere(category)).limit(limit) : await makeBase().limit(limit);
+    const baseQuery = makeBase();
+    let rows = category ? await baseQuery.where(categoryWhere(category)).limit(limit) : await baseQuery.limit(limit);
 
     // TEAM_008: if category metadata is missing (category_id/question_type null), fall back to any active questions
     if (category && rows.length === 0) {
       rows = await makeBase().limit(limit);
     }
-    const ids = rows.map((r) => r.id);
+    const ids = rows.map((r: { id: number }) => r.id);
 
     let opts: { questionId: number; optionKey: string; optionText: string; isCorrect: boolean | null }[] = [];
     if (ids.length) {
@@ -463,7 +474,7 @@ app.get('/questions/random', async (c) => {
       }
     }
 
-    const payload = rows.map((r) => {
+    const payload = rows.map((r: { id: number; subject: any; difficulty: any; text: any }) => {
       const questionId = r.id;
       const questionKey = String(questionId);
       const options = grouped[questionKey] ?? [];
