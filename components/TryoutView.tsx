@@ -9,6 +9,7 @@ import TryoutShareCard from '../src/components/share/TryoutShareCard';
 import { toPng } from 'html-to-image';
 import { SHARE_CAPTION, SHARE_LINK_TRYOUT } from '../src/constants/share';
 import type { TryoutShareData } from '../src/types/share';
+import { waitForCardAssets } from '../src/utils/share';
 
 // TEAM_004: connect Tryout (SKD) UI to server endpoints (free now; paywall-ready server-side)
 
@@ -255,11 +256,81 @@ const TryoutView: React.FC = () => {
   const generateImage = useCallback(async (): Promise<string | null> => {
     const node = cardRef.current;
     if (!node) return null;
+
+    const t0 = performance.now();
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    console.info('[share_capture] preflight', {
+      kind: 'tryout',
+      timestamp: Date.now(),
+      nodeExists: !!node,
+      offsetWidth: node.offsetWidth,
+      offsetHeight: node.offsetHeight,
+      boundingRect: { w: rect.width, h: rect.height, top: rect.top, left: rect.left },
+      computedFontFamily: style.fontFamily,
+      computedBgColor: style.backgroundColor,
+      images: [...node.querySelectorAll('img')].map((img) => ({
+        src: img.src,
+        currentSrc: img.currentSrc,
+        complete: img.complete,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+      })),
+    });
+
+    const sheets = [...document.styleSheets].map((sheet) => {
+      let readable = false;
+      try {
+        void sheet.cssRules;
+        readable = true;
+      } catch {
+        /* blocked */
+      }
+      return { href: sheet.href ?? '(inline)', readable };
+    });
+    console.info('[share_capture] stylesheets', {
+      total: sheets.length,
+      blocked: sheets.filter((s) => !s.readable).map((s) => s.href),
+    });
+
     try {
-      const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2 });
+      const t1 = performance.now();
+      // TEAM_016: wait for fonts + images to load/decode to avoid blank captures
+      await waitForCardAssets(node);
+      const t2 = performance.now();
+      const dataUrl = await toPng(node, {
+        cacheBust: true,
+        pixelRatio: 2,
+        skipFonts: true,
+        style: {
+          position: 'static',
+          left: 'auto',
+          top: 'auto',
+        },
+        backgroundColor: '#f5f5dc',
+      });
+      const t3 = performance.now();
+
+      console.info('[share_capture] timing_ms', {
+        raf: Math.round(t1 - t0),
+        assets: Math.round(t2 - t1),
+        capture: Math.round(t3 - t2),
+        total: Math.round(t3 - t0),
+      });
+
+      console.info('[share_capture] result', {
+        dataUrlLength: dataUrl.length,
+        startsWithPng: dataUrl.startsWith('data:image/png'),
+        likelyBlank: dataUrl.length < 2_000,
+      });
+
       return dataUrl;
     } catch (err: unknown) {
-      console.error('Image generation failed:', err);
+      console.error('[share_capture] error', {
+        name: err instanceof Error ? err.name : typeof err,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
       return null;
     }
   }, []);
@@ -269,7 +340,12 @@ const TryoutView: React.FC = () => {
     void (async () => {
       setIsGenerating(true);
       try {
-        await new Promise((resolve) => { requestAnimationFrame(resolve); });
+        // TEAM_016: allow offscreen card to render before capture
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve());
+          });
+        });
         const dataUrl = await generateImage();
         if (dataUrl) {
           setShareImageUrl(dataUrl);
@@ -422,7 +498,7 @@ const TryoutView: React.FC = () => {
       )}
 
       {/* Offscreen share card */}
-      {isGenerating && shareData && (
+      {shareData && (
         <div
           ref={cardRef}
           style={{

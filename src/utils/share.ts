@@ -51,3 +51,43 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function waitForCardAssets(root: HTMLElement): Promise<void> {
+  const fontsReady = (document as unknown as { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
+  if (fontsReady) {
+    try {
+      await fontsReady;
+    } catch {
+      // ignore
+    }
+  }
+
+  const images = Array.from(root.querySelectorAll('img'));
+  await Promise.all(
+    images.map(async (img) => {
+      if (img.complete && img.naturalWidth > 0) {
+        if (typeof img.decode === 'function') {
+          try {
+            await img.decode();
+          } catch {
+            // ignore
+          }
+        }
+        return;
+      }
+
+      await new Promise<void>((resolve) => {
+        const cleanup = () => {
+          img.removeEventListener('load', onDone);
+          img.removeEventListener('error', onDone);
+        };
+        const onDone = () => {
+          cleanup();
+          resolve();
+        };
+        img.addEventListener('load', onDone);
+        img.addEventListener('error', onDone);
+      });
+    })
+  );
+}

@@ -41,7 +41,7 @@ const DailyQuizShareCard: React.FC<DailyQuizShareCardProps> = ({ data }) => {
       {/* Header */}
       <div style={{ marginBottom: '80px' }}>
         <img
-          src="/full-logo.png"
+          src="/ikuttes.png"
           alt="Ikuttes"
           style={{ height: '120px', marginBottom: '20px' }}
         />
@@ -105,7 +105,7 @@ const DailyQuizShareCard: React.FC<DailyQuizShareCardProps> = ({ data }) => {
       <div style={{ marginTop: 'auto', textAlign: 'center' }}>
         <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '20px' }}>ikuttes.my.id</div>
         <div style={{ fontSize: '24px', color: '#666' }}>
-          Baru saja mempersiapkan diri untuk ikut tes CPNS!
+          Baru saja mempersiapkan diri untuk lolos tes CPNS! Di https://ikuttes.my.id
         </div>
       </div>
     </div>

@@ -56,7 +56,7 @@
 - `components/TryoutView.tsx` - Added share button in result modal
 
 ## Constants & Configuration
-- **Default Caption:** "Baru saja mempersiapkan diri untuk ikut tes CPNS!"
+- **Default Caption:** "Baru saja mempersiapkan diri untuk lolos tes CPNS! Di https://ikuttes.my.id"
 - **Quiz Deep Link:** `https://ikuttes.my.id/?view=QUIZ`
 - **Tryout Deep Link:** `https://ikuttes.my.id/?view=TRYOUT`
 - **Logo Path:** `/ikuttes.png`
@@ -69,9 +69,18 @@
 - Dev server running for testing
 
 ### Recent Fix (2026-03-28 21:05)
-- **Issue:** Logo 404 errors due to space in filename (`ikuttes.png`)
+- **Issue:** Logo 404 errors due to space in filename (`full logo.png`)
 - **Solution:** Copied logo to `public/full-logo.png` and updated share card components
 - **Result:** Logo now loads properly in share images
+
+### Recent Fix (2026-03-28 21:49)
+- **Issue:** Generated share image was blank (race condition: capture before fonts/images rendered)
+- **Solution:**
+  - Keep offscreen share card mounted (still offscreen; not `display: none`)
+  - Wait for `document.fonts.ready` (when available)
+  - Wait for card `<img>` elements to load/decode before calling `toPng`
+  - Double `requestAnimationFrame` before capture
+- **Result:** Capture is stable; no more blank PNG output
 
 ## Testing Checklist
 - [x] Build compiles without errors
