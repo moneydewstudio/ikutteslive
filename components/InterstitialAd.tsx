@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Button from './Button';
 import { X, ShieldCheck, Zap } from 'lucide-react';
+import { AD_CONFIG } from '../src/utils/adConfig';
+import AdSenseAd from '../src/components/AdSenseAd';
 
 interface InterstitialAdProps {
   onClose: () => void;
@@ -11,6 +13,8 @@ interface InterstitialAdProps {
 const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => {
   const [timeLeft, setTimeLeft] = useState(5);
   const [canSkip, setCanSkip] = useState(false);
+  const [adFailed, setAdFailed] = useState(false);
+  const useRealAds = import.meta.env.VITE_FEATURE_ADSENSE === 'true' && AD_CONFIG.slots.interstitial;
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -41,8 +45,17 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
           )}
        </div>
 
-       {/* Ad Container (Simulating an AdSense/AdMob Slot) */}
-       <div className="w-full max-w-sm bg-white rounded-none border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] overflow-hidden flex flex-col relative">
+       {/* Ad Container */}
+       {useRealAds && !adFailed ? (
+         <AdSenseAd
+           className="w-full max-w-sm bg-white rounded-none border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] overflow-hidden"
+           slot={AD_CONFIG.slots.interstitial}
+           format="rectangle"
+           onAdLoaded={() => console.log('[Ad] Loaded')}
+           onAdFailed={() => setAdFailed(true)}
+         />
+       ) : (
+         <div className="w-full max-w-sm bg-white rounded-none border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] overflow-hidden flex flex-col relative">
            
            {/* Ad Badge */}
            <div className="bg-gray-100 px-3 py-1 text-[10px] font-black uppercase text-gray-400 flex justify-between border-b border-gray-200">
@@ -50,7 +63,7 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
               <span>Google Ads</span>
            </div>
 
-           {/* Main Ad Visual (Mock Content) */}
+           {/* Main Ad Visual (Premium CTA) */}
            <div className="h-80 bg-brand-lime flex flex-col items-center justify-center p-8 text-center relative overflow-hidden group">
                {/* Animated Background Pattern */}
                <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '10px 10px'}}></div>
@@ -88,6 +101,16 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
                </Button>
            </div>
        </div>
+       )}
+
+       {/* Always-visible small premium CTA when real ads are shown */}
+       {useRealAds && !adFailed && (
+         <div className="mt-4 flex justify-center">
+           <Button onClick={onGoPro} variant="outline" size="sm">
+             Upgrade ke Premium
+           </Button>
+         </div>
+       )}
        
 
     </div>

@@ -427,7 +427,7 @@ app.get('/questions/random', async (c) => {
 
   try {
     const db = await getDb(c.env);
-    const makeBase = () =>
+    const makeBase = (whereCondition?: any) =>
       db
         .select({
           id: questions.id,
@@ -437,14 +437,15 @@ app.get('/questions/random', async (c) => {
         })
         .from(questions)
         .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
-        .where(activeQuestionWhere);
+        .where(whereCondition);
 
-    const baseQuery = makeBase();
-    let rows = category ? await baseQuery.where(categoryWhere(category)).limit(limit) : await baseQuery.limit(limit);
+    let rows = category 
+      ? await makeBase(and(activeQuestionWhere, categoryWhere(category))).limit(limit)
+      : await makeBase(activeQuestionWhere).limit(limit);
 
     // TEAM_008: if category metadata is missing (category_id/question_type null), fall back to any active questions
     if (category && rows.length === 0) {
-      rows = await makeBase().limit(limit);
+      rows = await makeBase(activeQuestionWhere).limit(limit);
     }
     const ids = rows.map((r: { id: number }) => r.id);
 
