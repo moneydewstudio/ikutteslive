@@ -1,9 +1,14 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, Calendar, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2 } from 'lucide-react';
+import { Clock, Calendar, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2, Share2 } from 'lucide-react';
 import Button from './Button';
 import QuizCard from './QuizCard';
 import { Question } from '../types';
 import * as QuizService from '../services/quizService';
+import ShareResultModal from './ShareResultModal';
+import TryoutShareCard from '../src/components/share/TryoutShareCard';
+import { toPng } from 'html-to-image';
+import { SHARE_CAPTION, SHARE_LINK_TRYOUT } from '../src/constants/share';
+import type { TryoutShareData } from '../src/types/share';
 
 // TEAM_004: connect Tryout (SKD) UI to server endpoints (free now; paywall-ready server-side)
 
@@ -71,6 +76,12 @@ const TryoutView: React.FC = () => {
   
   // Result State
   const [result, setResult] = useState<ScoreResult | null>(null);
+
+  // Share State
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const resetTryout = useCallback(() => {
     setResult(null);
@@ -241,6 +252,49 @@ const TryoutView: React.FC = () => {
     void startTryout();
   }, [resetTryout, startTryout]);
 
+  const generateImage = useCallback(async (): Promise<string | null> => {
+    const node = cardRef.current;
+    if (!node) return null;
+    try {
+      const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2 });
+      return dataUrl;
+    } catch (err: unknown) {
+      console.error('Image generation failed:', err);
+      return null;
+    }
+  }, []);
+
+  const handleShareClick = useCallback(() => {
+    if (!result) return;
+    void (async () => {
+      setIsGenerating(true);
+      try {
+        await new Promise((resolve) => { requestAnimationFrame(resolve); });
+        const dataUrl = await generateImage();
+        if (dataUrl) {
+          setShareImageUrl(dataUrl);
+          setShowShareModal(true);
+        }
+      } finally {
+        setIsGenerating(false);
+      }
+    })();
+  }, [generateImage, result]);
+
+  const shareData: TryoutShareData | null = result ? {
+    kind: 'tryout',
+    userName: 'User', // TODO: Get from user context
+    totalScore: result.totalScore,
+    twkScore: result.details.twk,
+    tiuScore: result.details.tiu,
+    tkpScore: result.details.tkp,
+    passed: result.passed,
+    correct: result.correctCount,
+    total: result.totalQuestions,
+    generatedAt: new Date().toISOString(),
+    link: SHARE_LINK_TRYOUT,
+  } : null;
+
   // --- RENDER ---
 
   if (!isStarted) {
@@ -357,10 +411,40 @@ const TryoutView: React.FC = () => {
                         Tutup
                      </Button>
                   </div>
+                  <div className="mt-3">
+                     <Button onClick={handleShareClick} variant="outline" fullWidth>
+                        <Share2 className="w-4 h-4 mr-2" /> Bagikan
+                     </Button>
+                  </div>
               </div>
            </div>
         </div>
       )}
+
+      {/* Offscreen share card */}
+      {isGenerating && shareData && (
+        <div
+          ref={cardRef}
+          style={{
+            position: 'fixed',
+            left: '-9999px',
+            top: 0,
+            width: '1080px',
+            height: '1920px',
+          }}
+        >
+          <TryoutShareCard data={shareData} />
+        </div>
+      )}
+
+      {/* Share modal */}
+      <ShareResultModal
+        imageUrl={shareImageUrl}
+        caption={SHARE_CAPTION}
+        link={SHARE_LINK_TRYOUT}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
 
       {/* 1. Header */}
       <div className="bg-white border-b border-black shadow-sm h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-20">
