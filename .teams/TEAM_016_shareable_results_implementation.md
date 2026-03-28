@@ -68,6 +68,11 @@
 - No lint errors
 - Dev server running for testing
 
+### Recent Fix (2026-03-28 21:05)
+- **Issue:** Logo 404 errors due to space in filename (`full logo.png`)
+- **Solution:** Copied logo to `public/full-logo.png` and updated share card components
+- **Result:** Logo now loads properly in share images
+
 ## Testing Checklist
 - [x] Build compiles without errors
 - [x] TypeScript strict mode compliance

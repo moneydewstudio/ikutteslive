@@ -41,7 +41,7 @@ const DailyQuizShareCard: React.FC<DailyQuizShareCardProps> = ({ data }) => {
       {/* Header */}
       <div style={{ marginBottom: '80px' }}>
         <img
-          src="/full logo.png"
+          src="/full-logo.png"
           alt="Ikuttes"
           style={{ height: '120px', marginBottom: '20px' }}
         />
