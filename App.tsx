@@ -249,7 +249,7 @@ const App: React.FC = () => {
   const Header = () => (
     <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
       <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
-        <img src="/full logo.png" alt="Ikuttes" className="h-8 w-auto" />
+        <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
       </div>
 
       {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}

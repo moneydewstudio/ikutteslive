@@ -59,7 +59,7 @@
 - **Default Caption:** "Baru saja mempersiapkan diri untuk ikut tes CPNS!"
 - **Quiz Deep Link:** `https://ikuttes.my.id/?view=QUIZ`
 - **Tryout Deep Link:** `https://ikuttes.my.id/?view=TRYOUT`
-- **Logo Path:** `/full logo.png`
+- **Logo Path:** `/ikuttes.png`
 
 ## Deployment Status
 ✅ **Successfully deployed** to Cloudflare Workers
@@ -69,7 +69,7 @@
 - Dev server running for testing
 
 ### Recent Fix (2026-03-28 21:05)
-- **Issue:** Logo 404 errors due to space in filename (`full logo.png`)
+- **Issue:** Logo 404 errors due to space in filename (`ikuttes.png`)
 - **Solution:** Copied logo to `public/full-logo.png` and updated share card components
 - **Result:** Logo now loads properly in share images
 
