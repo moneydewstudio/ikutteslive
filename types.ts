@@ -30,7 +30,6 @@ export interface UserSession {
   drillCategory?: 'TIU' | 'TWK' | 'TKP';
   score: number;
   readiness: number;
-  percentile: number;
   completedAt?: number;
 }
 

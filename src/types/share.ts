@@ -4,7 +4,6 @@ export interface DailyQuizShareData {
   percentage: number;
   correct: number;
   total: number;
-  percentile: number;
   readiness: string;
   generatedAt: string;
   link: string;

@@ -91,3 +91,8 @@ export async function waitForCardAssets(root: HTMLElement): Promise<void> {
     })
   );
 }
+
+export function openWhatsAppShare(text: string): void {
+  const encoded = encodeURIComponent(text);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank', 'noopener');
+}

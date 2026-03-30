@@ -180,8 +180,7 @@ export const createSession = (): UserSession => {
     questionIds: questions.map(q => q.id),
     answers: {},
     score: 0,
-    readiness: 0,
-    percentile: 0
+    readiness: 0
   };
   saveSession(session);
   return session;
@@ -202,8 +201,7 @@ export const createDailyDrillSessionFromApi = async (): Promise<UserSession> => 
     questions,
     answers: {},
     score: 0,
-    readiness: 0,
-    percentile: 0,
+    readiness: 0
   };
   saveDrillSession(session);
   return session;
@@ -227,8 +225,7 @@ export const createDailyDrillSessionFromApiByCategory = async (
     questions,
     answers: {},
     score: 0,
-    readiness: 0,
-    percentile: 0,
+    readiness: 0
   };
   saveDrillSession(session);
   return session;
@@ -248,8 +245,7 @@ export const createDailySessionFromApi = async (): Promise<UserSession> => {
     questions,
     answers: {},
     score: 0,
-    readiness: 0,
-    percentile: 0,
+    readiness: 0
   };
   saveSession(session);
   return session;
@@ -270,8 +266,7 @@ export const createSessionFromApi = async (
     questions,
     answers: {},
     score: 0,
-    readiness: 0,
-    percentile: 0,
+    readiness: 0
   };
   saveSession(session);
   return session;
@@ -350,16 +345,11 @@ export const calculateResults = (
 
   // Cap at 100
   const readiness = Math.min(Math.round(weightedScore), 100);
-  
-  // Mock Percentile Calculation (randomized for demo feel, but sticky to score)
-  const basePercentile = 40;
-  const percentile = Math.min(99, Math.round(basePercentile + (readiness * 0.5) + (Math.random() * 10)));
 
   const completedSession = {
     ...session,
     score: correctCount,
     readiness,
-    percentile,
     completedAt: Date.now()
   };
 

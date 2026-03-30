@@ -81,6 +81,7 @@ const TryoutView: React.FC = () => {
   // Share State
   const [isGenerating, setIsGenerating] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [shareImageState, setShareImageState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [showShareModal, setShowShareModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -338,6 +339,8 @@ const TryoutView: React.FC = () => {
   const handleShareClick = useCallback(() => {
     if (!result) return;
     void (async () => {
+      setShowShareModal(true);
+      setShareImageState('loading');
       setIsGenerating(true);
       try {
         // TEAM_016: allow offscreen card to render before capture
@@ -349,13 +352,21 @@ const TryoutView: React.FC = () => {
         const dataUrl = await generateImage();
         if (dataUrl) {
           setShareImageUrl(dataUrl);
-          setShowShareModal(true);
+          setShareImageState('ready');
+        } else {
+          setShareImageState('error');
         }
+      } catch {
+        setShareImageState('error');
       } finally {
         setIsGenerating(false);
       }
     })();
   }, [generateImage, result]);
+
+  const handleRetryGenerate = useCallback(() => {
+    handleShareClick();
+  }, [handleShareClick]);
 
   const shareData: TryoutShareData | null = result ? {
     kind: 'tryout',
@@ -516,10 +527,12 @@ const TryoutView: React.FC = () => {
       {/* Share modal */}
       <ShareResultModal
         imageUrl={shareImageUrl}
+        imageState={shareImageState}
         caption={SHARE_CAPTION}
         link={SHARE_LINK_TRYOUT}
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
+        onRetryGenerate={handleRetryGenerate}
       />
 
       {/* 1. Header */}

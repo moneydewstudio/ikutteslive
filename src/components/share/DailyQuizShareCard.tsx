@@ -6,7 +6,7 @@ interface DailyQuizShareCardProps {
 }
 
 const DailyQuizShareCard: React.FC<DailyQuizShareCardProps> = ({ data }) => {
-  const { userName, percentage, correct, total, percentile, readiness, generatedAt } = data;
+  const { userName, percentage, correct, total, readiness, generatedAt } = data;
 
   return (
     <div
@@ -76,9 +76,6 @@ const DailyQuizShareCard: React.FC<DailyQuizShareCardProps> = ({ data }) => {
         </div>
         <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '10px' }}>
           {correct} dari {total} benar
-        </div>
-        <div style={{ fontSize: '28px', opacity: 0.8 }}>
-          Persentil {100 - percentile}% Teratas
         </div>
       </div>
 

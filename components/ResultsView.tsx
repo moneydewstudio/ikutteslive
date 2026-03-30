@@ -24,6 +24,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
   const [expState, setExpState] = useState<Record<string, { status: 'idle' | 'loading' | 'ready' | 'locked' | 'error'; text?: string }>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [shareImageState, setShareImageState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [showShareModal, setShowShareModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -139,6 +140,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
 
   const handleShareClick = useCallback(() => {
     void (async () => {
+      setShowShareModal(true);
+      setShareImageState('loading');
       setIsGenerating(true);
       try {
         // TEAM_016: allow offscreen card to render before capture
@@ -150,13 +153,21 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
         const dataUrl = await generateImage();
         if (dataUrl) {
           setShareImageUrl(dataUrl);
-          setShowShareModal(true);
+          setShareImageState('ready');
+        } else {
+          setShareImageState('error');
         }
+      } catch {
+        setShareImageState('error');
       } finally {
         setIsGenerating(false);
       }
     })();
   }, [generateImage]);
+
+  const handleRetryGenerate = useCallback(() => {
+    handleShareClick();
+  }, [handleShareClick]);
 
   const percentage = Math.round((correctAnswers / totalQuestions) * 100);
   const readiness = session.readiness >= 80 ? 'Sangat Siap' : session.readiness >= 60 ? 'Siap' : session.readiness >= 40 ? 'Cukup Siap' : 'Perlu Latihan';
@@ -166,7 +177,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
     percentage,
     correct: correctAnswers,
     total: totalQuestions,
-    percentile: session.percentile,
     readiness,
     generatedAt: new Date().toISOString(),
     link: SHARE_LINK_QUIZ,
@@ -185,9 +195,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
             {Math.round((correctAnswers / totalQuestions) * 100)}%
           </h1>
           <p className="font-bold text-xl mb-6">Anda menjawab {correctAnswers} dari {totalQuestions} dengan benar.</p>
-          <div className="inline-block px-4 py-2 border border-black bg-white rounded-full text-xs font-black uppercase">
-            Persentil {100 - session.percentile}% Teratas
-          </div>
         </div>
 
         {/* Right: Actions */}
@@ -202,8 +209,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
             <Button onClick={onRetryClick} variant="outline" fullWidth>
               <RefreshCw className="w-4 h-4 mr-2" /> Coba Lagi
             </Button>
-            <Button onClick={handleShareClick} variant="outline">
-              <Share2 className="w-4 h-4" />
+            <Button onClick={handleShareClick} variant="outline" fullWidth>
+              <Share2 className="w-4 h-4 mr-2" /> Bagikan hasil
             </Button>
           </div>
         </div>
@@ -312,10 +319,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
       {/* Share modal */}
       <ShareResultModal
         imageUrl={shareImageUrl}
+        imageState={shareImageState}
         caption={SHARE_CAPTION}
         link={SHARE_LINK_QUIZ}
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
+        onRetryGenerate={handleRetryGenerate}
       />
     </div>
   );
