@@ -1,109 +1,88 @@
 import React from 'react';
 import { DailyQuizShareData } from '../../types/share';
+import { RESULT_STYLES } from '../../constants/resultStyles';
 
 interface DailyQuizShareCardProps {
   data: DailyQuizShareData;
 }
 
 const DailyQuizShareCard: React.FC<DailyQuizShareCardProps> = ({ data }) => {
-  const { userName, percentage, correct, total, readiness, generatedAt } = data;
+  const { percentage, correct, total, generatedAt } = data;
+
+  // Format date as short day label (e.g., "30 Mar 2026")
+  const dayLabel = new Date(generatedAt).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
   return (
     <div
       style={{
         width: '1080px',
         height: '1920px',
-        backgroundColor: '#f5f5dc',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        backgroundColor: RESULT_STYLES.bgColor,
+        fontFamily: RESULT_STYLES.fontFamily,
         color: '#000',
         display: 'flex',
         flexDirection: 'column',
-        padding: '60px',
+        alignItems: 'center',
+        padding: '0 80px',
         boxSizing: 'border-box',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Background decoration */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-120px',
-          right: '-120px',
-          width: '300px',
-          height: '300px',
-          border: '40px solid #000',
-          borderRadius: '50%',
-          opacity: 0.1,
-        }}
-      />
-
-      {/* Header */}
-      <div style={{ marginBottom: '80px' }}>
+      {/* Logo */}
+      <div style={{ paddingTop: '80px' }}>
         <img
           src="/ikuttes.png"
           alt="Ikuttes"
-          style={{ height: '120px', marginBottom: '20px' }}
+          style={{ height: '160px', maxWidth: '160px' }}
         />
-        <div style={{ fontSize: '48px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Hasil Latihan
-        </div>
       </div>
 
-      {/* User info */}
-      <div style={{ marginBottom: '60px' }}>
-        <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '10px' }}>
-          {userName}
-        </div>
-        <div style={{ fontSize: '24px', color: '#666' }}>
-          {new Date(generatedAt).toLocaleDateString('id-ID')}
-        </div>
-      </div>
+      {/* Spacer to push hero to vertical center */}
+      <div style={{ flex: 1 }} />
 
-      {/* Main score */}
-      <div
-        style={{
-          backgroundColor: '#000',
-          color: '#f5f5dc',
-          padding: '60px',
-          borderRadius: '20px',
-          textAlign: 'center',
-          marginBottom: '60px',
-        }}
-      >
-        <div style={{ fontSize: '200px', fontWeight: '900', lineHeight: 1, marginBottom: '20px' }}>
+      {/* Hero: label + percent + description */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
+        {/* Label: HASIL SESI */}
+        <div style={RESULT_STYLES.label}>
+          Hasil Sesi
+        </div>
+
+        {/* Big percent */}
+        <div style={{ ...RESULT_STYLES.bigPercent, marginTop: '16px' }}>
           {percentage}%
         </div>
-        <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '10px' }}>
-          {correct} dari {total} benar
-        </div>
-      </div>
 
-      {/* Readiness level */}
-      <div style={{ marginBottom: '60px' }}>
-        <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '20px' }}>Tingkat Kesiapan</div>
+        {/* Description */}
         <div
           style={{
-            backgroundColor: '#fff',
-            border: '4px solid #000',
-            padding: '30px',
-            borderRadius: '16px',
-            textAlign: 'center',
-            fontSize: '48px',
-            fontWeight: '900',
-            textTransform: 'uppercase',
+            ...RESULT_STYLES.description,
+            marginTop: '24px',
+            maxWidth: '80%',
           }}
         >
-          {readiness}
+          Anda menjawab {correct} dari {total} dengan benar.
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{ marginTop: 'auto', textAlign: 'center' }}>
-        <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '20px' }}>ikuttes.my.id</div>
-        <div style={{ fontSize: '24px', color: '#666' }}>
-          Baru saja mempersiapkan diri untuk lolos tes CPNS! Di https://ikuttes.my.id
-        </div>
+      {/* Spacer to push date to bottom */}
+      <div style={{ flex: 1 }} />
+
+      {/* Date line */}
+      <div
+        style={{
+          fontSize: '14px',
+          fontWeight: 500,
+          opacity: 0.6,
+          paddingBottom: '80px',
+          textAlign: 'center',
+        }}
+      >
+        {dayLabel}
       </div>
     </div>
   );

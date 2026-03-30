@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { UserSession } from '../types';
 import Button from './Button';
 import { ChevronDown, ChevronUp, Check, X, Share2, RefreshCw } from 'lucide-react';
@@ -27,6 +27,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
   const [shareImageState, setShareImageState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [showShareModal, setShowShareModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const autoShareTriggeredRef = useRef<string | null>(null); // Guard to prevent repeated auto-triggers per session.id
 
   const questions = getQuestionsForSession(session);
   const correctAnswers = session.score;
@@ -139,8 +140,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
   }, []);
 
   const handleShareClick = useCallback(() => {
+    // If modal is already open, do nothing
+    if (showShareModal) return;
+
     void (async () => {
       setShowShareModal(true);
+      // If image is ready, reuse it; otherwise show loading and regenerate
+      if (shareImageState === 'ready' && shareImageUrl) {
+        // No need to regenerate; modal will show cached image
+        return;
+      }
       setShareImageState('loading');
       setIsGenerating(true);
       try {
@@ -163,7 +172,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
         setIsGenerating(false);
       }
     })();
-  }, [generateImage]);
+  }, [showShareModal, shareImageState, shareImageUrl, generateImage]);
 
   const handleRetryGenerate = useCallback(() => {
     handleShareClick();
@@ -181,6 +190,35 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
     generatedAt: new Date().toISOString(),
     link: SHARE_LINK_QUIZ,
   };
+
+  // Auto-open share modal after 1.5s on ResultsView mount (once per session.id)
+  useEffect(() => {
+    if (autoShareTriggeredRef.current === session.id) return;
+
+    const timer = setTimeout(() => {
+      autoShareTriggeredRef.current = session.id;
+      setShowShareModal(true);
+      setShareImageState('loading');
+      setIsGenerating(true);
+      generateImage()
+        .then((url) => {
+          if (url) {
+            setShareImageUrl(url);
+            setShareImageState('ready');
+          } else {
+            setShareImageState('error');
+          }
+        })
+        .catch(() => {
+          setShareImageState('error');
+        })
+        .finally(() => {
+          setIsGenerating(false);
+        });
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [session.id, generateImage]);
 
   return (
     <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
