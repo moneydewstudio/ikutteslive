@@ -51,7 +51,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
       id,
       title,
       subject: category,
-      questions: 10,
+      questions: 20,
       difficulty: 'Harian',
       price: isUnlocked(category) ? 'Gratis' : 'Terkunci',
       color: isUnlocked(category) ? color : 'bg-white',
@@ -75,11 +75,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {isLoading && (
-            <div className="p-6 border-b border-black md:border-r bg-white flex items-center justify-center h-64">
-              <span className="font-medium text-sm text-gray-500">Memuat drills...</span>
-            </div>
-          )}
+        
           {packs.map((pack) => (
               <BonusCard
                 key={pack.id}

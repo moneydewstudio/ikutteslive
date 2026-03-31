@@ -11,7 +11,7 @@ interface DrillsViewProps {
   category?: DrillCategory;
 }
 
-// TEAM_005: daily drills view (10 questions, single-category rotation, global per Jakarta day)
+// TEAM_005: daily drills view (20 questions, per-category sessions, global per Jakarta day)
 const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category }) => {
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -35,23 +35,29 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category }) => {
   }, [category]);
 
   const refreshSession = useCallback(() => {
-    QuizService.clearDrillSession();
+    if (!category) return;
+    QuizService.clearDrillSession(category);
     setSession(null);
     setCurrentQuestionIdx(0);
     void startDrills();
-  }, [startDrills]);
+  }, [category, startDrills]);
 
   useEffect(() => {
-    const saved = QuizService.loadDrillSession();
+    // TEAM_018: migrate old drill session key to per-category keys
+    QuizService.migrateOldDrillSession();
+    
+    if (!category) return;
+    
+    const saved = QuizService.loadDrillSession(category);
     if (!saved) {
       void startDrills();
       return;
     }
 
-    // TEAM_018: resume only if the saved session matches the requested category (or no category requested)
+    // TEAM_018: resume only if the saved session matches the requested category
     const savedCategory = (saved.drillCategory ?? null) as DrillCategory | null;
-    if (category && savedCategory && savedCategory !== category) {
-      QuizService.clearDrillSession();
+    if (savedCategory !== category) {
+      QuizService.clearDrillSession(category);
       void startDrills();
       return;
     }

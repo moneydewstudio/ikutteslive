@@ -35,13 +35,13 @@ const BonusCard: React.FC<BonusCardProps> = ({ pack, onClick }) => {
           {pack.price === 'Terkunci' ? <Lock className="w-5 h-5 opacity-50" /> : <Star className="w-5 h-5 fill-black" />}
         </div>
         <h3 className="text-2xl font-black leading-tight mb-1">{pack.title}</h3>
-        <p className="text-sm font-medium opacity-70">{pack.questions} Soal</p>
+        <p className="text-sm font-medium opacity-70">20 Soal</p>
       </div>
 
       <div className="mt-4">
         {pack.price === 'Terkunci' ? (
           <div className="flex items-center justify-between text-gray-400">
-            <span className="font-bold text-sm">Butuh Level 5</span>
+            <span className="font-bold text-sm">Akses Premium</span>
             <Lock className="w-4 h-4" />
           </div>
         ) : (

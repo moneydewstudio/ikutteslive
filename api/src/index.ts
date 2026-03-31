@@ -22,6 +22,7 @@ import {
   questionOptions,
   questionCategories,
   questionSubcategories,
+  questionTopics,
   questionExplanations,
   tryoutAttempts,
   tryoutAttemptItems,
@@ -88,14 +89,14 @@ const isTryoutPremiumEnabled = (c: any) => String(c.env.TRYOUT_PREMIUM_ENABLED |
 
 // TEAM_008: avoid empty daily quiz/drills by matching category case-insensitively, falling back to `questions.question_type`, and disabling caching for dynamic question feeds
 const activeQuestionWhere = sql`coalesce(${questions.isActive}, true) = true`;
+// TEAM_019: Phase 2 fix for category leak — filter by topic_id with mapping: 1=TWK, 2=TIU, 3=TKP
 const categoryWhere = (code: string) => {
   const lower = code.toLowerCase();
-  return or(
-    sql`lower(${questionCategories.code}) = ${lower}`,
-    sql`lower(${questions.questionType}) = ${lower}`
-  );
+  const topicMap: Record<string, number> = { twk: 1, tiu: 2, tkp: 3 };
+  const topicId = topicMap[lower];
+  return topicId ? eq(questions.topicId, topicId) : sql`false`;
 };
-const subjectSelect = sql<string | null>`upper(coalesce(${questionCategories.code}, ${questions.questionType}))`;
+const subjectSelect = sql<string | null>`upper(coalesce(${questionTopics.code}, ${questions.questionType}))`;
 
 // Attach user context for all requests (non-blocking if token missing/invalid)
 app.use(cors());
@@ -126,7 +127,6 @@ app.get('/db/stats', async (c) => {
       const res = await db
         .select({ count: sql<number>`count(*)` })
         .from(questions)
-        .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
         .where(and(activeQuestionWhere, categoryWhere(code)));
       byCategory[code] = Number((res?.[0] as any)?.count ?? 0);
     }
@@ -140,6 +140,212 @@ app.get('/db/stats', async (c) => {
   } catch (e) {
     console.error('TEAM_008 /db/stats failed', e);
     return c.json({ ok: false, error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_019: Bulk import topic_id from JSON data
+// TODO(TEAM_019): remove after 2026-04-06 once migration is complete
+app.post('/db/import-topic-ids', async (c) => {
+  const expected = String(c.env.AUDIT_KEY || '');
+  const provided = String(c.req.header('x-audit-key') || '');
+  if (!expected || provided !== expected) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+
+  try {
+    const db = await getDb(c.env);
+    const body = await c.req.json().catch(() => ({}));
+    const { questions } = body as { questions?: Array<{ id: number; topic_id: number }> };
+
+    if (!Array.isArray(questions) || !questions.length) {
+      return c.json({ error: 'invalid questions array' }, 400);
+    }
+
+    let updated = 0;
+    for (const { id, topic_id } of questions) {
+      const result = await db.execute(sql`
+        UPDATE questions SET topic_id = ${topic_id} WHERE id = ${id}
+      `);
+      updated += Number(result.rowCount ?? 0);
+    }
+
+    return c.json({ ok: true, message: `Updated topic_id for ${updated} questions` });
+  } catch (e) {
+    console.error('TEAM_019 /db/import-topic-ids failed', e);
+    return c.json({ error: 'import failed', details: e instanceof Error ? e.message : 'unknown' }, 500);
+  }
+});
+
+// TEAM_019: Temporary endpoint to assign topic_id to questions based on patterns or manual mapping
+// TODO(TEAM_019): remove after 2026-04-06 once migration is complete
+app.post('/db/assign-topic-ids', async (c) => {
+  const expected = String(c.env.AUDIT_KEY || '');
+  const provided = String(c.req.header('x-audit-key') || '');
+  if (!expected || provided !== expected) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+
+  try {
+    const db = await getDb(c.env);
+    const body = await c.req.json().catch(() => ({}));
+    const { assignments } = body as { assignments?: Array<{ questionId: number; topicId: number }> };
+
+    if (Array.isArray(assignments) && assignments.length) {
+      // Apply manual assignments
+      for (const { questionId, topicId } of assignments) {
+        await db.execute(sql`
+          UPDATE questions SET topic_id = ${topicId} WHERE id = ${questionId}
+        `);
+      }
+      return c.json({ ok: true, message: `Assigned topic_id to ${assignments.length} questions` });
+    } else {
+      // Sample assignment: assign first 20 questions to each topic for testing
+      const topics = [1, 2, 3]; // TWK, TIU, TKP
+      let totalAssigned = 0;
+      for (const topicId of topics) {
+        const result = await db.execute(sql`
+          WITH cte AS (
+            SELECT id FROM questions 
+            WHERE topic_id IS NULL 
+            ORDER BY id 
+            LIMIT 20
+          )
+          UPDATE questions 
+          SET topic_id = ${topicId} 
+          WHERE id IN (SELECT id FROM cte)
+        `);
+        totalAssigned += Number(result.rowCount ?? 0);
+      }
+      return c.json({ ok: true, message: `Sample assignment: assigned topic_id to ${totalAssigned} questions` });
+    }
+  } catch (e) {
+    console.error('TEAM_019 /db/assign-topic-ids failed', e);
+    return c.json({ error: 'assignment failed', details: e instanceof Error ? e.message : 'unknown' }, 500);
+  }
+});
+
+// TEAM_019: Temporary migration endpoint to create question_topics table and seed data
+// TODO(TEAM_019): remove after 2026-04-06 once migration is complete
+app.get('/db/migrate-question-topics', async (c) => {
+  const expected = String(c.env.AUDIT_KEY || '');
+  const provided = String(c.req.header('x-audit-key') || '');
+  if (!expected || provided !== expected) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+
+  try {
+    const db = await getDb(c.env);
+
+    // Create table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS question_topics (
+        id INTEGER PRIMARY KEY,
+        code TEXT NOT NULL,
+        name TEXT NOT NULL
+      )
+    `);
+
+    // Seed topics
+    await db.execute(sql`
+      INSERT INTO question_topics (id, code, name) VALUES
+      (1, 'TWK', 'Tes Wawasan Kebangsaan'),
+      (2, 'TIU', 'Tes Intelegensia Umum'),
+      (3, 'TKP', 'Tes Karakteristik Pribadi')
+      ON CONFLICT (id) DO NOTHING
+    `);
+
+    return c.json({ ok: true, message: 'question_topics table created and seeded' });
+  } catch (e) {
+    console.error('TEAM_019 /db/migrate-question-topics failed', e);
+    return c.json({ error: 'migration failed', details: e instanceof Error ? e.message : 'unknown' }, 500);
+  }
+});
+
+// TEAM_019: Phase 1 audit endpoint for drills category leak investigation
+// TODO(TEAM_019): remove after 2026-04-06 once Phase 2 ships
+app.get('/db/category-audit', async (c) => {
+  const expected = String(c.env.AUDIT_KEY || '');
+  const provided = String(c.req.header('x-audit-key') || '');
+  if (!expected || provided !== expected) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+
+  try {
+    const db = await getDb(c.env);
+
+    const totalActiveRes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(questions)
+      .where(activeQuestionWhere);
+    const total_active = Number((totalActiveRes?.[0] as any)?.count ?? 0);
+
+    const withCategoryIdRes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(questions)
+      .where(and(activeQuestionWhere, sql`${questions.categoryId} is not null`));
+    const with_category_id = Number((withCategoryIdRes?.[0] as any)?.count ?? 0);
+    const without_category_id = Math.max(0, total_active - with_category_id);
+
+    const typeRows = await db
+      .select({ value: sql<string>`lower(coalesce(${questions.questionType}, ''))`, count: sql<number>`count(*)` })
+      .from(questions)
+      .where(activeQuestionWhere)
+      .groupBy(sql`lower(coalesce(${questions.questionType}, ''))`)
+      .orderBy(desc(sql`count(*)`))
+      .limit(50);
+    const question_type_values = typeRows
+      .map((r: any) => String(r.value || ''))
+      .filter((v) => !!v);
+
+    const mismatchCountRes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(questions)
+      .innerJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+      .where(
+        and(
+          activeQuestionWhere,
+          sql`${questions.categoryId} is not null`,
+          sql`${questions.questionType} is not null`,
+          sql`lower(${questionCategories.code}) <> lower(${questions.questionType})`
+        )
+      );
+    const mismatch_count = Number((mismatchCountRes?.[0] as any)?.count ?? 0);
+
+    const mismatchSamples = await db
+      .select({
+        id: questions.id,
+        category_code: sql<string | null>`lower(${questionCategories.code})`,
+        question_type: sql<string | null>`lower(${questions.questionType})`,
+      })
+      .from(questions)
+      .innerJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+      .where(
+        and(
+          activeQuestionWhere,
+          sql`${questions.categoryId} is not null`,
+          sql`${questions.questionType} is not null`,
+          sql`lower(${questionCategories.code}) <> lower(${questions.questionType})`
+        )
+      )
+      .limit(20);
+
+    return c.json({
+      total_active,
+      with_category_id,
+      without_category_id,
+      question_type_values,
+      mismatches: {
+        count: mismatch_count,
+        samples: mismatchSamples.map((r: any) => ({
+          id: String(r.id),
+          category_code: r.category_code ? String(r.category_code).toUpperCase() : null,
+          question_type: r.question_type ? String(r.question_type).toUpperCase() : null,
+        })),
+      },
+    });
+  } catch (e) {
+    console.error('TEAM_019 /db/category-audit failed', e);
+    return c.json({ error: 'unavailable' }, 503);
   }
 });
 
@@ -169,10 +375,10 @@ app.get('/drills/daily', async (c) => {
         text: questions.questionText,
       })
       .from(questions)
-      .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
       .where(and(activeQuestionWhere, categoryWhere(category)))
       .orderBy(sql`md5((${questions.id})::text || ${dayKey})`)
-      .limit(10);
+      .limit(20);
 
     const drillPicked = picked.length
       ? picked
@@ -184,10 +390,10 @@ app.get('/drills/daily', async (c) => {
             text: questions.questionText,
           })
           .from(questions)
-          .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+          .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
           .where(activeQuestionWhere)
           .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'fallback')`)
-          .limit(10);
+          .limit(20);
 
     const ids = drillPicked.map((r) => r.id);
     const opts = ids.length
@@ -231,9 +437,12 @@ app.get('/drills/daily', async (c) => {
         maxWeightByQuestion[questionKey]?.id ??
         (options[0]?.id ?? null);
 
+      // TEAM_019: ensure subject is never null so the frontend won't default missing subjects to TIU
+      const safeSubject = (r.subject as any) ?? category;
+
       return {
         id: r.id,
-        subject: (r.subject as any) ?? null,
+        subject: safeSubject,
         difficulty: r.difficulty,
         text: r.text,
         image_url: null,
@@ -246,6 +455,15 @@ app.get('/drills/daily', async (c) => {
     if (!questionsPayload.length) {
       console.error('TEAM_008 /drills/daily empty selection', { dayKey, category });
       return c.json({ error: 'insufficient_question_pool' }, 503);
+    }
+
+    if (questionsPayload.length < 20) {
+      console.warn('TEAM_008 /drills/daily insufficient questions for category', { 
+        dayKey, 
+        category, 
+        returned: questionsPayload.length,
+        required: 20 
+      });
     }
 
     return c.json({ dayKey, refreshAt, category, questions: questionsPayload });
@@ -282,7 +500,7 @@ app.get('/quiz/daily', async (c) => {
           text: questions.questionText,
         })
         .from(questions)
-        .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
         .where(and(activeQuestionWhere, categoryWhere(q.code)))
         .orderBy(sql`md5((${questions.id})::text || ${dayKey})`)
         .limit(q.limit);
@@ -301,7 +519,7 @@ app.get('/quiz/daily', async (c) => {
           text: questions.questionText,
         })
         .from(questions)
-        .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
         .where(and(activeQuestionWhere, existingIds.length ? notInArray(questions.id, existingIds) : sql`true`))
         .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'topup')`)
         .limit(remaining);
@@ -317,7 +535,7 @@ app.get('/quiz/daily', async (c) => {
           text: questions.questionText,
         })
         .from(questions)
-        .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
         .where(activeQuestionWhere)
         .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'fallback')`)
         .limit(desiredCount);
@@ -436,7 +654,7 @@ app.get('/questions/random', async (c) => {
           text: questions.questionText,
         })
         .from(questions)
-        .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
         .where(whereCondition);
 
     let rows = category 
@@ -778,12 +996,12 @@ app.get('/exam/:examId/questions', async (c) => {
     const questionRows = await db
       .select({
         id: questions.id,
-        subject: questionCategories.code,
+        subject: questionTopics.code,
         difficulty: questions.difficulty,
         text: questions.questionText,
       })
       .from(questions)
-      .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
       .where(inArray(questions.id, ids));
 
     const byId = new Map<number, any>();
@@ -855,13 +1073,12 @@ app.post('/exam/:examId/submit', async (c) => {
     const questionMetaRows = await db
       .select({
         id: questions.id,
-        // TEAM_013: category codes are often missing in `question_categories.code`; fall back to `questions.question_type` and normalize case
-        code: subjectSelect,
+        code: sql<string | null>`upper(${questionTopics.code})`,
         subcategoryId: questions.subcategoryId,
         subtopicId: questions.subtopicId,
       })
       .from(questions)
-      .leftJoin(questionCategories, eq(questions.categoryId, questionCategories.id))
+      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
       .where(inArray(questions.id, ids));
 
     const metaById = new Map<number, { code: string; subcategoryId: number | null; subtopicId: number | null }>();
@@ -954,12 +1171,10 @@ app.post('/exam/:examId/submit', async (c) => {
         continue;
       }
 
-      // TEAM_013: some datasets don't populate `is_correct`; fall back to max weight option as the correct key
       const correctKey = resolveCorrectOptionKey(opts);
       const isCorrect = !!correctKey && selected === correctKey;
       if (isCorrect) {
         if (code === 'TWK') {
-          // TEAM_013: score as correct-count (1 point per correct) for TWK/TIU
           twk += 1;
           twkCorrect += 1;
         } else if (code === 'TIU') {

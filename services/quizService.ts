@@ -8,8 +8,12 @@ import { apiFetch } from './apiClient';
 // TEAM_005: daily drills helpers and storage (global, single-category rotation)
 
 const SESSION_KEY = 'ikuttes_session_v1';
-const DRILLS_SESSION_KEY = 'ikuttes_drills_session_v1';
+const DRILLS_SESSION_KEY_PREFIX = 'ikuttes_drills_session_v1_';
 const HISTORY_KEY = 'ikuttes_history_v1';
+
+const getDrillSessionKey = (category: 'TIU' | 'TWK' | 'TKP'): string => {
+  return `${DRILLS_SESSION_KEY_PREFIX}${category}`;
+};
 
 export const getRandomQuestions = (count: number = 5): Question[] => {
   // Simple shuffle
@@ -277,7 +281,11 @@ export const saveSession = (session: UserSession) => {
 };
 
 export const saveDrillSession = (session: UserSession) => {
-  localStorage.setItem(DRILLS_SESSION_KEY, JSON.stringify(session));
+  if (!session.drillCategory) {
+    throw new Error('Drill session must have a drillCategory');
+  }
+  const key = getDrillSessionKey(session.drillCategory);
+  localStorage.setItem(key, JSON.stringify(session));
 };
 
 export const loadSession = (): UserSession | null => {
@@ -299,17 +307,23 @@ export const loadSession = (): UserSession | null => {
   }
 };
 
-export const loadDrillSession = (): UserSession | null => {
-  const data = localStorage.getItem(DRILLS_SESSION_KEY);
+export const loadDrillSession = (category: 'TIU' | 'TWK' | 'TKP'): UserSession | null => {
+  const key = getDrillSessionKey(category);
+  const data = localStorage.getItem(key);
   if (!data) return null;
   try {
     const parsed = JSON.parse(data) as UserSession;
+    // TEAM_019: legacy drills sessions were 10 questions; discard so we refetch the 20-question daily set
+    if (Array.isArray(parsed?.questionIds) && parsed.questionIds.length === 10) {
+      localStorage.removeItem(key);
+      return null;
+    }
     if (parsed.refreshAt && Number.isFinite(parsed.refreshAt) && Date.now() >= parsed.refreshAt) {
-      localStorage.removeItem(DRILLS_SESSION_KEY);
+      localStorage.removeItem(key);
       return null;
     }
     if (!parsed || !Array.isArray((parsed as any).questions) || !(parsed as any).questions.length) {
-      localStorage.removeItem(DRILLS_SESSION_KEY);
+      localStorage.removeItem(key);
       return null;
     }
     return parsed;
@@ -322,8 +336,17 @@ export const clearSession = () => {
   localStorage.removeItem(SESSION_KEY);
 };
 
-export const clearDrillSession = () => {
-  localStorage.removeItem(DRILLS_SESSION_KEY);
+export const clearDrillSession = (category: 'TIU' | 'TWK' | 'TKP') => {
+  const key = getDrillSessionKey(category);
+  localStorage.removeItem(key);
+};
+
+export const clearAllDrillSessions = () => {
+  const categories: Array<'TIU' | 'TWK' | 'TKP'> = ['TIU', 'TWK', 'TKP'];
+  categories.forEach(category => {
+    const key = getDrillSessionKey(category);
+    localStorage.removeItem(key);
+  });
 };
 
 export const calculateResults = (
@@ -371,5 +394,24 @@ export const getHistory = (): UserSession[] => {
     return JSON.parse(data);
   } catch {
     return [];
+  }
+};
+
+// TEAM_018: migrate old drill session key to per-category keys (one-time migration)
+export const migrateOldDrillSession = () => {
+  const OLD_KEY = 'ikuttes_drills_session_v1';
+  const data = localStorage.getItem(OLD_KEY);
+  if (!data) return;
+  
+  try {
+    const session = JSON.parse(data) as UserSession;
+    if (session.drillCategory && ['TIU', 'TWK', 'TKP'].includes(session.drillCategory)) {
+      const newKey = getDrillSessionKey(session.drillCategory);
+      localStorage.setItem(newKey, data);
+    }
+  } catch (e) {
+    console.warn('Failed to migrate old drill session', e);
+  } finally {
+    localStorage.removeItem(OLD_KEY);
   }
 };

@@ -25,6 +25,12 @@ export const questionSubcategories = pgTable('question_subcategories', {
   name: text('name').notNull(),
 });
 
+export const questionTopics = pgTable('question_topics', {
+  id: integer('id').primaryKey(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+});
+
 export const questions = pgTable('questions', {
   id: integer('id').primaryKey(),
   topicId: integer('topic_id'),
