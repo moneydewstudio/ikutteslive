@@ -14,13 +14,15 @@ import DrillsView from './components/DrillsView';
 import InterstitialAd from './components/InterstitialAd';
 import Button from './components/Button';
 import { syncAuth } from './services/backend';
+import { OnboardingTourProvider } from './src/contexts/OnboardingTourContext';
 
 // TEAM_001: switch Latihan session creation to API-backed questions (Neon via Worker)
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewState>('QUIZ');
+  // TEAM_020: make Drills landing (BONUS) the default first screen
+  const [view, setView] = useState<ViewState>('BONUS');
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [user, setUser] = useState<User | null>(null);
@@ -39,8 +41,14 @@ const App: React.FC = () => {
       if (!raw) return;
 
       const next = raw.toUpperCase() as ViewState;
-      const allowed: ViewState[] = ['QUIZ', 'BONUS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL'];
+      // TEAM_020: allow DRILLS deep link but route to BONUS when category is unknown
+      const allowed: ViewState[] = ['QUIZ', 'BONUS', 'DRILLS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL'];
       if (!allowed.includes(next)) return;
+
+      if (next === 'DRILLS') {
+        setView('BONUS');
+        return;
+      }
 
       setView(next);
     };
@@ -125,6 +133,15 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const handleLatihanClick = useCallback(() => {
+    // TEAM_020: clicking Latihan should resume mid-quiz, but start a new quiz after completion
+    if (session && !session.completedAt) {
+      setView('QUIZ');
+      return;
+    }
+    void handleStartQuiz();
+  }, [session, handleStartQuiz]);
+
   useEffect(() => {
     if (!session?.refreshAt) return;
     const ms = session.refreshAt - Date.now();
@@ -157,8 +174,6 @@ const App: React.FC = () => {
         setSession(calculated);
         setView('RESULTS');
       }
-    } else {
-      handleStartQuiz();
     }
   }, []);
 
@@ -236,48 +251,43 @@ const App: React.FC = () => {
   };
 
   const handleLogoClick = () => {
-    if (session && session.completedAt) {
-      setView('RESULTS');
-    } else if (session) {
-      setView('QUIZ');
-    } else {
-      handleStartQuiz();
-    }
+    // TEAM_020: logo acts as "home" and routes to Drills landing
+    setView('BONUS');
   };
 
   // --- HEADER COMPONENT ---
-  const Header = () => (
-    <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
-        <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
-      </div>
+const Header = () => (
+  <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
+    <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick} data-tour="header-logo">
+      <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
+    </div>
 
-      {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}
-      <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide">
-        <button onClick={handleLogoClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Latihan</button>
-        {/* TEAM_018: repurpose BONUS tab into Drills entry; DRILLS view is internal runner */}
-        <button onClick={() => setView('BONUS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' ? 'text-black' : 'text-gray-400'}`}>Drills</button>
-        <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
-        <button onClick={() => setView('PROFILE')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Statistik</button>
-        {/* TEAM_015: link to Astro blog served under /blog */}
-        <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
-      </nav>
+    {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}
+    <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
+      {/* TEAM_018: repurpose BONUS tab into Drills entry; DRILLS view is internal runner */}
+      <button onClick={() => setView('BONUS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}>Drills</button>
+      <button onClick={handleLatihanClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Latihan</button>
+      <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
+      <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
+      <button onClick={() => setView('PROFILE')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Profil</button>
+      {/* TEAM_015: link to Astro blog served under /blog */}
+    </nav>
 
-      <div>
-        {user && !user.name?.includes('Tamu') ? (
-          <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
-            Profil Saya
-          </Button>
-        ) : (
-          <Button variant="black" size="sm" onClick={() => setShowSignupModal(true)} isLoading={isAuthLoading}>
-            Masuk
-          </Button>
-        )}
-      </div>
-    </header>
-  );
+    <div>
+      {user && !user.name?.includes('Tamu') ? (
+        <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
+          Profil Saya
+        </Button>
+      ) : (
+        <Button variant="black" size="sm" onClick={() => setShowSignupModal(true)} isLoading={isAuthLoading}>
+          Masuk
+        </Button>
+      )}
+    </div>
+  </header>
+);
 
-  const renderContent = () => {
+const renderContent = () => {
     switch (view) {
       case 'BONUS':
         return (
@@ -335,31 +345,42 @@ const App: React.FC = () => {
           <ResultsView session={session} onSignupClick={() => setShowSignupModal(true)} onRetryClick={handleStartQuiz} />
         );
       default:
-        if (session) return renderContent(); 
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
-      <Header />
-      {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
-      <main className="flex-1 flex flex-col w-full min-h-0">
-        {renderContent()}
-      </main>
-      {view !== 'AD_INTERSTITIAL' && (
-        <div className="md:hidden">
-           <BottomNav currentView={view} onChange={setView} />
-        </div>
-      )}
-      {showSignupModal && (
-        <SignupModal
-          onClose={() => setShowSignupModal(false)}
-          onConfirm={handleSignupConfirm}
-          isLoading={isSignupLoading}
-        />
-      )}
-    </div>
+    <OnboardingTourProvider>
+      <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
+        <Header />
+        {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
+        <main className="flex-1 flex flex-col w-full min-h-0">
+          {renderContent()}
+        </main>
+        {view !== 'AD_INTERSTITIAL' && (
+          <div className="md:hidden">
+             <BottomNav
+               currentView={view}
+               onChange={(next) => {
+                 // TEAM_020: centralize Latihan click behavior for bottom nav as well
+                 if (next === 'QUIZ') {
+                   handleLatihanClick();
+                   return;
+                 }
+                 setView(next);
+               }}
+             />
+          </div>
+        )}
+        {showSignupModal && (
+          <SignupModal
+            onClose={() => setShowSignupModal(false)}
+            onConfirm={handleSignupConfirm}
+            isLoading={isSignupLoading}
+          />
+        )}
+      </div>
+    </OnboardingTourProvider>
   );
 };
 

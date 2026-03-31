@@ -26,10 +26,6 @@ const HomeView: React.FC<HomeViewProps> = ({ user, onStartQuiz, onNavigate }) =>
                </svg>
             </span>
           </h1>
-          <p className="text-lg text-gray-600 mb-10 max-w-md leading-relaxed">
-            Ikuttes is the platform where you can test, track, and improve your CPNS readiness. 
-            Frictionless assessment for rapid results.
-          </p>
           <div className="flex flex-wrap gap-4">
             <Button onClick={onStartQuiz} size="lg" withArrow variant="black">
               Start Quiz

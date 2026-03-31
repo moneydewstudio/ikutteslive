@@ -6,6 +6,14 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: #FDF8F3;
   color: #111111;
+  /* TEAM_020: prevent pull-to-refresh on mobile */
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+html {
+  /* TEAM_020: prevent pull-to-refresh on mobile */
+  overscroll-behavior: none;
 }
 
 /* Custom scrollbar */

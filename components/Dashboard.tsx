@@ -13,8 +13,9 @@ import {
   PolarRadiusAxis,
   Radar,
 } from 'recharts';
-import { TrendingUp, Lock, ChevronRight } from 'lucide-react';
+import { TrendingUp, Lock, ChevronRight, BookOpen } from 'lucide-react';
 import { apiFetch } from '../services/apiClient';
+import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
 
 interface DashboardProps {
   user: User;
@@ -40,6 +41,7 @@ type RadarPoint = {
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => {
+  const { replayTour } = useOnboardingTour();
   const chartData = useMemo(
     () =>
       history
@@ -154,14 +156,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
         <div className="md:w-1/3 flex flex-col border-b md:border-b-0 md:border-r border-black bg-bg">
             
             {/* User Profile Cell */}
-            <div className="p-6 border-b border-black flex items-center gap-4">
-               <div className="w-16 h-16 rounded-full border border-black bg-brand-cream overflow-hidden">
-                   <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+            <div className="p-6 border-b border-black flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full border border-black bg-brand-cream overflow-hidden">
+                      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+                  </div>
+                  <div>
+                      <h2 className="font-black text-xl">{user.name || 'Tamu'}</h2>
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-500">{isPremium ? 'Akun Premium' : 'Akun Gratis'}</span>
+                  </div>
                </div>
-               <div>
-                   <h2 className="font-black text-xl">{user.name || 'Tamu'}</h2>
-                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500">{isPremium ? 'Akun Premium' : 'Akun Gratis'}</span>
-               </div>
+               <Button variant="outline" size="sm" onClick={replayTour}>
+                 <BookOpen className="w-4 h-4 mr-2" />
+                 Panduan
+               </Button>
             </div>
 
             {/* Radar Charts (Premium) */}

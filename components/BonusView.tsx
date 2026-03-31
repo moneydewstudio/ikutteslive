@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BonusCard, { Pack } from './BonusCard';
 import { User } from '../types';
 import * as QuizService from '../services/quizService';
+import OnboardingTour from '../src/components/OnboardingTour';
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
@@ -74,7 +75,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" data-tour="drills-cards">
         
           {packs.map((pack) => (
               <BonusCard
@@ -91,6 +92,9 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
               />
           ))}
       </div>
+      
+      {/* Onboarding Tour - only renders on first visit */}
+      <OnboardingTour />
     </div>
   );
 };

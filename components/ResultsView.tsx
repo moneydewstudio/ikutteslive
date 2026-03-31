@@ -10,6 +10,7 @@ import { toPng } from 'html-to-image';
 import { SHARE_CAPTION, SHARE_LINK_QUIZ } from '../src/constants/share';
 import type { DailyQuizShareData } from '../src/types/share';
 import { waitForCardAssets } from '../src/utils/share';
+import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
 
 // TEAM_001: render results from session-embedded API questions instead of placeholder pool
 
@@ -28,6 +29,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
   const [showShareModal, setShowShareModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const autoShareTriggeredRef = useRef<string | null>(null); // Guard to prevent repeated auto-triggers per session.id
+  const { isTourActive } = useOnboardingTour();
 
   const questions = getQuestionsForSession(session);
   const correctAnswers = session.score;
@@ -192,8 +194,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
   };
 
   // Auto-open share modal after 1.5s on ResultsView mount (once per session.id)
+  // Suppress when onboarding tour is active to avoid conflicts
   useEffect(() => {
     if (autoShareTriggeredRef.current === session.id) return;
+    if (isTourActive) return; // Don't auto-open share modal during tour
 
     const timer = setTimeout(() => {
       autoShareTriggeredRef.current = session.id;
@@ -218,7 +222,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [session.id, generateImage]);
+  }, [session.id, generateImage, isTourActive]);
 
   return (
     <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
