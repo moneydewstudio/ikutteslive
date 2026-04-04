@@ -1,0 +1,2 @@
+# TEAM_022: Redirect ads.txt to Ezoic Ads.txt Manager
+/ads.txt https://srv.adstxtmanager.com/19390/ikuttes.my.id 301
