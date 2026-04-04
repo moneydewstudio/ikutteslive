@@ -60,16 +60,15 @@ const App: React.FC = () => {
 
   // Ezoic: refresh ads on SPA navigation (view change), but not for interstitial
   useEffect(() => {
-    if (
-      import.meta.env.VITE_FEATURE_EZOIC === 'true' &&
-      window.ezstandalone &&
-      window.ezstandalone.cmd &&
-      view !== 'AD_INTERSTITIAL'
-    ) {
-      window.ezstandalone.cmd.push(() => {
-        window.ezstandalone.showAds();
-      });
-    }
+    if (import.meta.env.VITE_FEATURE_EZOIC !== 'true') return;
+    if (view === 'AD_INTERSTITIAL') return;
+
+    const ez = window.ezstandalone;
+    if (!ez || !ez.cmd) return;
+
+    ez.cmd.push(() => {
+      ez.showAds();
+    });
   }, [view]);
 
   // AUTH LISTENER
