@@ -30,6 +30,18 @@ const ogImage = 'https://ikuttes.my.id/blog/og-default.svg';
 <!doctype html>
 <html lang="id">
   <head>
+    <!-- Ezoic Privacy/CMP Scripts (must load first) -->
+    <script data-cfasync="false" src="https://cmp.gatekeeperconsent.com/min.js"></script>
+    <script data-cfasync="false" src="https://the.gatekeeperconsent.com/cmp.min.js"></script>
+
+    <!-- Ezoic Standalone Scripts -->
+    <script>
+      window.ezstandalone = window.ezstandalone || {};
+      ezstandalone.cmd = ezstandalone.cmd || [];
+    </script>
+    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>
+    <script src="//ezoicanalytics.com/analytics.js"></script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -55,12 +67,6 @@ const ogImage = 'https://ikuttes.my.id/blog/og-default.svg';
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-
-    <script 
-      async 
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1577646736137540" 
-      crossorigin="anonymous"
-    ></script>
 
     {schema.map((value) => (
       <script type="application/ld+json" set:html={JSON.stringify(value)} />

@@ -58,6 +58,20 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', applyViewFromUrl);
   }, []);
 
+  // Ezoic: refresh ads on SPA navigation (view change), but not for interstitial
+  useEffect(() => {
+    if (
+      import.meta.env.VITE_FEATURE_EZOIC === 'true' &&
+      window.ezstandalone &&
+      window.ezstandalone.cmd &&
+      view !== 'AD_INTERSTITIAL'
+    ) {
+      window.ezstandalone.cmd.push(() => {
+        window.ezstandalone.showAds();
+      });
+    }
+  }, [view]);
+
   // AUTH LISTENER
   useEffect(() => {
     let isMounting = true;
@@ -168,13 +182,13 @@ const App: React.FC = () => {
       const answeredCount = Object.keys(savedSession.answers).length;
       if (answeredCount < savedSession.questionIds.length) {
         setCurrentQuestionIdx(answeredCount);
-        setView('QUIZ');
       } else {
         const calculated = QuizService.calculateResults(savedSession);
         setSession(calculated);
-        setView('RESULTS');
       }
     }
+    // Only auto-route to quiz/results if user explicitly navigates there
+    // Default view remains BONUS unless changed by user action
   }, []);
 
   const handleOptionSelect = (optionId: string) => {

@@ -6,6 +6,25 @@ const posts: CreatePostInput[] = [
     hub: 'tiu',
     slug: 'first-post',
     keyword: 'keyword1',
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     intent: 'practice',
     title: 'First Post Title',
     metaDescription: 'Description for first post...',

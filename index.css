@@ -7,7 +7,7 @@ body {
   background-color: #FDF8F3;
   color: #111111;
   /* TEAM_020: prevent pull-to-refresh on mobile */
-  touch-action: none;
+  touch-action: pan-y;
   overscroll-behavior: none;
 }
 

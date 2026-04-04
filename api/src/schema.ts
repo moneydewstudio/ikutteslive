@@ -14,6 +14,7 @@ export const users = pgTable('users', {
 
 export const questionCategories = pgTable('question_categories', {
   id: integer('id').primaryKey(),
+  topicId: integer('topic_id').references(() => questionTopics.id),
   code: text('code').notNull(),
   name: text('name').notNull(),
 });

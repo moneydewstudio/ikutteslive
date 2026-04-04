@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { Clock, Calendar, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2, Share2 } from 'lucide-react';
 import Button from './Button';
 import QuizCard from './QuizCard';
+import InterstitialAd from './InterstitialAd';
 import { Question } from '../types';
 import * as QuizService from '../services/quizService';
 import ShareResultModal from './ShareResultModal';
@@ -14,6 +15,16 @@ import { waitForCardAssets } from '../src/utils/share';
 // TEAM_004: connect Tryout (SKD) UI to server endpoints (free now; paywall-ready server-side)
 
 // TEAM_008: use the same QuizService+apiFetch pattern as daily quiz/drills for tryout start/fetch/submit
+
+// Extracted boundary check for testability
+export const shouldShowInterstitial = (
+  currentIndex: number,
+  lastInterstitialAtIndex: number | null
+): boolean => {
+  const boundaries = [20, 40, 60, 80, 100];
+  const nextIndex = currentIndex + 1;
+  return boundaries.includes(nextIndex) && lastInterstitialAtIndex !== currentIndex;
+};
 
 interface ScoreResult {
   totalScore: number;
@@ -84,6 +95,10 @@ const TryoutView: React.FC = () => {
   const [shareImageState, setShareImageState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [showShareModal, setShowShareModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const [isInterstitialOpen, setIsInterstitialOpen] = useState(false);
+  const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+  const [lastInterstitialAtIndex, setLastInterstitialAtIndex] = useState<number | null>(null);
 
   const resetTryout = useCallback(() => {
     setResult(null);
@@ -223,11 +238,17 @@ const TryoutView: React.FC = () => {
   }, [questions, currentIndex]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+    if (currentIndex >= questions.length - 1) return;
+    if (shouldShowInterstitial(currentIndex, lastInterstitialAtIndex)) {
+      const nextIndex = currentIndex + 1;
+      setPendingIndex(nextIndex);
+      setLastInterstitialAtIndex(currentIndex);
+      setIsInterstitialOpen(true);
+      return; // do NOT advance
     }
-  }, [currentIndex, questions.length]);
-  
+    setCurrentIndex(currentIndex + 1);
+  }, [currentIndex, questions.length, lastInterstitialAtIndex]);
+
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
@@ -253,6 +274,14 @@ const TryoutView: React.FC = () => {
     resetTryout();
     void startTryout();
   }, [resetTryout, startTryout]);
+
+  const handleInterstitialClose = useCallback(() => {
+    setIsInterstitialOpen(false);
+    if (pendingIndex != null) {
+      setCurrentIndex(pendingIndex);
+      setPendingIndex(null);
+    }
+  }, [pendingIndex]);
 
   const generateImage = useCallback(async (): Promise<string | null> => {
     const node = cardRef.current;
@@ -409,33 +438,10 @@ const TryoutView: React.FC = () => {
                  <div className="absolute -bottom-20 -right-20 w-64 h-64 border-[40px] border-black opacity-10 rounded-full"></div>
              </div>
              {/* Right: Info */}
-             <div className="flex flex-col bg-white">
-                 <div className="flex-1 border-b border-black p-8 flex flex-col justify-center">
-                     <h3 className="text-xl font-black mb-6 flex items-center gap-2">
-                         <Calendar className="w-5 h-5" /> Jadwal
-                     </h3>
-                     <div className="space-y-4">
-                         {[1, 2, 3].map(i => (
-                             <div key={i} className="flex items-center justify-between p-4 border border-black hover:bg-gray-50 cursor-pointer transition-colors group">
-                                 <div>
-                                     <div className="font-black text-lg">Gelombang {i}</div>
-                                     <div className="text-xs text-gray-500 font-bold">10 Okt 2024 • 09:00 WIB</div>
-                                 </div>
-                                 <ChevronRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-                             </div>
-                         ))}
-                     </div>
-                 </div>
-                 <div className="h-1/3 bg-brand-lime p-8 flex items-center justify-between">
-                     <div>
-                         <div className="text-xs font-black uppercase tracking-widest mb-1">Peserta</div>
-                         <div className="text-4xl font-black">1,240</div>
-                     </div>
-                     <div className="h-12 w-12 bg-black text-brand-lime flex items-center justify-center rounded-full">
-                         <ArrowUpRight className="w-6 h-6" />
-                     </div>
-                 </div>
-             </div>
+            <div className="flex flex-col bg-white">
+              {/* Removed: schedule and participants sections until real data exists */}
+              <div className="flex-1" />
+            </div>
          </div>
       </div>
     );
@@ -459,6 +465,17 @@ const TryoutView: React.FC = () => {
   // TEAM_013: allow Tryout overlay to scroll on mobile only (desktop keeps fixed layout)
   return (
     <div className="fixed inset-0 z-[100] bg-gray-100 flex flex-col font-sans overflow-y-auto md:overflow-hidden">
+      
+      {/* Interstitial Ad Overlay */}
+      {isInterstitialOpen && (
+        <InterstitialAd
+          onClose={handleInterstitialClose}
+          onGoPro={() => {
+            // TODO: navigate to premium page or show upgrade modal
+            console.log('Go to Premium from interstitial');
+          }}
+        />
+      )}
       
       {/* RESULT MODAL */}
       {result && (

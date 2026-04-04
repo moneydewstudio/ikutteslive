@@ -849,21 +849,23 @@ app.post('/exam/start', async (c) => {
   try {
     const db = await getDb(c.env);
 
-    const categoryRows = await db
-      .select({ id: questionCategories.id, code: questionCategories.code })
-      .from(questionCategories)
-      .where(inArray(questionCategories.code, ['TWK', 'TIU', 'TKP']));
-
-    const categoryIdByCode = new Map<string, number>();
-    for (const r of categoryRows as any[]) categoryIdByCode.set(String(r.code), Number(r.id));
-
+    // Topic-based selection with quotas: TWK=30, TIU=35, TKP=45
     const quotas: Record<string, number> = { TWK: 30, TIU: 35, TKP: 45 };
     const orderedCodes: Array<'TWK' | 'TIU' | 'TKP'> = ['TWK', 'TIU', 'TKP'];
-
     const pickedIds: number[] = [];
 
-    // TEAM_008: DB may not contain TWK/TIU/TKP category labels yet; fall back to a deterministic active-question pool
-    if ((categoryRows as any[]).length === 0) {
+    // Get topic rows for TWK/TIU/TKP
+    const topicRows = await db
+      .select({ id: questionTopics.id, code: questionTopics.code })
+      .from(questionTopics)
+      .where(inArray(questionTopics.code, orderedCodes));
+
+    const topicIdByCode = new Map<string, number>();
+    for (const r of topicRows as any[]) topicIdByCode.set(String(r.code), Number(r.id));
+
+    // TEAM_008: Fallback if topics don't exist yet
+    if (topicRows.length === 0) {
+      console.warn('TEAM_008 No topics found, falling back to active questions');
       const fallback = await db
         .select({ id: questions.id })
         .from(questions)
@@ -874,27 +876,34 @@ app.post('/exam/start', async (c) => {
     }
 
     for (const code of orderedCodes) {
-      const categoryId = categoryIdByCode.get(code);
-      if (!categoryId) continue;
+      const topicId = topicIdByCode.get(code);
+      if (!topicId) continue;
 
+      const quota = quotas[code];
+
+      // Get subcategories indirectly: topics -> categories -> subcategories
       const subcats = await db
         .select({ id: questionSubcategories.id })
         .from(questionSubcategories)
-        .where(eq(questionSubcategories.categoryId, categoryId));
+        .innerJoin(questionCategories, eq(questionSubcategories.categoryId, questionCategories.id))
+        .where(eq(questionCategories.topicId, topicId))
+        .orderBy(questionSubcategories.id); // deterministic ordering
 
       const subIds = (subcats as any[]).map((s) => Number(s.id)).filter((n) => Number.isFinite(n));
-      const quota = quotas[code];
+
       if (!subIds.length) {
+        // Fallback: pick directly from topic if no subcategories
         const fallback = await db
           .select({ id: questions.id })
           .from(questions)
-          .where(and(eq(questions.categoryId, categoryId), eq(questions.isActive, true)))
+          .where(and(eq(questions.topicId, topicId), eq(questions.isActive, true)))
           .orderBy(sql`md5((${questions.id})::text || ${seed})`)
           .limit(quota);
         pickedIds.push(...(fallback as any[]).map((q) => Number(q.id)));
         continue;
       }
 
+      // Batched selection to avoid N+1 queries
       const base = Math.floor(quota / subIds.length);
       let remainder = quota % subIds.length;
       let missing = 0;
@@ -917,12 +926,13 @@ app.post('/exam/start', async (c) => {
       }
 
       if (missing > 0) {
+        // Fill missing from same topic (maintains topic purity)
         const extra = await db
           .select({ id: questions.id })
           .from(questions)
           .where(
             and(
-              eq(questions.categoryId, categoryId),
+              eq(questions.topicId, topicId),
               eq(questions.isActive, true),
               pickedIds.length ? notInArray(questions.id, pickedIds) : sql`true`
             )
@@ -933,9 +943,10 @@ app.post('/exam/start', async (c) => {
       }
     }
 
-    // TEAM_008: when category-linked pools are empty, top-up from any active questions so tryout can start
+    // Final fallback: cross-topic (violates purity but ensures tryout can start)
     if (pickedIds.length < 110) {
       const remaining = 110 - pickedIds.length;
+      console.warn('TEAM_008 Using cross-topic fallback, purity violated');
       const topup = await db
         .select({ id: questions.id })
         .from(questions)

@@ -1,5 +1,6 @@
 ---
 // TEAM_010: render programmatic content blocks without Markdown parsing
+// TEAM_022: add Ezoic mid-content placement (201) after first paragraph
 import type { ContentBlock } from '../../lib/blogContent';
 import CtaCard from '../global/CtaCard.astro';
 
@@ -11,9 +12,24 @@ const { blocks } = Astro.props;
 ---
 
 <div class="space-y-5">
-  {blocks.map((block) => {
+  {blocks.map((block, idx) => {
     if (block.type === 'paragraph') {
-      return <p class="leading-relaxed text-black/90">{block.text}</p>;
+      const rendered = <p class="leading-relaxed text-black/90">{block.text}</p>;
+      // Insert Ezoic mid-content ad after the first paragraph only
+      if (idx === 0) {
+        return (
+          <>
+            {rendered}
+            <div id="ezoic-pub-ad-placeholder-201"></div>
+            <script is:inline>
+              if (typeof window !== 'undefined' && window.ezstandalone && window.ezstandalone.cmd) {
+                window.ezstandalone.cmd.push(() => window.ezstandalone.showAds(201));
+              }
+            </script>
+          </>
+        );
+      }
+      return rendered;
     }
     if (block.type === 'heading') {
       return block.level === 2 ? (

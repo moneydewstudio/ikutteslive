@@ -1,1 +1,4 @@
+# TEAM_022: EzoicAds integration (replace with actual Ezoic-provided entries when available)
 google.com, pub-1577646736137540, DIRECT, f08c47fec0942fa0
+# Example Ezoic entries (to be replaced by real entries from Ezoic dashboard)
+# ezoic.com, DIRECT, # REPLACE_WITH_EZOIC_VALUE

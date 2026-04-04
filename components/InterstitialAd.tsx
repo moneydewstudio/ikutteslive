@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from './Button';
 import { X, ShieldCheck, Zap } from 'lucide-react';
-import { AD_CONFIG } from '../src/utils/adConfig';
-import AdSenseAd from '../src/components/AdSenseAd';
+import EzoicPlaceholder from '../src/components/EzoicPlaceholder';
 
 interface InterstitialAdProps {
   onClose: () => void;
@@ -14,7 +13,10 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
   const [timeLeft, setTimeLeft] = useState(5);
   const [canSkip, setCanSkip] = useState(false);
   const [adFailed, setAdFailed] = useState(false);
-  const useRealAds = import.meta.env.VITE_FEATURE_ADSENSE === 'true' && AD_CONFIG.slots.interstitial;
+  const useRealAds =
+    import.meta.env.VITE_FEATURE_EZOIC === 'true' &&
+    !!import.meta.env.VITE_EZOIC_INTERSTITIAL_PLACEMENT_ID;
+  const placementId = Number(import.meta.env.VITE_EZOIC_INTERSTITIAL_PLACEMENT_ID) || 101;
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -47,12 +49,10 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
 
        {/* Ad Container */}
        {useRealAds && !adFailed ? (
-         <AdSenseAd
+         <EzoicPlaceholder
+           placementId={placementId}
+           onFallback={() => setAdFailed(true)}
            className="w-full max-w-sm bg-white rounded-none border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] overflow-hidden"
-           slot={AD_CONFIG.slots.interstitial}
-           format="rectangle"
-           onAdLoaded={() => console.log('[Ad] Loaded')}
-           onAdFailed={() => setAdFailed(true)}
          />
        ) : (
          <div className="w-full max-w-sm bg-white rounded-none border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] overflow-hidden flex flex-col relative">
@@ -60,7 +60,7 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
            {/* Ad Badge */}
            <div className="bg-gray-100 px-3 py-1 text-[10px] font-black uppercase text-gray-400 flex justify-between border-b border-gray-200">
               <span>Advertisement</span>
-              <span>Google Ads</span>
+              <span>Ezoic Ads</span>
            </div>
 
            {/* Main Ad Visual (Premium CTA) */}
