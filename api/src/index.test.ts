@@ -23,7 +23,7 @@ describe('api smoke', () => {
     } as any);
 
     expect(res.status).toBe(403);
-    const json = await res.json();
+    const json = (await res.json()) as any;
     expect(json?.code).toBe('PREMIUM_REQUIRED');
   });
 
@@ -34,7 +34,7 @@ describe('api smoke', () => {
     } as any);
 
     expect(res.status).toBe(403);
-    const json = await res.json();
+    const json = (await res.json()) as any;
     expect(json?.code).toBe('PREMIUM_REQUIRED');
   });
 });

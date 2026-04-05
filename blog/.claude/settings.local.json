@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p ~/.ssh)",
+      "Bash(ssh-keyscan -H github.com)",
+      "WebFetch(domain:ikuttes.my.id)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

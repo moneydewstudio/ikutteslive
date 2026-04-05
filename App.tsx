@@ -14,7 +14,9 @@ import DrillsView from './components/DrillsView';
 import InterstitialAd from './components/InterstitialAd';
 import Button from './components/Button';
 import { syncAuth } from './services/backend';
+import { recordAnswerEvent } from './services/userEvents';
 import { OnboardingTourProvider } from './src/contexts/OnboardingTourContext';
+import AdminPayments from './components/AdminPayments';
 
 // TEAM_001: switch Latihan session creation to API-backed questions (Neon via Worker)
 
@@ -33,6 +35,20 @@ const App: React.FC = () => {
   const [isSignupLoading, setIsSignupLoading] = useState(false);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
 
+  const refreshPremium = useCallback(async () => {
+    try {
+      const synced = await syncAuth();
+      const nextIsPro = !!(synced as any)?.is_premium;
+      setUser((prev) => {
+        if (!prev) return prev;
+        if (prev.isPro === nextIsPro) return prev;
+        return { ...prev, isPro: nextIsPro };
+      });
+    } catch (e) {
+      console.warn('TEAM_024 premium refresh failed', e);
+    }
+  }, []);
+
   // TEAM_016: allow deep-linking into SPA sections via URL param (e.g. /?view=DRILLS)
   useEffect(() => {
     const applyViewFromUrl = () => {
@@ -42,8 +58,14 @@ const App: React.FC = () => {
 
       const next = raw.toUpperCase() as ViewState;
       // TEAM_020: allow DRILLS deep link but route to BONUS when category is unknown
-      const allowed: ViewState[] = ['QUIZ', 'BONUS', 'DRILLS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL'];
+      const allowed: ViewState[] = ['QUIZ', 'BONUS', 'DRILLS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL', 'ADMIN_PAYMENTS'];
       if (!allowed.includes(next)) return;
+
+      // TEAM_024: admin payments panel is a hidden UI entry; deep link must also be blocked unless the email matches.
+      if (next === 'ADMIN_PAYMENTS') {
+        const email = user?.email ?? '';
+        if (email !== 'pojok.sepak@gmail.com') return;
+      }
 
       if (next === 'DRILLS') {
         setView('BONUS');
@@ -56,7 +78,7 @@ const App: React.FC = () => {
     applyViewFromUrl();
     window.addEventListener('popstate', applyViewFromUrl);
     return () => window.removeEventListener('popstate', applyViewFromUrl);
-  }, []);
+  }, [user?.email]);
 
   // Ezoic: refresh ads on SPA navigation (view change), but not for interstitial
   useEffect(() => {
@@ -193,12 +215,21 @@ const App: React.FC = () => {
   const handleOptionSelect = (optionId: string) => {
     if (!session) return;
     const currentQId = session.questionIds[currentQuestionIdx];
+    const currentQ = QuizService.getQuestionsForSession(session).find((q) => q.id === currentQId);
     const updatedSession = {
       ...session,
       answers: { ...session.answers, [currentQId]: optionId }
     };
     setSession(updatedSession);
     QuizService.saveSession(updatedSession);
+
+    if (currentQ) {
+      // TEAM_025: fire-and-forget answer telemetry for server-side counters.
+      void recordAnswerEvent({
+        questionId: currentQId,
+        isCorrect: optionId === currentQ.correct_option_id,
+      }).catch(() => null);
+    }
 
     setTimeout(() => {
       if (currentQuestionIdx < session.questionIds.length - 1) {
@@ -288,9 +319,16 @@ const Header = () => (
 
     <div>
       {user && !user.name?.includes('Tamu') ? (
-        <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
-          Profil Saya
-        </Button>
+        <div className="flex items-center gap-2">
+          {user?.email === 'pojok.sepak@gmail.com' ? (
+            <Button variant="outline" size="sm" onClick={() => setView('ADMIN_PAYMENTS')}>
+              Admin
+            </Button>
+          ) : null}
+          <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
+            Profil Saya
+          </Button>
+        </div>
       ) : (
         <Button variant="black" size="sm" onClick={() => setShowSignupModal(true)} isLoading={isAuthLoading}>
           Masuk
@@ -314,11 +352,19 @@ const renderContent = () => {
           />
         );
       case 'DRILLS':
-        return <DrillsView onSignupClick={() => setShowSignupModal(true)} category={selectedDrillCategory ?? undefined} />;
+        return (
+          <DrillsView
+            onSignupClick={() => setShowSignupModal(true)}
+            category={selectedDrillCategory ?? undefined}
+            onPremiumActivated={refreshPremium}
+          />
+        );
       case 'TRYOUT':
         return <TryoutView />;
       case 'PROFILE':
         return <Dashboard user={user || { id: '', isPro: false, streak: 0 }} history={QuizService.getHistory()} onStartQuiz={handleStartQuiz} />;
+      case 'ADMIN_PAYMENTS':
+        return <AdminPayments adminEmail="pojok.sepak@gmail.com" userEmail={user?.email} />;
       case 'QUIZ':
         if (!session) return null;
         const questions = QuizService.getQuestionsForSession(session);
@@ -355,7 +401,12 @@ const renderContent = () => {
       case 'RESULTS':
         if (!session) return null;
         return (
-          <ResultsView session={session} onSignupClick={() => setShowSignupModal(true)} onRetryClick={handleStartQuiz} />
+          <ResultsView
+            session={session}
+            onSignupClick={() => setShowSignupModal(true)}
+            onRetryClick={handleStartQuiz}
+            onPremiumActivated={refreshPremium}
+          />
         );
       default:
         return null;

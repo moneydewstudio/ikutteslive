@@ -8,6 +8,13 @@ export const users = pgTable('users', {
   name: text('name'),
   isPremium: boolean('is_premium').default(false).notNull(),
   premiumUntil: timestamp('premium_until'),
+  // TEAM_023: monetization/purchase fields for static-QRIS premium entitlement
+  purchaseCount: integer('purchase_count').default(0).notNull(),
+  lastPurchaseType: text('last_purchase_type'),
+  firstPaywallSeenAt: timestamp('first_paywall_seen_at'),
+  sessionsCount: integer('sessions_count').default(0).notNull(),
+  questionsAnsweredTotal: integer('questions_answered_total').default(0).notNull(),
+  wrongStreak: integer('wrong_streak').default(0).notNull(),
   streak: integer('streak').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -93,5 +100,33 @@ export const tryoutAttemptItems = pgTable('tryout_attempt_items', {
   isCorrect: boolean('is_correct'),
   selectedWeight: integer('selected_weight'),
   maxWeight: integer('max_weight'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// TEAM_023: static-QRIS payments (manual-first matching)
+export const payments = pgTable('payments', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id).notNull(),
+  planType: text('plan_type').notNull(),
+  baseAmount: integer('base_amount').notNull(),
+  uniqueSuffix: integer('unique_suffix').notNull(),
+  amountExpected: integer('amount_expected').notNull(),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  confirmedBy: text('confirmed_by'),
+  userClaimedAt: timestamp('user_claimed_at', { withTimezone: true }),
+  adminNote: text('admin_note'),
+  transactionRef: text('transaction_ref'),
+});
+
+// TEAM_023: minimal admin audit trail for manual confirm/cancel/expire actions
+export const paymentAdminActions = pgTable('payment_admin_actions', {
+  id: text('id').primaryKey(),
+  paymentId: text('payment_id').references(() => payments.id).notNull(),
+  adminId: text('admin_id').notNull(),
+  action: text('action').notNull(),
+  note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

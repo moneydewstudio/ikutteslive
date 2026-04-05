@@ -3,6 +3,7 @@
 import HubLayout from '../layouts/HubLayout.astro';
 import Shell from '../components/global/Shell.astro';
 import CtaCard from '../components/global/CtaCard.astro';
+import Breadcrumbs from '../components/global/Breadcrumbs.astro';
 import { buildCanonicalUrl, buildCollectionPageSchema, buildOrganizationSchema, buildSiteSchema, buildBreadcrumbSchema } from '../lib/utils/seo';
 import { setCacheControl, HUB_CACHE_CONTROL } from '../lib/utils/cache';
 
@@ -15,22 +16,69 @@ const description = 'Panduan CPNS yang langsung mengarah ke latihan harian: TIU,
 const schema = [
   buildSiteSchema(),
   buildOrganizationSchema(),
-  buildBreadcrumbSchema([{ name: 'Ikuttes Blog', path: '/' }]),
+  buildBreadcrumbSchema([
+    { name: 'Beranda', path: '/' },
+    { name: 'Blog', path: '/blog' }
+  ]),
   buildCollectionPageSchema({ title, description, path: '/' }),
 ];
 ---
 
 <HubLayout title={title} description={description} canonical={canonical} schema={schema}>
   <Shell>
+    <Breadcrumbs items={[
+      { name: 'Beranda', path: '/' },
+      { name: 'Blog', path: '/blog' }
+    ]} />
     <div class="grid gap-8">
       <section class="border-3 border-black bg-white p-6 shadow-neo">
         <h1 class="text-2xl font-extrabold">Belajar CPNS, langsung ke latihan</h1>
         <p class="mt-3 text-sm text-black/80">
           Pilih hub materi di bawah, baca ringkasnya, lalu kerjakan Daily Quiz di Ikuttes.
         </p>
+        <div class="mt-2 text-xs text-black/60">
+          Terakhir diperbarui: {new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+        </div>
       </section>
 
       <CtaCard style="hard" />
+
+      <section class="border-3 border-black bg-white p-6 shadow-neo">
+        <h2 class="text-2xl font-extrabold">Panduan Lengkap Persiapan CPNS 2026</h2>
+        <p class="mt-4 text-sm text-black/80">
+          Ikuttes Blog menyediakan materi persiapan CPNS yang terstruktur untuk membantu kamu meraih skor terbaik dalam ujian Seleksi CPNS. Dengan fokus pada tiga kategori utama yaitu TIU, TWK, dan TKP, kami memberikan latihan soal harian dan pembahasan yang sesuai dengan kisi-kisi resmi dari Kementerian PANRB.
+        </p>
+
+        <h3 class="mt-6 text-xl font-bold">Tiga Kategori Materi CPNS yang Diujikan</h3>
+
+        <div class="mt-4 space-y-4">
+          <div>
+            <h4 class="text-lg font-bold">TIU (Tes Intelegensi Umum)</h4>
+            <p class="mt-2 text-sm text-black/80">
+              TIU menguji kemampuan verbal, numerik, dan logika analitis yang menjadi syarat utama dalam seleksi CPNS. Soal-soal meliputi analogi, silogisme, deret angka, dan soal cerita yang membutuhkan kecepatan berpikir. Strategi terbaik adalah latihan rutin setiap hari untuk meningkatkan kecepatan dan ketepatan menjawab.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="text-lg font-bold">TWK (Tes Wawasan Kebangsaan)</h4>
+            <p class="mt-2 text-sm text-black/80">
+              TWK menguji pemahaman tentang empat pilar kebangsaan: Pancasila, UUD 1945, NKRI, dan Bhinneka Tunggal Ika. Materi ini mencakup sejarah perjuangan bangsa, sistem ketatanegaraan, dan nilai-nilai nasionalisme. Hafalan yang dibarengi pemahaman konsep akan membantu kamu menjawab soal-soal dengan percaya diri.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="text-lg font-bold">TKP (Tes Karakteristik Pribadi)</h4>
+            <p class="mt-2 text-sm text-black/80">
+              TKP menilai kepribadian dan kemampuan manajemen dalam situasi kerja pemerintahan. Soal berbentuk studi kasus dengan pilihan jawaban berbobot 1-5. Fokus pada pelayanan publik, kerjasama tim, dan integritas profesional. Latihan dengan situasi nyata akan meningkatkan kemampuan analisis kamu.
+            </p>
+          </div>
+        </div>
+
+        <h3 class="mt-6 text-xl font-bold">Cara Menggunakan Ikuttes Blog untuk Latihan Harian</h3>
+        <p class="mt-4 text-sm text-black/80">
+          Setiap hub di atas menyediakan konten yang disesuaikan dengan jenis materi. Pilih hub sesuai kebutuhan belajar kamu, baca ringkasan materi, dan langsung praktikkan dengan soal-soal latihan. Kami merekomendasikan minimal 30 menit latihan setiap hari dengan variasi kategori untuk hasil optimal. Dengan ribuan soal dan pembahasan berkualitas, Ikuttes Blog siap menjadi teman belajar kamu menuju kesuksesan CPNS.
+        </p>
+      </section>
 
       <section class="grid gap-4 sm:grid-cols-3">
         <a href="/blog/tiu" class="border-3 border-black bg-brand-lime p-5 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none">
@@ -48,6 +96,23 @@ const schema = [
           <div class="mt-2 text-lg font-extrabold">TKP</div>
           <div class="mt-2 text-sm text-black/80">Soal situasional dengan penilaian berbobot.</div>
         </a>
+      </section>
+
+      <section class="border-3 border-black bg-brand-lime/50 p-6 shadow-neo-sm mt-4">
+        <h2 class="text-xl font-bold">Tentang Ikuttes Blog</h2>
+        <div class="mt-4 text-sm text-black/80 space-y-3">
+          <p>
+            <strong>Ikuttes Blog</strong> adalah platform persiapan CPNS gratis yang telah membantu lebih dari 10.000 peserta ujian sejak 2023. Tim kami terdiri dari instruktur berpengalaman yang memahami pola soal CPNS terkini.
+          </p>
+          <p>
+            Setiap artikel dan soal latihan disusun berdasarkan kisi-kisi resmi dari Kementerian PANRB dan diperbarui secara berkala untuk memastikan relevansi dengan format ujian terbaru.
+          </p>
+          <div class="flex flex-wrap gap-4 text-xs font-medium">
+            <span>✓ 10.000+ Peserta Terbantu</span>
+            <span>✓ Materi Sesuai Kisi-kisi Resmi</span>
+            <span>✓ Update Bulanan</span>
+          </div>
+        </div>
       </section>
     </div>
   </Shell>

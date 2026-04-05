@@ -23,3 +23,15 @@
 - File: `components/QuizCard.tsx`
   Line: 25
   Description: TODO(TEAM_014): Manually verify on mobile that answer options no longer overlap question content.
+
+- File: `db/migrations/20260405_team_023_static_qris_payments.sql`
+  Line: N/A
+  Description: TODO(TEAM_023): Apply static-QRIS payments migration to the Neon DB (adds payments tables + user monetization fields).
+
+- File: `api/` (Cloudflare Worker env)
+  Line: N/A
+  Description: TODO(TEAM_023): Set Worker secret `ADMIN_KEY` for `/admin/payments*` endpoints and document admin SOP (use `x-admin-key`).
+
+- File: `api/` (tests)
+  Line: N/A
+  Description: TODO(TEAM_023): Investigate Vitest unhandled error `write EOF` (tests not discovered) in this Windows environment; fix or document required Node/Wrangler settings.

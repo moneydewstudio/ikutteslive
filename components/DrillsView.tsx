@@ -3,16 +3,18 @@ import QuizCard from './QuizCard';
 import ResultsView from './ResultsView';
 import { UserSession } from '../types';
 import * as QuizService from '../services/quizService';
+import { recordAnswerEvent } from '../services/userEvents';
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
 interface DrillsViewProps {
   onSignupClick: () => void;
   category?: DrillCategory;
+  onPremiumActivated?: () => Promise<void> | void;
 }
 
 // TEAM_005: daily drills view (20 questions, per-category sessions, global per Jakarta day)
-const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category }) => {
+const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, onPremiumActivated }) => {
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -93,12 +95,21 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category }) => {
     (optionId: string) => {
       if (!session) return;
       const currentId = session.questionIds[currentQuestionIdx];
+      const currentQ = questions[currentQuestionIdx];
       const updatedSession = {
         ...session,
         answers: { ...session.answers, [currentId]: optionId },
       };
       setSession(updatedSession);
       QuizService.saveDrillSession(updatedSession);
+
+      if (currentQ) {
+        // TEAM_025: fire-and-forget answer telemetry for server-side counters.
+        void recordAnswerEvent({
+          questionId: currentId,
+          isCorrect: optionId === currentQ.correct_option_id,
+        }).catch(() => null);
+      }
 
       setTimeout(() => {
         if (currentQuestionIdx < session.questionIds.length - 1) {
@@ -110,7 +121,7 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category }) => {
         }
       }, 250);
     },
-    [session, currentQuestionIdx]
+    [session, currentQuestionIdx, questions]
   );
 
   if (isLoading && !session) {
@@ -124,7 +135,14 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category }) => {
   if (!session) return null;
 
   if (session.completedAt) {
-    return <ResultsView session={session} onSignupClick={onSignupClick} onRetryClick={refreshSession} />;
+    return (
+      <ResultsView
+        session={session}
+        onSignupClick={onSignupClick}
+        onRetryClick={refreshSession}
+        onPremiumActivated={onPremiumActivated}
+      />
+    );
   }
 
   return (

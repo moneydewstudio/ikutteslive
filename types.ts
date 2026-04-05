@@ -33,7 +33,7 @@ export interface UserSession {
   completedAt?: number;
 }
 
-export type ViewState = 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'DRILLS' | 'SIGNUP' | 'AD_INTERSTITIAL';
+export type ViewState = 'QUIZ' | 'RESULTS' | 'BONUS' | 'TRYOUT' | 'PROFILE' | 'DRILLS' | 'SIGNUP' | 'AD_INTERSTITIAL' | 'ADMIN_PAYMENTS';
 
 export interface User {
   id: string; // Firebase UID

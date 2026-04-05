@@ -8,6 +8,8 @@ export type AppEnv = {
     TRYOUT_TOKEN_SECRET?: string;
     // TEAM_004: dormant paywall switch; when enabled, tryout endpoints require premium
     TRYOUT_PREMIUM_ENABLED?: string;
+    // TEAM_023: shared secret for admin payment operations (manual QRIS confirmation)
+    ADMIN_KEY?: string;
   };
   Variables: {
     user?: {

@@ -11,6 +11,8 @@ import { SHARE_CAPTION, SHARE_LINK_QUIZ } from '../src/constants/share';
 import type { DailyQuizShareData } from '../src/types/share';
 import { waitForCardAssets } from '../src/utils/share';
 import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
+import PaywallModal from './PaywallModal';
+import PaymentModal from './PaymentModal';
 
 // TEAM_001: render results from session-embedded API questions instead of placeholder pool
 
@@ -18,22 +20,35 @@ interface ResultsViewProps {
   session: UserSession;
   onSignupClick: () => void;
   onRetryClick: () => void;
+  onPremiumActivated?: () => Promise<void> | void;
 }
 
-const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRetryClick }) => {
+const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRetryClick, onPremiumActivated }) => {
   const [openQuestionId, setOpenQuestionId] = useState<string | null>(null);
   const [expState, setExpState] = useState<Record<string, { status: 'idle' | 'loading' | 'ready' | 'locked' | 'error'; text?: string }>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const [shareImageState, setShareImageState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paymentCtx, setPaymentCtx] = useState<{ paymentId: string; planType: '3_day' | '30_day' } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const autoShareTriggeredRef = useRef<string | null>(null); // Guard to prevent repeated auto-triggers per session.id
   const { isTourActive } = useOnboardingTour();
 
-  const questions = getQuestionsForSession(session);
-  const correctAnswers = session.score;
-  const totalQuestions = questions.length;
+  const openPaywall = () => {
+    setShowPaywall(true);
+  };
+
+  const handlePaymentConfirmed = useCallback(async () => {
+    try {
+      await onPremiumActivated?.();
+    } finally {
+      setPaymentCtx(null);
+      setShowPaywall(false);
+      setExpState({});
+    }
+  }, [onPremiumActivated]);
 
   const fetchExplanationIfNeeded = async (id: string) => {
     const state = expState[id]?.status || 'idle';
@@ -180,6 +195,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
     handleShareClick();
   }, [handleShareClick]);
 
+  const questions = getQuestionsForSession(session);
+  const correctAnswers = session.score;
+  const totalQuestions = questions.length;
+
   const percentage = Math.round((correctAnswers / totalQuestions) * 100);
   const readiness = session.readiness >= 80 ? 'Sangat Siap' : session.readiness >= 60 ? 'Siap' : session.readiness >= 40 ? 'Cukup Siap' : 'Perlu Latihan';
   const shareData: DailyQuizShareData = {
@@ -325,7 +344,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
                             return (
                               <div className="flex items-center justify-between gap-3 p-3 border border-black bg-white">
                                 <p className="text-sm font-medium">Fitur Premium. Tingkatkan akun untuk melihat pembahasan.</p>
-                                <Button variant="black" size="sm" onClick={onSignupClick}>Naikkan Akun</Button>
+                                <Button variant="black" size="sm" onClick={openPaywall}>Buka Premium</Button>
                               </div>
                             );
                           }
@@ -368,6 +387,28 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
         onClose={() => setShowShareModal(false)}
         onRetryGenerate={handleRetryGenerate}
       />
+
+      <PaywallModal
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onPaymentCreated={({ paymentId, planType }) => {
+          setShowPaywall(false);
+          setPaymentCtx({ paymentId, planType });
+        }}
+      />
+
+      {paymentCtx ? (
+        <PaymentModal
+          isOpen={!!paymentCtx}
+          paymentId={paymentCtx.paymentId}
+          planType={paymentCtx.planType}
+          onClose={() => setPaymentCtx(null)}
+          onPaymentIdChange={(nextPaymentId) =>
+            setPaymentCtx((prev) => (prev ? { ...prev, paymentId: nextPaymentId } : prev))
+          }
+          onConfirmed={handlePaymentConfirmed}
+        />
+      ) : null}
     </div>
   );
 };

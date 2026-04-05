@@ -24,6 +24,8 @@ import {
   questionSubcategories,
   questionTopics,
   questionExplanations,
+  payments,
+  paymentAdminActions,
   tryoutAttempts,
   tryoutAttemptItems,
 } from './schema';
@@ -54,6 +56,19 @@ export const resolveCorrectOptionKey = (
 };
 
 const app = new Hono<AppEnv>();
+
+// TEAM_025: minimal behavior counters to support offer reveal + future paywall triggers.
+// Non-blocking: if DB update fails, do not break core question delivery.
+const bumpSessionsCountSafe = async (db: Awaited<ReturnType<typeof getDb>>, userId: string) => {
+  try {
+    await db
+      .update(users)
+      .set({ sessionsCount: sql`${users.sessionsCount} + 1` })
+      .where(eq(users.id, userId));
+  } catch {
+    // swallow
+  }
+};
 
 // TEAM_004: rotate daily quiz at 00:00 UTC+07 (Jakarta time) using a stable day key
 const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;
@@ -87,6 +102,35 @@ const getTryoutSecret = (c: any) => {
 };
 const isTryoutPremiumEnabled = (c: any) => String(c.env.TRYOUT_PREMIUM_ENABLED || '').toLowerCase() === 'true';
 
+// TEAM_023: admin auth for manual QRIS confirmation
+const requireAdmin = (c: any) => {
+  const expected = String(c.env.ADMIN_KEY || '');
+  if (!expected) return false;
+  const provided = String(c.req.header('x-admin-key') || '');
+  return provided && provided === expected;
+};
+
+// TEAM_023: premium entitlement is driven by premium_until timestamp
+const isPremiumActive = (premiumUntil: Date | null | undefined) => {
+  if (!premiumUntil) return false;
+  return premiumUntil.getTime() > Date.now();
+};
+
+// TEAM_023: payment constants
+const PAYMENT_EXPIRES_MINUTES = 20;
+type PlanType = '3_day' | '30_day';
+const planBaseAmount = (planType: PlanType) => (planType === '3_day' ? 9900 : 19000);
+const planDurationDays = (planType: PlanType) => (planType === '3_day' ? 3 : 30);
+const randomSuffix = () => 1 + Math.floor(Math.random() * 99);
+const nowPlusMinutes = (minutes: number) => new Date(Date.now() + minutes * 60 * 1000);
+const extendPremiumUntil = (current: Date | null | undefined, planType: PlanType) => {
+  const base = current && current.getTime() > Date.now() ? current : new Date();
+  const d = planDurationDays(planType);
+  return new Date(base.getTime() + d * 24 * 60 * 60 * 1000);
+};
+
+const makeId = () => crypto.randomUUID();
+
 // TEAM_008: avoid empty daily quiz/drills by matching category case-insensitively, falling back to `questions.question_type`, and disabling caching for dynamic question feeds
 const activeQuestionWhere = sql`coalesce(${questions.isActive}, true) = true`;
 // TEAM_019: Phase 2 fix for category leak — filter by topic_id with mapping: 1=TWK, 2=TIU, 3=TKP
@@ -107,6 +151,92 @@ app.use(withUserContext);
 
 app.get('/health', (c) => c.json({ ok: true }));
 
+// TEAM_023: entitlements endpoint (premium + offer visibility)
+app.get('/me/entitlements', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) {
+    return c.json({
+      isPremium: false,
+      premiumExpiresAt: null,
+      offers: [{ planType: '3_day', price: 9900, anchorPrice: 59000 }],
+      paywallTrigger: null,
+    });
+  }
+
+  try {
+    const db = await getDb(c.env);
+    const res = await db
+      .select({
+        premiumUntil: users.premiumUntil,
+        purchaseCount: users.purchaseCount,
+        lastPurchaseType: users.lastPurchaseType,
+        firstPaywallSeenAt: users.firstPaywallSeenAt,
+        sessionsCount: users.sessionsCount,
+        questionsAnsweredTotal: users.questionsAnsweredTotal,
+        wrongStreak: users.wrongStreak,
+      })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+
+    const row = res.length ? res[0] : null;
+
+    // TEAM_025: server-authoritative "first paywall seen" marker.
+    if (row && !row.firstPaywallSeenAt) {
+      try {
+        await db
+          .update(users)
+          .set({ firstPaywallSeenAt: sql`now()` })
+          .where(eq(users.id, user.id));
+      } catch {
+        // swallow
+      }
+    }
+
+    const isPremium = isPremiumActive(row?.premiumUntil);
+    const premiumExpiresAt = row?.premiumUntil ? row.premiumUntil.toISOString() : null;
+
+    const paywallTrigger = (() => {
+      if (!row) return null;
+      if (isPremium) return null;
+
+      const nowMs = Date.now();
+      const untilMs = row.premiumUntil ? row.premiumUntil.getTime() : null;
+      if (untilMs !== null && untilMs <= nowMs && (row.purchaseCount ?? 0) > 0) return 'post_expiry';
+
+      if ((row.wrongStreak ?? 0) >= 3) return 'wrong_streak';
+
+      if ((row.questionsAnsweredTotal ?? 0) >= 50 || (row.sessionsCount ?? 0) >= 2) return 'high_engagement';
+
+      return 'explanation_locked';
+    })();
+
+    const shouldReveal30 =
+      !!row &&
+      ((row.sessionsCount ?? 0) >= 2 ||
+        (row.purchaseCount ?? 0) > 0 ||
+        String(row.lastPurchaseType ?? '') === '3_day' ||
+        (row.questionsAnsweredTotal ?? 0) > 50);
+
+    // Default first paywall exposure shows 3-day only; 30-day can be revealed when rules match.
+    const offers = shouldReveal30
+      ? [
+          { planType: '3_day', price: 9900, anchorPrice: 59000 },
+          { planType: '30_day', price: 19000, anchorPrice: 59000 },
+        ]
+      : [{ planType: '3_day', price: 9900, anchorPrice: 59000 }];
+
+    return c.json({ isPremium, premiumExpiresAt, offers, paywallTrigger });
+  } catch (e) {
+    return c.json({
+      isPremium: false,
+      premiumExpiresAt: null,
+      offers: [{ planType: '3_day', price: 9900, anchorPrice: 59000 }],
+      paywallTrigger: null,
+    });
+  }
+});
+
 app.get('/db/ping', async (c) => {
   try {
     const db = await getDb(c.env);
@@ -114,6 +244,325 @@ app.get('/db/ping', async (c) => {
     return c.json({ ok: true, response: (result.rows?.[0] as { response: string } | undefined)?.response ?? null });
   } catch (error) {
     return c.json({ ok: false, error: error instanceof Error ? error.message : 'unknown error' }, 500);
+  }
+});
+
+// TEAM_023: create payment (static QRIS amount allocation)
+app.post('/payments', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ error: 'unauthorized' }, 401);
+
+  const body = (await c.req.json().catch(() => null)) as { planType?: PlanType } | null;
+  const planType = body?.planType;
+  if (planType !== '3_day' && planType !== '30_day') return c.json({ error: 'invalid_plan_type' }, 400);
+
+  const baseAmount = planBaseAmount(planType);
+  const expiresAt = nowPlusMinutes(PAYMENT_EXPIRES_MINUTES);
+
+  try {
+    const db = await getDb(c.env);
+
+    // Enforce one active pending payment per user: cancel any existing active pending.
+    const existingPending = await db
+      .select({ id: payments.id, expiresAt: payments.expiresAt })
+      .from(payments)
+      .where(and(eq(payments.userId, user.id), eq(payments.status, 'pending')))
+      .orderBy(desc(payments.createdAt))
+      .limit(5);
+
+    for (const p of existingPending) {
+      if (p.expiresAt && p.expiresAt.getTime() > Date.now()) {
+        await db
+          .update(payments)
+          .set({ status: 'cancelled', adminNote: sql`coalesce(${payments.adminNote}, '') || ' cancelled_by_new_payment'` })
+          .where(eq(payments.id, p.id));
+      }
+    }
+
+    // Allocate suffix with advisory lock to reduce race collisions.
+    let tries = 0;
+    while (tries < 20) {
+      tries++;
+      const uniqueSuffix = randomSuffix();
+      const amountExpected = baseAmount + uniqueSuffix;
+
+      // Lock on amount for the duration of this request.
+      await db.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${`qris_amount:${amountExpected}`}))`
+      );
+
+      const collision = await db
+        .select({ id: payments.id, expiresAt: payments.expiresAt })
+        .from(payments)
+        .where(and(eq(payments.amountExpected, amountExpected), eq(payments.status, 'pending')))
+        .limit(1);
+
+      if (collision.length > 0 && collision[0].expiresAt && collision[0].expiresAt.getTime() > Date.now()) {
+        continue;
+      }
+
+      const id = makeId();
+      await db.insert(payments).values({
+        id,
+        userId: user.id,
+        planType,
+        baseAmount,
+        uniqueSuffix,
+        amountExpected,
+        status: 'pending',
+        expiresAt,
+      });
+
+      return c.json({ paymentId: id, amountExpected, expiresAt: expiresAt.toISOString(), status: 'pending' });
+    }
+
+    return c.json({ error: 'busy_try_again' }, 409);
+  } catch (e) {
+    console.error('TEAM_023 /payments create failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+app.get('/payments/:id', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ error: 'unauthorized' }, 401);
+  const id = c.req.param('id');
+
+  try {
+    const db = await getDb(c.env);
+    const res = await db
+      .select({
+        id: payments.id,
+        userId: payments.userId,
+        planType: payments.planType,
+        amountExpected: payments.amountExpected,
+        status: payments.status,
+        createdAt: payments.createdAt,
+        expiresAt: payments.expiresAt,
+        userClaimedAt: payments.userClaimedAt,
+      })
+      .from(payments)
+      .where(eq(payments.id, id))
+      .limit(1);
+
+    if (!res.length) return c.json({ error: 'not_found' }, 404);
+    if (res[0].userId !== user.id) return c.json({ error: 'forbidden' }, 403);
+
+    // Soft-expire on read
+    const row = res[0];
+    if (row.status === 'pending' && row.expiresAt && row.expiresAt.getTime() <= Date.now()) {
+      await db.update(payments).set({ status: 'expired' }).where(eq(payments.id, id));
+      row.status = 'expired';
+    }
+
+    return c.json({
+      id: row.id,
+      planType: row.planType,
+      amountExpected: row.amountExpected,
+      status: row.status,
+      createdAt: row.createdAt?.toISOString?.() ?? null,
+      expiresAt: row.expiresAt?.toISOString?.() ?? null,
+      userClaimedAt: row.userClaimedAt?.toISOString?.() ?? null,
+    });
+  } catch (e) {
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+app.post('/payments/:id/claim', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ error: 'unauthorized' }, 401);
+  const id = c.req.param('id');
+
+  try {
+    const db = await getDb(c.env);
+    const res = await db.select({ userId: payments.userId, status: payments.status }).from(payments).where(eq(payments.id, id)).limit(1);
+    if (!res.length) return c.json({ error: 'not_found' }, 404);
+    if (res[0].userId !== user.id) return c.json({ error: 'forbidden' }, 403);
+
+    if (res[0].status === 'pending') {
+      await db.update(payments).set({ userClaimedAt: new Date() }).where(eq(payments.id, id));
+    }
+
+    return c.json({ ok: true });
+  } catch (e) {
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+app.post('/payments/:id/cancel', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ error: 'unauthorized' }, 401);
+  const id = c.req.param('id');
+
+  try {
+    const db = await getDb(c.env);
+    const res = await db.select({ userId: payments.userId, status: payments.status }).from(payments).where(eq(payments.id, id)).limit(1);
+    if (!res.length) return c.json({ error: 'not_found' }, 404);
+    if (res[0].userId !== user.id) return c.json({ error: 'forbidden' }, 403);
+
+    if (res[0].status === 'pending') {
+      await db.update(payments).set({ status: 'cancelled' }).where(eq(payments.id, id));
+    }
+
+    return c.json({ ok: true });
+  } catch (e) {
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_023: admin operations
+app.get('/admin/payments', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'forbidden' }, 403);
+  const status = String(c.req.query('status') ?? 'pending');
+
+  try {
+    const db = await getDb(c.env);
+    const rows = await db
+      .select({
+        id: payments.id,
+        userId: payments.userId,
+        planType: payments.planType,
+        amountExpected: payments.amountExpected,
+        createdAt: payments.createdAt,
+        expiresAt: payments.expiresAt,
+        status: payments.status,
+        userClaimedAt: payments.userClaimedAt,
+      })
+      .from(payments)
+      .where(eq(payments.status, status))
+      .orderBy(desc(payments.createdAt))
+      .limit(200);
+
+    return c.json({ payments: rows.map((r) => ({
+      id: r.id,
+      user_id: r.userId,
+      plan_type: r.planType,
+      amount_expected: r.amountExpected,
+      status: r.status,
+      created_at: r.createdAt?.toISOString?.() ?? null,
+      expires_at: r.expiresAt?.toISOString?.() ?? null,
+      user_claimed_at: r.userClaimedAt?.toISOString?.() ?? null,
+    })) });
+  } catch (e) {
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+app.post('/admin/payments/:id/confirm', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'forbidden' }, 403);
+  const id = c.req.param('id');
+  const body = (await c.req.json().catch(() => null)) as { adminId?: string; confirmNote?: string; transactionRef?: string } | null;
+  const adminId = String(body?.adminId || 'admin');
+
+  try {
+    const db = await getDb(c.env);
+
+    // TEAM_023: make confirmation idempotent + atomic via a single SQL statement.
+    // - Only transitions pending -> confirmed.
+    // - Extends premium_until from max(now(), premium_until).
+    // - Increments purchase_count and records last_purchase_type.
+    // - Inserts admin audit row.
+    const actionId = makeId();
+    const res = await db.execute(sql`
+      with p0 as (
+        select id, user_id, plan_type, status
+        from payments
+        where id = ${id}
+        limit 1
+      ),
+      p_confirm as (
+        update payments p
+        set
+          status = 'confirmed',
+          confirmed_at = now(),
+          confirmed_by = ${adminId},
+          admin_note = ${body?.confirmNote ?? null},
+          transaction_ref = ${body?.transactionRef ?? null}
+        where p.id = ${id}
+          and p.status = 'pending'
+        returning p.id, p.user_id, p.plan_type
+      ),
+      u_update as (
+        update users u
+        set
+          premium_until = (
+            case
+              when u.premium_until is not null and u.premium_until > now() then u.premium_until
+              else now()
+            end
+          ) + (
+            case
+              when (select plan_type from p_confirm) = '3_day' then interval '3 days'
+              else interval '30 days'
+            end
+          ),
+          purchase_count = coalesce(u.purchase_count, 0) + 1,
+          last_purchase_type = (select plan_type from p_confirm)
+        where u.id = (select user_id from p_confirm)
+        returning u.premium_until as premium_until
+      ),
+      a_insert as (
+        insert into payment_admin_actions (id, payment_id, admin_id, action, note, created_at)
+        select ${actionId}, (select id from p_confirm), ${adminId}, 'confirm', ${body?.confirmNote ?? null}, now()
+        where exists (select 1 from p_confirm)
+        returning id
+      )
+      select
+        (select status from p0) as status_before,
+        (select count(*)::int from p_confirm) as confirmed_count,
+        (select premium_until from u_update) as premium_until;
+    `);
+
+    const row = (res.rows?.[0] as any) ?? null;
+    if (!row) return c.json({ error: 'not_found' }, 404);
+
+    if (String(row.status_before) === 'confirmed') {
+      return c.json({ ok: true, status: 'confirmed' });
+    }
+    if (String(row.status_before) !== 'pending') {
+      return c.json({ error: 'not_confirmable', status: row.status_before }, 409);
+    }
+    if (Number(row.confirmed_count ?? 0) !== 1) {
+      return c.json({ error: 'unavailable' }, 503);
+    }
+
+    return c.json({ ok: true, status: 'confirmed', premium_until: row.premium_until ? new Date(row.premium_until).toISOString() : null });
+  } catch (e) {
+    console.error('TEAM_023 admin confirm failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+app.post('/admin/payments/:id/expire', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'forbidden' }, 403);
+  const id = c.req.param('id');
+  const body = (await c.req.json().catch(() => null)) as { adminId?: string; note?: string } | null;
+  const adminId = String(body?.adminId || 'admin');
+
+  try {
+    const db = await getDb(c.env);
+    await db.update(payments).set({ status: 'expired' }).where(eq(payments.id, id));
+    await db.insert(paymentAdminActions).values({ id: makeId(), paymentId: id, adminId, action: 'expire', note: body?.note ?? null });
+    return c.json({ ok: true });
+  } catch {
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+app.post('/admin/payments/:id/cancel', async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: 'forbidden' }, 403);
+  const id = c.req.param('id');
+  const body = (await c.req.json().catch(() => null)) as { adminId?: string; note?: string } | null;
+  const adminId = String(body?.adminId || 'admin');
+
+  try {
+    const db = await getDb(c.env);
+    await db.update(payments).set({ status: 'cancelled', adminNote: body?.note ?? null }).where(eq(payments.id, id));
+    await db.insert(paymentAdminActions).values({ id: makeId(), paymentId: id, adminId, action: 'cancel', note: body?.note ?? null });
+    return c.json({ ok: true });
+  } catch {
+    return c.json({ error: 'unavailable' }, 503);
   }
 });
 
@@ -164,6 +613,11 @@ app.get('/drills/daily', async (c) => {
 
   try {
     const db = await getDb(c.env);
+    const user = c.get('user');
+    if (user?.id) {
+      void bumpSessionsCountSafe(db, user.id);
+    }
+
     const picked = await db
       .select({
         id: questions.id,
@@ -284,6 +738,11 @@ app.get('/quiz/daily', async (c) => {
 
   try {
     const db = await getDb(c.env);
+    const user = c.get('user');
+    if (user?.id) {
+      void bumpSessionsCountSafe(db, user.id);
+    }
+
     const picked: Array<{ id: number; subject: string | null; difficulty: number; text: string | null }> = [];
 
     const desiredCount = quotas.reduce((acc, q) => acc + q.limit, 0);
@@ -412,7 +871,7 @@ app.post('/auth/sync', async (c) => {
   try {
     const db = await getDb(c.env);
     const existing = await db
-      .select({ id: users.id, isPremium: users.isPremium })
+      .select({ id: users.id, premiumUntil: users.premiumUntil })
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1);
@@ -422,7 +881,8 @@ app.post('/auth/sync', async (c) => {
       return c.json({ userId: user.id, is_premium: false });
     }
 
-    return c.json({ userId: user.id, is_premium: !!existing[0].isPremium });
+    const until = existing[0].premiumUntil;
+    return c.json({ userId: user.id, is_premium: isPremiumActive(until) });
   } catch (e) {
     console.error('TEAM_001 /auth/sync failed', e);
     return c.json({ error: 'unavailable' }, 503);
@@ -435,6 +895,43 @@ app.get('/user/me', (c) => {
   return c.json(user);
 });
 
+// TEAM_025: lightweight user event endpoint for monetization triggers/counters.
+// - increments questions_answered_total
+// - maintains wrong_streak (reset to 0 on correct, +1 on wrong)
+app.post('/events/answer', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ error: 'unauthorized' }, 401);
+
+  const body = (await c.req.json().catch(() => null)) as { questionId?: string; isCorrect?: boolean } | null;
+  const isCorrect = !!body?.isCorrect;
+
+  try {
+    const db = await getDb(c.env);
+
+    // TEAM_025: ensure user row exists even if /auth/sync was not called.
+    await db
+      .insert(users)
+      .values({ id: user.id, email: user.email ?? null })
+      .onConflictDoNothing();
+
+    await db.execute(sql`
+      update users
+      set
+        questions_answered_total = coalesce(questions_answered_total, 0) + 1,
+        wrong_streak = case
+          when ${isCorrect} then 0
+          else coalesce(wrong_streak, 0) + 1
+        end
+      where id = ${user.id}
+    `);
+
+    return c.json({ ok: true });
+  } catch (e) {
+    console.error('TEAM_025 /events/answer failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
 app.get('/questions/random', async (c) => {
   c.header('Cache-Control', 'no-store');
   const limit = Math.max(1, Math.min(50, Number(c.req.query('limit') ?? '5')));
@@ -442,6 +939,11 @@ app.get('/questions/random', async (c) => {
 
   try {
     const db = await getDb(c.env);
+    const user = c.get('user');
+    if (user?.id) {
+      void bumpSessionsCountSafe(db, user.id);
+    }
+
     const makeBase = (whereCondition?: any) =>
       db
         .select({
@@ -520,7 +1022,7 @@ app.get('/explanations/:id', requirePremium, async (c) => {
   const id = c.req.param('id');
   const questionId = Number(id);
   if (!Number.isFinite(questionId)) {
-    return c.json({ error: 'bad_request' }, 400);
+    return c.json({ error: 'invalid_id' }, 400);
   }
   try {
     const db = await getDb(c.env);

@@ -34,8 +34,13 @@ export const withUserContext: MiddlewareHandler<AppEnv> = async (c, next) => {
     let is_premium = false;
     try {
       const db = await getDb({ NEON_DATABASE_URL: c.env.NEON_DATABASE_URL });
-      const res = await db.select({ isPremium: users.isPremium }).from(users).where(eq(users.id, uid)).limit(1);
-      if (res.length > 0) is_premium = !!res[0].isPremium;
+      const res = await db
+        .select({ premiumUntil: users.premiumUntil })
+        .from(users)
+        .where(eq(users.id, uid))
+        .limit(1);
+      const until = res.length ? res[0].premiumUntil : null;
+      is_premium = !!until && until.getTime() > Date.now();
     } catch {
       // swallow errors to avoid blocking requests if DB is not configured locally
     }
