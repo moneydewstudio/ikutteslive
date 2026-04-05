@@ -319,7 +319,8 @@ app.post('/payments', async (c) => {
     return c.json({ error: 'busy_try_again' }, 409);
   } catch (e) {
     console.error('TEAM_023 /payments create failed', e);
-    return c.json({ error: 'unavailable' }, 503);
+    const msg = e instanceof Error ? e.message : 'unavailable';
+    return c.json({ error: msg }, msg === 'NEON_DATABASE_URL is not configured' ? 500 : 503);
   }
 });
 
@@ -928,7 +929,8 @@ app.post('/events/answer', async (c) => {
     return c.json({ ok: true });
   } catch (e) {
     console.error('TEAM_025 /events/answer failed', e);
-    return c.json({ error: 'unavailable' }, 503);
+    const msg = e instanceof Error ? e.message : 'unavailable';
+    return c.json({ error: msg }, msg === 'NEON_DATABASE_URL is not configured' ? 500 : 503);
   }
 });
 

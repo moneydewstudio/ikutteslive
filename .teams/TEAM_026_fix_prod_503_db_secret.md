@@ -18,6 +18,13 @@ Endpoints catch DB errors and return `{ error: 'unavailable' }` with status 503.
 - Wrangler deploy output does not list secrets under bindings; this is expected.
 - Cannot fully verify via unauthenticated curl since endpoints require Firebase auth; validation should be done via the frontend (logged-in user) to confirm 503s disappear.
 
+## Result
+- 503s resolved after schema migration
+- `/events/answer` now returns 200
+- `/payments` now returns 200 and creates payments
+- Frontend paywall and payment flow functional
+
 ## Follow-ups
 - Rotate Neon credentials (the URL was pasted into chat during debugging).
-- If 503 persists after secret is set, investigate Neon connectivity from Workers (region/SSL/channel binding settings) and add more diagnostic error logging.
+- Remove temporary logging from `apiFetch()` after stability confirmed.
+- Investigate admin panel not showing newly created payments and user claim not reflected.

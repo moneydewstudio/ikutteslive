@@ -13,8 +13,15 @@ type Bindings = {
 
 export const getDb = async (env: Bindings) => {
   if (!env.NEON_DATABASE_URL) {
-    throw new Error('NEON_DATABASE_URL is not configured');
+    const err = new Error('NEON_DATABASE_URL is not configured');
+    console.error('getDb: missing NEON_DATABASE_URL', { envKeys: Object.keys(env) });
+    throw err;
   }
-  const sql = neon(env.NEON_DATABASE_URL);
-  return drizzle(sql, { schema });
+  try {
+    const sql = neon(env.NEON_DATABASE_URL);
+    return drizzle(sql, { schema });
+  } catch (e) {
+    console.error('getDb: failed to initialize Neon client', e);
+    throw new Error('DB connection failed');
+  }
 };
