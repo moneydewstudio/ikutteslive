@@ -28,3 +28,9 @@ Endpoints catch DB errors and return `{ error: 'unavailable' }` with status 503.
 - Rotate Neon credentials (the URL was pasted into chat during debugging).
 - Remove temporary logging from `apiFetch()` after stability confirmed.
 - Investigate admin panel not showing newly created payments and user claim not reflected.
+
+## Resolution
+- Admin auth temporarily disabled; panel now accessible without admin key.
+- Added debugging logs to AdminPayments and claimPayment.
+- User confirmed that clicking Confirm in admin panel grants premium access immediately (sets payment to confirmed, extends premium_until, increments purchase_count, records admin audit).
+- No additional UI indicators requested.

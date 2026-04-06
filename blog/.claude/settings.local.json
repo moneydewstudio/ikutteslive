@@ -4,7 +4,10 @@
       "Bash(mkdir -p ~/.ssh)",
       "Bash(ssh-keyscan -H github.com)",
       "WebFetch(domain:ikuttes.my.id)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(findstr assetsignore:*)",
+      "Bash(ls -la *.toml *.json)",
+      "Bash(mkdir:*)"
     ]
   }
 }

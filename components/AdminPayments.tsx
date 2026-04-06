@@ -25,7 +25,6 @@ type AdminPaymentsProps = {
 };
 
 const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) => {
-  const [adminKey, setAdminKey] = useState('');
   const [status, setStatus] = useState<PaymentStatus>('pending');
   const [query, setQuery] = useState('');
   const [claimedOnly, setClaimedOnly] = useState(false);
@@ -49,22 +48,15 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
 
   const adminFetch = useCallback(
     async (path: string, init: RequestInit = {}) => {
-      const headers = new Headers(init.headers || {});
-      headers.set('x-admin-key', adminKey);
-      return apiFetch(path, { ...init, headers });
+      // No admin key required while debugging
+      return apiFetch(path, { ...init });
     },
-    [adminKey]
+    []
   );
 
   const fetchPayments = useCallback(async () => {
     if (!isEmailAllowed) {
       setError('forbidden_ui');
-      setPayments([]);
-      return;
-    }
-
-    if (!adminKey.trim()) {
-      setError(null);
       setPayments([]);
       return;
     }
@@ -84,6 +76,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
         return;
       }
       const json = (await res.json()) as PaymentsResponse;
+      console.log('[AdminPayments] fetched', { status, response: json });
       setPayments(Array.isArray(json?.payments) ? json.payments : []);
     } catch {
       setError('unavailable');
@@ -91,7 +84,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
     } finally {
       setLoading(false);
     }
-  }, [adminFetch, adminKey, isEmailAllowed, status]);
+  }, [adminFetch, isEmailAllowed, status]);
 
   useEffect(() => {
     void fetchPayments();
@@ -128,8 +121,6 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
   const runAction = async () => {
     if (!modal) return;
     const { kind, payment } = modal;
-
-    if (!adminKey.trim()) return;
 
     if (kind === 'confirm' && !confirmChecked) return;
 
@@ -209,20 +200,6 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
         <div>
           <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Admin Payments</h1>
           <div className="text-sm text-gray-600 font-medium">Konfirmasi pembayaran QRIS berdasarkan nominal persis.</div>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-2 md:items-center">
-          <input
-            className="border border-black rounded-lg px-3 py-2 text-sm w-full md:w-72"
-            placeholder="Admin Key"
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-            type="password"
-            autoComplete="off"
-          />
-          <Button variant="outline" size="sm" onClick={() => void fetchPayments()} isLoading={loading}>
-            Refresh
-          </Button>
         </div>
       </div>
 

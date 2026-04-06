@@ -58,7 +58,9 @@ export async function getPayment(paymentId: string): Promise<PaymentResponse> {
 }
 
 export async function claimPayment(paymentId: string): Promise<void> {
+  console.log('[claimPayment] sending claim for', { paymentId });
   const res = await apiFetch(`/payments/${encodeURIComponent(paymentId)}/claim`, { method: 'POST' });
+  console.log('[claimPayment] response', { status: res.status, ok: res.ok });
   if (!res.ok) throw new Error('Failed to claim payment');
 }
 

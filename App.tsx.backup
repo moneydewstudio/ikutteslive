@@ -30,6 +30,7 @@ const AppContent: React.FC = () => {
     openPaywall('interstitial_premium_cta');
   }, [openPaywall]);
 
+  // ...rest of existing App logic here
   // TEAM_020: make Drills landing (BONUS) the default first screen
   const [view, setView] = useState<ViewState>('BONUS');
   const [session, setSession] = useState<UserSession | null>(null);
@@ -233,42 +234,116 @@ const AppContent: React.FC = () => {
     if (currentQ) {
       // TEAM_025: fire-and-forget answer telemetry for server-side counters.
       void recordAnswerEvent({
-        questionId: currentQId,
-        isCorrect: optionId === currentQ.correct_option_id,
-      }).catch(() => null);
-    }
 
-    setTimeout(() => {
-      if (currentQuestionIdx < session.questionIds.length - 1) {
-        setCurrentQuestionIdx(prev => prev + 1);
-      } else {
-        finishQuiz(updatedSession);
-      }
-    }, 250);
-  };
+const handleLatihanClick = useCallback(() => {
+  // TEAM_020: clicking Latihan should resume mid-quiz, but start a new quiz after completion
+  if (session && !session.completedAt) {
+    setView('QUIZ');
+    return;
+  }
+  void handleStartQuiz();
+}, [session, handleStartQuiz]);
 
-  const finishQuiz = (finalSession: UserSession) => {
-    const resultSession = QuizService.calculateResults(finalSession);
-    setSession(resultSession);
+useEffect(() => {
+  if (!session?.refreshAt) return;
+  const ms = session.refreshAt - Date.now();
+  if (!Number.isFinite(ms)) return;
+
+  if (ms <= 0) {
     QuizService.clearSession();
+    void handleStartQuiz();
+    return;
+  }
 
-    if (user && user.isPro) {
-      setView('RESULTS');
+  const timer = window.setTimeout(() => {
+    QuizService.clearSession();
+    void handleStartQuiz();
+  }, ms);
+
+  return () => window.clearTimeout(timer);
+}, [session?.refreshAt, handleStartQuiz]);
+
+useEffect(() => {
+  const savedSession = QuizService.loadSession();
+  if (savedSession) {
+    setSession(savedSession);
+    const answeredCount = Object.keys(savedSession.answers).length;
+    if (answeredCount < savedSession.questionIds.length) {
+      setCurrentQuestionIdx(answeredCount);
     } else {
-      setView('AD_INTERSTITIAL');
+      const calculated = QuizService.calculateResults(savedSession);
+      setSession(calculated);
     }
-  };
+  }
+  // Only auto-route to quiz/results if user explicitly navigates there
+  // Default view remains BONUS unless changed by user action
+}, []);
 
-  const handleAdComplete = () => {
+const handleOptionSelect = (optionId: string) => {
+  if (!session) return;
+  const currentQId = session.questionIds[currentQuestionIdx];
+  const currentQ = QuizService.getQuestionsForSession(session).find((q) => q.id === currentQId);
+  const updatedSession = {
+    ...session,
+    answers: { ...session.answers, [currentQId]: optionId }
+  };
+  setSession(updatedSession);
+  QuizService.saveSession(updatedSession);
+
+  if (currentQ) {
+    // TEAM_025: fire-and-forget answer telemetry for server-side counters.
+    void recordAnswerEvent({
+      questionId: currentQId,
+      isCorrect: optionId === currentQ.correct_option_id,
+    }).catch(() => null);
+  }
+
+  setTimeout(() => {
+    if (currentQuestionIdx < session.questionIds.length - 1) {
+      setCurrentQuestionIdx(prev => prev + 1);
+    } else {
+      finishQuiz(updatedSession);
+    }
+  }, 250);
+};
+
+const finishQuiz = (finalSession: UserSession) => {
+  const resultSession = QuizService.calculateResults(finalSession);
+  setSession(resultSession);
+  QuizService.clearSession();
+
+  if (user && user.isPro) {
     setView('RESULTS');
-  };
+  } else {
+    setView('AD_INTERSTITIAL');
+  }
+};
 
-  const handleSignupConfirm = async () => {
-    if (isSignupLoading) return;
-    setIsSignupLoading(true);
-    try {
-      await authService.signInWithGoogle();
+const handleAdComplete = () => {
+  setView('RESULTS');
+};
+
+const handleSignupConfirm = async () => {
+  if (isSignupLoading) return;
+  setIsSignupLoading(true);
+  try {
+    await authService.signInWithGoogle();
+    setShowSignupModal(false);
+  } catch (err: any) {
+    console.error("Sign-in failed", err);
+    // Handle domain unauthorized specifically
+    if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+      alert("Domain ini belum terdaftar di Firebase.\n\nAnda tetap dapat menggunakan aplikasi sebagai Tamu.");
       setShowSignupModal(false);
+      
+      // Ensure guest mode is active if we don't have a user yet
+      if (!user || user.id !== 'local_guest') {
+          setUser({
+            id: 'local_guest',
+            name: 'Tamu',
+            isPro: false,
+            streak: 0
+          });
     } catch (err: any) {
       console.error("Sign-in failed", err);
       // Handle domain unauthorized specifically
@@ -416,44 +491,40 @@ const renderContent = () => {
   };
 
   return (
-    <OnboardingTourProvider>
-      <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
-        <Header />
-        {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
-        <main className="flex-1 flex flex-col w-full min-h-0">
-          {renderContent()}
-        </main>
-        {view !== 'AD_INTERSTITIAL' && (
-          <div className="md:hidden">
-             <BottomNav
-               currentView={view}
-               onChange={(next) => {
-                 // TEAM_020: centralize Latihan click behavior for bottom nav as well
-                 if (next === 'QUIZ') {
-                   handleLatihanClick();
-                   return;
-                 }
-                 setView(next);
-               }}
-             />
-          </div>
-        )}
-        {showSignupModal && (
-          <SignupModal
-            onClose={() => setShowSignupModal(false)}
-            onConfirm={handleSignupConfirm}
-            isLoading={isSignupLoading}
-          />
-        )}
-      </div>
-    </OnboardingTourProvider>
+    <PaywallProvider onPremiumActivated={refreshPremium}>
+      <OnboardingTourProvider>
+        <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
+          <Header />
+          {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
+          <main className="flex-1 flex flex-col w-full min-h-0">
+            {renderContent()}
+          </main>
+          {view !== 'AD_INTERSTITIAL' && (
+            <div className="md:hidden">
+               <BottomNav
+                 currentView={view}
+                 onChange={(next) => {
+                   // TEAM_020: centralize Latihan click behavior for bottom nav as well
+                   if (next === 'QUIZ') {
+                     handleLatihanClick();
+                     return;
+                   }
+                   setView(next);
+                 }}
+               />
+            </div>
+          )}
+          {showSignupModal && (
+            <SignupModal
+              onClose={() => setShowSignupModal(false)}
+              onConfirm={handleSignupConfirm}
+              isLoading={isSignupLoading}
+            />
+          )}
+        </div>
+      </OnboardingTourProvider>
+    </PaywallProvider>
   );
 };
-
-const App: React.FC = () => (
-  <PaywallProvider onPremiumActivated={async () => {}}>
-    <AppContent />
-  </PaywallProvider>
-);
 
 export default App;

@@ -3,6 +3,7 @@ import BonusCard, { Pack } from './BonusCard';
 import { User } from '../types';
 import * as QuizService from '../services/quizService';
 import OnboardingTour from '../src/components/OnboardingTour';
+import { usePaywall } from '../src/contexts/PaywallContext';
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
@@ -13,6 +14,7 @@ interface BonusViewProps {
 
 // TEAM_018: repurpose Bonus page into Drills entry (3 cards with free/premium gating)
 const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
+  const { openPaywall } = usePaywall();
   const [todayCategory, setTodayCategory] = useState<DrillCategory | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -84,7 +86,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
                 onClick={() => {
                   const category = pack.subject as DrillCategory;
                   if (!isUnlocked(category)) {
-                    alert('Gunakan akun Premium untuk buka semua drills');
+                    openPaywall('drills_locked_card');
                     return;
                   }
                   onStartDrill(category);

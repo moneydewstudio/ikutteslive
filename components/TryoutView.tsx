@@ -11,6 +11,7 @@ import { toPng } from 'html-to-image';
 import { SHARE_CAPTION, SHARE_LINK_TRYOUT } from '../src/constants/share';
 import type { TryoutShareData } from '../src/types/share';
 import { waitForCardAssets } from '../src/utils/share';
+import { usePaywall } from '../src/contexts/PaywallContext';
 
 // TEAM_004: connect Tryout (SKD) UI to server endpoints (free now; paywall-ready server-side)
 
@@ -73,6 +74,7 @@ const SubmitButton = React.memo(({ onClick }: { onClick: () => void }) => (
 ));
 
 const TryoutView: React.FC = () => {
+  const { openPaywall } = usePaywall();
   const [isStarted, setIsStarted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -122,7 +124,7 @@ const TryoutView: React.FC = () => {
       const { res: submitRes, data } = await QuizService.submitTryoutFromApi(examId, answers);
 
       if (submitRes.status === 403) {
-        alert('Fitur Premium akan tersedia untuk pengguna serius. Segera hadir!');
+        openPaywall('tryout_submit_403');
         return;
       }
 
@@ -170,7 +172,7 @@ const TryoutView: React.FC = () => {
     try {
       const { res: startRes, data: startData } = await QuizService.startTryoutFromApi();
       if (startRes.status === 403) {
-        alert('Fitur Premium akan tersedia untuk pengguna serius. Segera hadir!');
+        openPaywall('tryout_start_403');
         resetTryout();
         return;
       }
