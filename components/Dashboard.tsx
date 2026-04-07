@@ -182,7 +182,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               {!isPremium ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center">
                   <p className="font-black text-lg mb-2">Fitur Premium</p>
-                  <p className="font-medium text-sm max-w-[220px]">Fitur ini akan tersedia untuk pengguna serius. Segera hadir!</p>
+                  <p className="font-medium text-sm max-w-[220px]">Lihat progres dan kelemahanmu dengan akun Premium.</p>
                 </div>
               ) : radarLoading ? (
                 <div className="flex-1 flex items-center justify-center text-sm font-bold">Memuat...</div>
@@ -250,7 +250,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               {!isPremium ? (
                 <div className="p-8 text-center">
                   <p className="font-black mb-2">Fitur Premium</p>
-                  <p className="text-gray-600 font-medium">Fitur ini akan tersedia untuk pengguna serius. Segera hadir!</p>
+                  <p className="text-gray-600 font-medium">Lihat progres dan kelemahanmu dengan akun Premium.</p>
                 </div>
               ) : tryoutHistoryLoading ? (
                 <div className="p-8 text-center text-gray-600 font-medium">Memuat...</div>

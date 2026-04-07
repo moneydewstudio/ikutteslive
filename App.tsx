@@ -24,12 +24,6 @@ import AdminPayments from './components/AdminPayments';
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
 const AppContent: React.FC = () => {
-  const { openPaywall } = usePaywall();
-
-  const handleGoPro = useCallback(() => {
-    openPaywall('interstitial_premium_cta');
-  }, [openPaywall]);
-
   // TEAM_020: make Drills landing (BONUS) the default first screen
   const [view, setView] = useState<ViewState>('BONUS');
   const [session, setSession] = useState<UserSession | null>(null);
@@ -37,10 +31,19 @@ const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [selectedDrillCategory, setSelectedDrillCategory] = useState<DrillCategory | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [signupReason, setSignupReason] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   // TEAM_012: prevent duplicate Google popup attempts on localhost
   const [isSignupLoading, setIsSignupLoading] = useState(false);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
+
+  const isGuest = !!user && (user.id === 'local_guest' || !user.email);
+
+  const openSignup = useCallback((reason?: string) => {
+    // TEAM_028: allow paywall gating to open signup with a dedicated reason/copy.
+    setSignupReason(reason ?? null);
+    setShowSignupModal(true);
+  }, []);
 
   const refreshPremium = useCallback(async () => {
     try {
@@ -332,7 +335,7 @@ const Header = () => (
           </Button>
         </div>
       ) : (
-        <Button variant="black" size="sm" onClick={() => setShowSignupModal(true)} isLoading={isAuthLoading}>
+        <Button variant="black" size="sm" onClick={() => openSignup('manual')} isLoading={isAuthLoading}>
           Masuk
         </Button>
       )}
@@ -356,7 +359,7 @@ const renderContent = () => {
       case 'DRILLS':
         return (
           <DrillsView
-            onSignupClick={() => setShowSignupModal(true)}
+            onSignupClick={() => openSignup('manual')}
             category={selectedDrillCategory ?? undefined}
             onPremiumActivated={refreshPremium}
           />
@@ -399,13 +402,13 @@ const renderContent = () => {
           </div>
         );
       case 'AD_INTERSTITIAL':
-        return <InterstitialAd onClose={handleAdComplete} onGoPro={handleGoPro} />;
+        return null;
       case 'RESULTS':
         if (!session) return null;
         return (
           <ResultsView
             session={session}
-            onSignupClick={() => setShowSignupModal(true)}
+            onSignupClick={() => openSignup('manual')}
             onRetryClick={handleStartQuiz}
             onPremiumActivated={refreshPremium}
           />
@@ -416,44 +419,181 @@ const renderContent = () => {
   };
 
   return (
-    <OnboardingTourProvider>
-      <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
-        <Header />
-        {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
-        <main className="flex-1 flex flex-col w-full min-h-0">
-          {renderContent()}
-        </main>
-        {view !== 'AD_INTERSTITIAL' && (
-          <div className="md:hidden">
-             <BottomNav
-               currentView={view}
-               onChange={(next) => {
-                 // TEAM_020: centralize Latihan click behavior for bottom nav as well
-                 if (next === 'QUIZ') {
-                   handleLatihanClick();
-                   return;
-                 }
-                 setView(next);
-               }}
-             />
-          </div>
-        )}
-        {showSignupModal && (
-          <SignupModal
-            onClose={() => setShowSignupModal(false)}
-            onConfirm={handleSignupConfirm}
-            isLoading={isSignupLoading}
-          />
-        )}
-      </div>
-    </OnboardingTourProvider>
+    <PaywallProvider
+      onPremiumActivated={refreshPremium}
+      getIsGuest={() => isGuest}
+      onOpenSignup={(reason) => openSignup(reason)}
+    >
+      <OnboardingTourProvider>
+        <AppWithPaywall
+          view={view}
+          setView={setView}
+          user={user}
+          session={session}
+          currentQuestionIdx={currentQuestionIdx}
+          isAuthLoading={isAuthLoading}
+          isQuizLoading={isQuizLoading}
+          selectedDrillCategory={selectedDrillCategory}
+          isSignupLoading={isSignupLoading}
+          showSignupModal={showSignupModal}
+          signupReason={signupReason}
+          setShowSignupModal={setShowSignupModal}
+          setSignupReason={setSignupReason}
+          handleLatihanClick={handleLatihanClick}
+          handleStartQuiz={handleStartQuiz}
+          handleAdComplete={handleAdComplete}
+          handleSignupConfirm={handleSignupConfirm}
+          handleLogoClick={handleLogoClick}
+          renderContent={renderContent}
+          openSignup={openSignup}
+        />
+      </OnboardingTourProvider>
+    </PaywallProvider>
   );
 };
 
-const App: React.FC = () => (
-  <PaywallProvider onPremiumActivated={async () => {}}>
-    <AppContent />
-  </PaywallProvider>
-);
+type AppWithPaywallProps = {
+  view: ViewState;
+  setView: React.Dispatch<React.SetStateAction<ViewState>>;
+  user: User | null;
+  session: UserSession | null;
+  currentQuestionIdx: number;
+  isAuthLoading: boolean;
+  isQuizLoading: boolean;
+  selectedDrillCategory: DrillCategory | null;
+  isSignupLoading: boolean;
+  showSignupModal: boolean;
+  signupReason: string | null;
+  setShowSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setSignupReason: React.Dispatch<React.SetStateAction<string | null>>;
+  handleLatihanClick: () => void;
+  handleStartQuiz: () => Promise<void>;
+  handleAdComplete: () => void;
+  handleSignupConfirm: () => Promise<void>;
+  handleLogoClick: () => void;
+  renderContent: () => React.ReactNode;
+  openSignup: (reason?: string) => void;
+};
+
+const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
+  view,
+  setView,
+  user,
+  isAuthLoading,
+  handleLatihanClick,
+  handleAdComplete,
+  handleLogoClick,
+  renderContent,
+  openSignup,
+  showSignupModal,
+  setShowSignupModal,
+  handleSignupConfirm,
+  isSignupLoading,
+  signupReason,
+}) => {
+  const { openPaywall } = usePaywall();
+
+  const handleGoPro = useCallback(() => {
+    openPaywall('interstitial_premium_cta');
+  }, [openPaywall]);
+
+  // --- HEADER COMPONENT ---
+  const Header = () => (
+    <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
+      <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick} data-tour="header-logo">
+        <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
+      </div>
+
+      {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}
+      <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
+        {/* TEAM_018: repurpose BONUS tab into Drills entry; DRILLS view is internal runner */}
+        <button
+          onClick={() => setView('BONUS')}
+          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}
+        >
+          Drills
+        </button>
+        <button
+          onClick={handleLatihanClick}
+          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}
+        >
+          Latihan
+        </button>
+        <button
+          onClick={() => setView('TRYOUT')}
+          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}
+        >
+          Tryout
+        </button>
+        <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">
+          Blog
+        </a>
+        <button
+          onClick={() => setView('PROFILE')}
+          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}
+        >
+          Profil
+        </button>
+        {/* TEAM_015: link to Astro blog served under /blog */}
+      </nav>
+
+      <div>
+        {user && !user.name?.includes('Tamu') ? (
+          <div className="flex items-center gap-2">
+            {user?.email === 'pojok.sepak@gmail.com' ? (
+              <Button variant="outline" size="sm" onClick={() => setView('ADMIN_PAYMENTS')}>
+                Admin
+              </Button>
+            ) : null}
+            <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
+              Profil Saya
+            </Button>
+          </div>
+        ) : (
+          <Button variant="black" size="sm" onClick={() => openSignup('manual')} isLoading={isAuthLoading}>
+            Masuk
+          </Button>
+        )}
+      </div>
+    </header>
+  );
+
+  return (
+    <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
+      <Header />
+      {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
+      <main className="flex-1 flex flex-col w-full min-h-0">
+        {view === 'AD_INTERSTITIAL' ? <InterstitialAd onClose={handleAdComplete} onGoPro={handleGoPro} /> : renderContent()}
+      </main>
+      {view !== 'AD_INTERSTITIAL' && (
+        <div className="md:hidden">
+          <BottomNav
+            currentView={view}
+            onChange={(next) => {
+              // TEAM_020: centralize Latihan click behavior for bottom nav as well
+              if (next === 'QUIZ') {
+                handleLatihanClick();
+                return;
+              }
+              setView(next);
+            }}
+          />
+        </div>
+      )}
+      {showSignupModal && (
+        <SignupModal
+          onClose={() => {
+            setShowSignupModal(false);
+          }}
+          onConfirm={handleSignupConfirm}
+          isLoading={isSignupLoading}
+          reason={signupReason ?? undefined}
+        />
+      )}
+    </div>
+  );
+};
+
+const App: React.FC = () => <AppContent />;
 
 export default App;

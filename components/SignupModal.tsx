@@ -7,9 +7,13 @@ interface SignupModalProps {
   onClose: () => void;
   onConfirm: () => void;
   isLoading?: boolean;
+  reason?: string;
 }
 
-const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm, isLoading = false }) => {
+const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm, isLoading = false, reason }) => {
+  // TEAM_028: premium gating requires account creation; show dedicated copy when opened from paywall.
+  const isPremiumGate = reason === 'premium_requires_account';
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -24,8 +28,12 @@ const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm, isLoading
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Simpan hasil Anda</h2>
-          <p className="text-gray-500 mb-6">Buat akun gratis untuk melacak kemajuan dan membuka latihan harian.</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{isPremiumGate ? 'Buat akun dulu' : 'Simpan hasil Anda'}</h2>
+          <p className="text-gray-500 mb-6">
+            {isPremiumGate
+              ? 'Kamu belum buat akun. Buat akun dulu, baru upgrade ke premium, ya!'
+              : 'Buat akun gratis untuk melacak kemajuan dan membuka latihan harian.'}
+          </p>
           
           <div className="space-y-3">
             <button 

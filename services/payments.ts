@@ -15,6 +15,8 @@ export type EntitlementsResponse = {
 
 export async function getEntitlements(): Promise<EntitlementsResponse> {
   const res = await apiFetch('/me/entitlements');
+  // TEAM_028: distinguish unauthenticated state so UI can show a friendly signup prompt.
+  if (res.status === 401 || res.status === 403) throw new Error('unauthenticated');
   if (!res.ok) throw new Error('Failed to load entitlements');
   return res.json();
 }
@@ -31,6 +33,8 @@ export async function createPayment(planType: '3_day' | '30_day'): Promise<Creat
     method: 'POST',
     body: JSON.stringify({ planType }),
   });
+  // TEAM_028: distinguish unauthenticated state so UI can show a friendly signup prompt.
+  if (res.status === 401 || res.status === 403) throw new Error('unauthenticated');
   if (res.status === 409) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.error || 'busy_try_again');

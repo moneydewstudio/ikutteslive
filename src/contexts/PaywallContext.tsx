@@ -13,17 +13,24 @@ const PaywallContext = createContext<PaywallContextValue | null>(null);
 type PaywallProviderProps = {
   children: React.ReactNode;
   onPremiumActivated: () => Promise<void> | void;
+  getIsGuest: () => boolean;
+  onOpenSignup: (reason?: string) => void;
 };
 
-export const PaywallProvider: React.FC<PaywallProviderProps> = ({ children, onPremiumActivated }) => {
+export const PaywallProvider: React.FC<PaywallProviderProps> = ({ children, onPremiumActivated, getIsGuest, onOpenSignup }) => {
   const [showPaywall, setShowPaywall] = useState(false);
   const [paymentCtx, setPaymentCtx] = useState<{ paymentId: string; planType: '3_day' | '30_day' } | null>(null);
   const [currentTrigger, setCurrentTrigger] = useState<string | null>(null);
 
   const openPaywall = useCallback((trigger?: string) => {
+    // TEAM_028: guests/anonymous users must create an account before upgrading to premium.
+    if (getIsGuest()) {
+      onOpenSignup('premium_requires_account');
+      return;
+    }
     setCurrentTrigger(trigger ?? null);
     setShowPaywall(true);
-  }, []);
+  }, [getIsGuest, onOpenSignup]);
 
   const handlePaymentCreated = useCallback(({ paymentId, planType }: { paymentId: string; planType: '3_day' | '30_day' }) => {
     setShowPaywall(false);

@@ -33,10 +33,11 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
           setOffers(nextOffers);
           setServerTrigger(typeof ent?.paywallTrigger === 'string' ? ent.paywallTrigger : null);
         }
-      } catch {
+      } catch (e) {
         if (!cancelled) {
           setOffers([{ planType: '3_day', price: 9900, anchorPrice: 59000 }]);
-          setError('unavailable');
+          const msg = e instanceof Error ? e.message : '';
+          setError(msg === 'unauthenticated' ? 'unauthenticated' : 'unavailable');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -57,6 +58,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
   const show30Day = offerMap.has('30_day');
   const anchorPrice = offerMap.get('3_day')?.anchorPrice ?? 59000;
   const effectiveTrigger = serverTrigger ?? trigger ?? null;
+  const isUnauthenticated = error === 'unauthenticated';
 
   const handleUnlock = async (planType: '3_day' | '30_day') => {
     if (creatingPlan) return;
@@ -65,8 +67,9 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
     try {
       const p = await createPayment(planType);
       onPaymentCreated({ paymentId: p.paymentId, planType });
-    } catch {
-      setError('create_failed');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      setError(msg === 'unauthenticated' ? 'unauthenticated' : 'create_failed');
     } finally {
       setCreatingPlan(null);
     }
@@ -80,9 +83,11 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
         <div className="p-5 border-b border-black bg-gray-50">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="font-black text-xl uppercase">Buka Pembahasan</div>
+              <div className="font-black text-xl uppercase">{isUnauthenticated ? 'Buat Akun Dulu' : 'Buka Pembahasan'}</div>
               <div className="text-sm font-medium text-gray-700 mt-1">
-                Pembahasan hanya untuk Premium. Bayar 3 hari dulu biar cepat paham dan tidak mengulang kesalahan.
+                {isUnauthenticated
+                  ? 'Kamu belum buat akun. Buat akun dulu, ya!'
+                  : 'Pembahasan hanya untuk Premium. Bayar 3 hari dulu biar cepat paham dan tidak mengulang kesalahan.'}
               </div>
               {effectiveTrigger ? (
                 <div className="text-[11px] font-bold text-gray-500 mt-2">Trigger: {effectiveTrigger}</div>
@@ -105,9 +110,13 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
 
           {error ? (
             <div className="mb-4 border border-black rounded-xl p-3 bg-brand-cream">
-              <div className="font-black">Error</div>
+              <div className="font-black">{error === 'unauthenticated' ? 'Akun diperlukan' : 'Error'}</div>
               <div className="text-sm font-medium text-gray-700 mt-1">
-                {error === 'create_failed' ? 'Gagal membuat pembayaran. Coba lagi.' : 'Layanan tidak tersedia.'}
+                {error === 'unauthenticated'
+                  ? 'Kamu belum buat akun. Buat akun dulu, ya!'
+                  : error === 'create_failed'
+                    ? 'Gagal membuat pembayaran. Coba lagi.'
+                    : 'Layanan tidak tersedia.'}
               </div>
             </div>
           ) : null}
