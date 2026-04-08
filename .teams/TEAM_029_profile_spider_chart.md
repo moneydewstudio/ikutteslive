@@ -39,3 +39,11 @@ Implement a single Recharts spider (radar) chart on Profil page across 12 fixed 
 
 ## Notes / follow-ups
 - Apply SQL migration to Neon manually (repo uses versioned SQL migrations, no runtime DDL).
+
+## Change Log (Post-Implementation)
+- **2026-04-08**: Removed premium gating from skill chart and tryout history per user request
+  - `api/src/index.ts`: Removed `requirePremium` from `/tryout/history` and `/analytics/subtopic-readiness`
+  - `components/Dashboard.tsx`: Removed paywall UI, Lock icons, and `isPremium` checks; all users now see full data
+- **2026-04-08**: Added guest lock for Profil page - guest users redirected to signup modal
+  - `App.tsx`: Added `handleProfileClick` handler that checks `isGuest` and opens signup modal with reason `'profil_requires_account'`
+  - Updated all 5 Profil entry points: desktop nav, desktop "Profil Saya" button, mobile nav, mobile "Profil Saya" button, and BottomNav

@@ -46,6 +46,15 @@ const AppContent: React.FC = () => {
     setShowSignupModal(true);
   }, []);
 
+  // TEAM_029: Lock Profil page for guest users - redirect to signup
+  const handleProfileClick = useCallback(() => {
+    if (isGuest) {
+      openSignup('profil_requires_account');
+      return;
+    }
+    setView('PROFILE');
+  }, [isGuest, openSignup]);
+
   const refreshPremium = useCallback(async () => {
     try {
       const synced = await syncAuth();
@@ -327,7 +336,7 @@ const Header = () => (
       <button onClick={handleLatihanClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Latihan</button>
       <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
       <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
-      <button onClick={() => setView('PROFILE')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Profil</button>
+      <button onClick={handleProfileClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Profil</button>
       {/* TEAM_015: link to Astro blog served under /blog */}
     </nav>
 
@@ -339,7 +348,7 @@ const Header = () => (
               Admin
             </Button>
           ) : null}
-          <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
+          <Button variant="black" size="sm" onClick={handleProfileClick}>
             Profil Saya
           </Button>
         </div>
@@ -455,6 +464,7 @@ const renderContent = () => {
           handleLogoClick={handleLogoClick}
           renderContent={renderContent}
           openSignup={openSignup}
+          handleProfileClick={handleProfileClick}
         />
       </OnboardingTourProvider>
     </PaywallProvider>
@@ -482,6 +492,7 @@ type AppWithPaywallProps = {
   handleLogoClick: () => void;
   renderContent: () => React.ReactNode;
   openSignup: (reason?: string) => void;
+  handleProfileClick: () => void;
 };
 
 const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
@@ -499,6 +510,7 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
   handleSignupConfirm,
   isSignupLoading,
   signupReason,
+  handleProfileClick,
 }) => {
   const { openPaywall } = usePaywall();
 
@@ -538,7 +550,7 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
           Blog
         </a>
         <button
-          onClick={() => setView('PROFILE')}
+          onClick={handleProfileClick}
           className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}
         >
           Profil
@@ -554,7 +566,7 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
                 Admin
               </Button>
             ) : null}
-            <Button variant="black" size="sm" onClick={() => setView('PROFILE')}>
+            <Button variant="black" size="sm" onClick={handleProfileClick}>
               Profil Saya
             </Button>
           </div>
@@ -582,6 +594,11 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
               // TEAM_020: centralize Latihan click behavior for bottom nav as well
               if (next === 'QUIZ') {
                 handleLatihanClick();
+                return;
+              }
+              // TEAM_029: Lock Profil page for guest users - redirect to signup
+              if (next === 'PROFILE') {
+                handleProfileClick();
                 return;
               }
               setView(next);

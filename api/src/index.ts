@@ -1206,8 +1206,8 @@ app.get('/explanations/:id', requirePremium, async (c) => {
 app.get('/analytics/weakness', requirePremium, (c) => c.json({ data: [] }));
 app.get('/rank/percentile', requirePremium, (c) => c.json({ percentile: 0 }));
 
-// TEAM_009: premium-gated tryout history for Statistik (Riwayat Tryout)
-app.get('/tryout/history', requirePremium, async (c) => {
+// TEAM_029: tryout history for all users (was premium-gated, now open)
+app.get('/tryout/history', async (c) => {
   const user = c.get('user');
   if (!user) return c.json({ error: 'unauthorized' }, 401);
 
@@ -1296,8 +1296,8 @@ app.get('/analytics/subtopic-accuracy', requirePremium, async (c) => {
   }
 });
 
-// TEAM_029: unified subtopic readiness for profile spider chart (Tryout + Daily Quiz; drills excluded)
-app.get('/analytics/subtopic-readiness', requirePremium, async (c) => {
+// TEAM_029: unified subtopic readiness for profile spider chart (Tryout + Daily Quiz; drills excluded) - now open to all users
+app.get('/analytics/subtopic-readiness', async (c) => {
   const user = c.get('user');
   if (!user) return c.json({ error: 'unauthorized' }, 401);
 

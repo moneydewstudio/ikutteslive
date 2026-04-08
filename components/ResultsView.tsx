@@ -261,16 +261,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
         {/* Right: Actions */}
         <div className="md:w-1/2 bg-white p-8 flex flex-col justify-center items-start space-y-4">
           <h2 className="text-3xl font-black uppercase mb-2">Langkah Selanjutnya</h2>
-          <p className="text-gray-600 mb-6 max-w-sm">Usaha yang bagus. Tinjau kesalahan Anda di bawah atau simpan sesi ini ke profil Anda.</p>
-
-          <Button onClick={onSignupClick} variant="black" fullWidth size="lg">
-            Simpan Progres
-          </Button>
+          <p className="text-gray-600 mb-6 max-w-sm">Bagus! Semakin hari pasti makin siap. Pamerkan progres latihan hari ini ke kontak kamu sekarang!</p>
           <div className="flex w-full gap-3">
             <Button onClick={onRetryClick} variant="outline" fullWidth>
               <RefreshCw className="w-4 h-4 mr-2" /> Coba Lagi
             </Button>
-            <Button onClick={handleShareClick} variant="outline" fullWidth>
+            <Button onClick={handleShareClick} variant="black" fullWidth>
               <Share2 className="w-4 h-4 mr-2" /> Bagikan hasil
             </Button>
           </div>

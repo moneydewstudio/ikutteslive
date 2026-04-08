@@ -427,11 +427,11 @@ const TryoutView: React.FC = () => {
                          Waktu Terbatas
                      </div>
                      <h1 className="text-5xl md:text-7xl font-black leading-none mb-6">
-                         Tryout<br/>Akbar
+                         Simulasi<br/>Tryout
                      </h1>
                      <p className="font-bold text-lg mb-8 max-w-md">
-                         Simulasi skala penuh. 110 soal. 100 menit.
-                         Uji diri Anda dengan antarmuka CAT standar BKN.
+                         Simulasi skala penuh dengan 110 soal dalam 100 menit.
+                         Uji kesiapanmu dengan standar SKD CPNS sesungguhnya.
                      </p>
                      <Button size="lg" variant="black" withArrow onClick={startTryout}>
                          Mulai Simulasi

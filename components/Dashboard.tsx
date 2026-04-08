@@ -13,7 +13,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from 'recharts';
-import { TrendingUp, Lock, ChevronRight, BookOpen } from 'lucide-react';
+import { TrendingUp, ChevronRight, BookOpen } from 'lucide-react';
 import { apiFetch } from '../services/apiClient';
 import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
 import { getPendingDailyQuizSubmit, syncPendingDailyQuizSubmit } from '../services/dailyQuizSync';
@@ -85,11 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
   const [radarError, setRadarError] = useState<string | null>(null);
   const [radarSyncWarning, setRadarSyncWarning] = useState(false);
 
-  const isPremium = !!(user as any)?.isPro;
-
   useEffect(() => {
-    if (!isPremium) return;
-
     let cancelled = false;
     const run = async () => {
       setTryoutHistoryLoading(true);
@@ -115,10 +111,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     return () => {
       cancelled = true;
     };
-  }, [isPremium]);
+  }, []);
 
   useEffect(() => {
-    if (!isPremium) return;
     let cancelled = false;
 
     const run = async () => {
@@ -136,11 +131,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     return () => {
       cancelled = true;
     };
-  }, [isPremium]);
+  }, []);
 
   useEffect(() => {
-    if (!isPremium) return;
-
     let cancelled = false;
     const run = async () => {
       setRadarLoading(true);
@@ -166,23 +159,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     return () => {
       cancelled = true;
     };
-  }, [isPremium]);
+  }, []);
 
   return (
     <div className="flex flex-col w-full animate-fade-in pb-24 md:pb-0">
-      
-      {/* HEADER SECTION */}
-      <div className="p-8 border-b border-black bg-white">
-         <div className="flex justify-between items-end">
-             <div>
-                <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-2">Statistik Saya</h1>
-                <p className="text-gray-500 font-medium">Pantau kemajuan dan kesiapan Anda.</p>
-             </div>
-             <Button onClick={onStartQuiz} withArrow>
-               Latihan Cepat
-             </Button>
-         </div>
-      </div>
 
       <div className="flex flex-col md:flex-row flex-1">
         
@@ -197,7 +177,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
                   </div>
                   <div>
                       <h2 className="font-black text-xl">{user.name || 'Tamu'}</h2>
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-500">{isPremium ? 'Akun Premium' : 'Akun Gratis'}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Statistik Pembelajaran</span>
                   </div>
                </div>
                <Button variant="outline" size="sm" onClick={replayTour}>
@@ -206,19 +186,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
                </Button>
             </div>
 
-            {/* Radar Charts (Premium) */}
+            {/* Radar Charts */}
             <div className="p-6 flex-1 flex flex-col bg-brand-lime">
               <div className="flex items-center justify-between mb-4">
                 <span className="font-bold text-sm uppercase tracking-widest border border-black px-2 py-1 rounded-full bg-white">Kemampuan per Subtopik</span>
-                {!isPremium ? <Lock className="w-4 h-4" /> : null}
               </div>
 
-              {!isPremium ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center">
-                  <p className="font-black text-lg mb-2">Fitur Premium</p>
-                  <p className="font-medium text-sm max-w-[220px]">Lihat progres dan kelemahanmu dengan akun Premium.</p>
-                </div>
-              ) : radarLoading ? (
+              {radarLoading ? (
                 <div className="flex-1 flex items-center justify-center text-sm font-bold">Memuat...</div>
               ) : radarError ? (
                 <div className="flex-1 flex items-center justify-center text-sm font-bold">Gagal memuat.</div>
@@ -297,20 +271,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
                  </ResponsiveContainer>
             </div>
 
-            {/* Riwayat Tryout (Premium) */}
+            {/* Riwayat Tryout */}
             <div className="flex flex-col flex-1">
               <div className="p-4 border-b border-black bg-gray-50 flex justify-between items-center">
                 <h3 className="font-black text-lg flex items-center gap-2">
-                  Riwayat Tryout {!isPremium ? <Lock className="w-4 h-4" /> : null}
+                  Riwayat Tryout
                 </h3>
               </div>
 
-              {!isPremium ? (
-                <div className="p-8 text-center">
-                  <p className="font-black mb-2">Fitur Premium</p>
-                  <p className="text-gray-600 font-medium">Lihat progres dan kelemahanmu dengan akun Premium.</p>
-                </div>
-              ) : tryoutHistoryLoading ? (
+              {tryoutHistoryLoading ? (
                 <div className="p-8 text-center text-gray-600 font-medium">Memuat...</div>
               ) : tryoutHistoryError ? (
                 <div className="p-8 text-center text-gray-600 font-medium">Gagal memuat.</div>
