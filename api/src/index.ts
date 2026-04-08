@@ -26,6 +26,8 @@ import {
   questionExplanations,
   payments,
   paymentAdminActions,
+  dailyQuizAttempts,
+  dailyQuizAttemptItems,
   tryoutAttempts,
   tryoutAttemptItems,
 } from './schema';
@@ -230,6 +232,170 @@ app.get('/me/entitlements', async (c) => {
       offers: [{ planType: '3_day', price: 9900, anchorPrice: 59000 }],
       paywallTrigger: null,
     });
+  }
+});
+
+// TEAM_029: persist daily quiz submissions (Tryout + Daily Quiz feed unified profile spider chart; drills excluded)
+app.post('/quiz/daily/submit', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ ok: false, error: 'unauthorized' }, 401);
+
+  let body: any = null;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ ok: false, error: 'bad_request' }, 400);
+  }
+
+  const dayKey = String(body?.dayKey ?? '');
+  const answers = (body?.answers ?? null) as unknown;
+  if (!dayKey || typeof answers !== 'object' || answers == null) {
+    return c.json({ ok: false, error: 'bad_request' }, 400);
+  }
+
+  const ids = Object.keys(answers)
+    .map((k) => Number(k))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (!ids.length) return c.json({ ok: false, error: 'bad_request' }, 400);
+
+  try {
+    const db = await getDb(c.env);
+
+    // Resolve (or create) attemptId for idempotency on (user_id, day_key)
+    const attemptId = crypto.randomUUID();
+    await db
+      .insert(dailyQuizAttempts)
+      .values({ id: attemptId, userId: user.id, dayKey })
+      .onConflictDoNothing();
+
+    const existing = await db
+      .select({ id: dailyQuizAttempts.id })
+      .from(dailyQuizAttempts)
+      .where(and(eq(dailyQuizAttempts.userId, user.id), eq(dailyQuizAttempts.dayKey, dayKey)))
+      .limit(1);
+    const effectiveAttemptId = String(existing?.[0]?.id || attemptId);
+
+    // Replace items on retry/idempotent resubmit
+    await db.execute(sql`
+      delete from daily_quiz_attempt_items
+      where attempt_id = ${effectiveAttemptId}
+    `);
+
+    const questionMetaRows = await db
+      .select({
+        id: questions.id,
+        code: sql<string | null>`upper(${questionTopics.code})`,
+        subcategoryId: questions.subcategoryId,
+        subtopicId: questions.subtopicId,
+      })
+      .from(questions)
+      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
+      .where(inArray(questions.id, ids));
+
+    const metaById = new Map<number, { code: string; subcategoryId: number | null; subtopicId: number | null }>();
+    for (const r of questionMetaRows as any[]) {
+      const rawSubcategoryId = r.subcategoryId == null ? null : Number(r.subcategoryId);
+      const rawSubtopicId = r.subtopicId == null ? null : Number(r.subtopicId);
+      metaById.set(Number(r.id), {
+        code: String(r.code || '').toUpperCase(),
+        subcategoryId: Number.isFinite(rawSubcategoryId) ? rawSubcategoryId : null,
+        subtopicId: Number.isFinite(rawSubtopicId) ? rawSubtopicId : null,
+      });
+    }
+
+    const optionRows = await db
+      .select({
+        questionId: questionOptions.questionId,
+        optionKey: questionOptions.optionKey,
+        isCorrect: questionOptions.isCorrect,
+        weight: questionOptions.weight,
+      })
+      .from(questionOptions)
+      .where(inArray(questionOptions.questionId, ids));
+
+    const optionsByQuestion: Record<string, Array<{ key: string; isCorrect: boolean | null; weight: number | null }>> = {};
+    for (const o of optionRows as any[]) {
+      const k = String(o.questionId);
+      if (!optionsByQuestion[k]) optionsByQuestion[k] = [];
+      optionsByQuestion[k].push({
+        key: String(o.optionKey).toLowerCase(),
+        isCorrect: o.isCorrect ?? null,
+        weight: o.weight ?? null,
+      });
+    }
+
+    const itemRows: Array<{
+      questionId: number;
+      subcategoryId: number | null;
+      isCorrect: boolean | null;
+      selectedWeight: number | null;
+      maxWeight: number | null;
+    }> = [];
+
+    for (const qid of ids) {
+      const meta = metaById.get(qid);
+      const rawCode = String(meta?.code || '').toUpperCase();
+      const subcategoryId = meta?.subcategoryId ?? meta?.subtopicId ?? null;
+
+      const selected = String((answers as any)[String(qid)] ?? '').toLowerCase();
+      if (!selected) continue;
+
+      const opts = optionsByQuestion[String(qid)] ?? [];
+      const hasWeights = opts.some((o) => {
+        const w = Number(o.weight);
+        return Number.isFinite(w) && w > 0;
+      });
+      const hasExplicitCorrect = opts.some((o) => !!o.isCorrect);
+      const code = rawCode === 'TWK' || rawCode === 'TIU' || rawCode === 'TKP' ? rawCode : hasWeights && !hasExplicitCorrect ? 'TKP' : 'TIU';
+
+      if (code === 'TKP') {
+        const found = opts.find((o) => o.key === selected);
+        const w = Number(found?.weight ?? 0);
+
+        const max = opts.reduce((acc, o) => {
+          const ww = Number(o.weight ?? 0);
+          if (!Number.isFinite(ww)) return acc;
+          return ww > acc ? ww : acc;
+        }, 0);
+
+        itemRows.push({
+          questionId: qid,
+          subcategoryId,
+          isCorrect: null,
+          selectedWeight: Number.isFinite(w) ? w : 0,
+          maxWeight: Number.isFinite(max) ? max : 0,
+        });
+        continue;
+      }
+
+      const correctKey = resolveCorrectOptionKey(opts);
+      const isCorrect = !!correctKey && selected === correctKey;
+      itemRows.push({
+        questionId: qid,
+        subcategoryId,
+        isCorrect,
+        selectedWeight: null,
+        maxWeight: null,
+      });
+    }
+
+    if (itemRows.length) {
+      await db.insert(dailyQuizAttemptItems).values(
+        itemRows.map((r) => ({
+          attemptId: effectiveAttemptId,
+          questionId: r.questionId,
+          subcategoryId: r.subcategoryId,
+          isCorrect: r.isCorrect,
+          selectedWeight: r.selectedWeight,
+          maxWeight: r.maxWeight,
+        }))
+      );
+    }
+
+    return c.json({ ok: true, attemptId: effectiveAttemptId });
+  } catch (e) {
+    console.error('TEAM_029 /quiz/daily/submit failed', e);
+    return c.json({ ok: false, error: 'unavailable' }, 503);
   }
 });
 
@@ -1126,6 +1292,105 @@ app.get('/analytics/subtopic-accuracy', requirePremium, async (c) => {
     return c.json({ categories: byCategory });
   } catch (e) {
     console.error('TEAM_009 /analytics/subtopic-accuracy failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_029: unified subtopic readiness for profile spider chart (Tryout + Daily Quiz; drills excluded)
+app.get('/analytics/subtopic-readiness', requirePremium, async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'unauthorized' }, 401);
+
+  try {
+    const db = await getDb(c.env);
+
+    const tryoutRows = await db
+      .select({
+        subcategoryId: tryoutAttemptItems.subcategoryId,
+        attempts: sql<number>`count(*)`,
+        twkTiuCorrect: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} = true then 1 else 0 end)`,
+        tkpRatioSum: sql<number>`sum(case when ${tryoutAttemptItems.maxWeight} > 0 then (${tryoutAttemptItems.selectedWeight}::float / ${tryoutAttemptItems.maxWeight}::float) else 0 end)`,
+        hasBinary: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} is null then 0 else 1 end)`,
+      })
+      .from(tryoutAttemptItems)
+      .leftJoin(tryoutAttempts, eq(tryoutAttemptItems.attemptId, tryoutAttempts.id))
+      .where(and(eq(tryoutAttempts.userId, user.id), sql`${tryoutAttemptItems.subcategoryId} is not null`))
+      .groupBy(tryoutAttemptItems.subcategoryId);
+
+    const dailyRows = await db
+      .select({
+        subcategoryId: dailyQuizAttemptItems.subcategoryId,
+        attempts: sql<number>`count(*)`,
+        twkTiuCorrect: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} = true then 1 else 0 end)`,
+        tkpRatioSum: sql<number>`sum(case when ${dailyQuizAttemptItems.maxWeight} > 0 then (${dailyQuizAttemptItems.selectedWeight}::float / ${dailyQuizAttemptItems.maxWeight}::float) else 0 end)`,
+        hasBinary: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} is null then 0 else 1 end)`,
+      })
+      .from(dailyQuizAttemptItems)
+      .leftJoin(dailyQuizAttempts, eq(dailyQuizAttemptItems.attemptId, dailyQuizAttempts.id))
+      .where(and(eq(dailyQuizAttempts.userId, user.id), sql`${dailyQuizAttemptItems.subcategoryId} is not null`))
+      .groupBy(dailyQuizAttemptItems.subcategoryId);
+
+    const merged = new Map<
+      number,
+      { attempts: number; correct: number; tkpRatioSum: number; hasBinary: number }
+    >();
+
+    const mergeInto = (rows: any[]) => {
+      for (const r of rows) {
+        const subcategoryId = Number(r.subcategoryId);
+        if (!Number.isFinite(subcategoryId)) continue;
+        const prev = merged.get(subcategoryId) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
+        merged.set(subcategoryId, {
+          attempts: prev.attempts + Number(r.attempts ?? 0),
+          correct: prev.correct + Number(r.twkTiuCorrect ?? 0),
+          tkpRatioSum: prev.tkpRatioSum + Number(r.tkpRatioSum ?? 0),
+          hasBinary: prev.hasBinary + Number(r.hasBinary ?? 0),
+        });
+      }
+    };
+
+    mergeInto(tryoutRows as any[]);
+    mergeInto(dailyRows as any[]);
+
+    const subcategoryIds = Array.from(merged.keys());
+    if (!subcategoryIds.length) return c.json({ data: [] });
+
+    const subcats = await db
+      .select({
+        id: questionSubcategories.id,
+        name: questionSubcategories.name,
+        topicCode: sql<string | null>`upper(${questionTopics.code})`,
+      })
+      .from(questionSubcategories)
+      .leftJoin(questionCategories, eq(questionSubcategories.categoryId, questionCategories.id))
+      .leftJoin(questionTopics, eq(questionCategories.topicId, questionTopics.id))
+      .where(inArray(questionSubcategories.id, subcategoryIds));
+
+    const subcatMeta = new Map<number, { name: string; topicCode: string | null }>();
+    for (const r of subcats as any[]) {
+      subcatMeta.set(Number(r.id), { name: String(r.name ?? ''), topicCode: r.topicCode ? String(r.topicCode) : null });
+    }
+
+    const data = subcategoryIds
+      .map((id) => {
+        const m = merged.get(id);
+        const meta = subcatMeta.get(id);
+        if (!m || !meta) return null;
+        const attempts = m.attempts;
+        const ratio = m.hasBinary > 0 ? (attempts > 0 ? m.correct / attempts : 0) : attempts > 0 ? m.tkpRatioSum / attempts : 0;
+        return {
+          subcategoryId: id,
+          subcategoryName: meta.name,
+          topicCode: meta.topicCode,
+          attempts,
+          value: Math.max(0, Math.min(100, ratio * 100)),
+        };
+      })
+      .filter(Boolean);
+
+    return c.json({ data });
+  } catch (e) {
+    console.error('TEAM_029 /analytics/subtopic-readiness failed', e);
     return c.json({ error: 'unavailable' }, 503);
   }
 });

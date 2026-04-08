@@ -35,3 +35,7 @@
 - File: `api/` (tests)
   Line: N/A
   Description: TODO(TEAM_023): Investigate Vitest unhandled error `write EOF` (tests not discovered) in this Windows environment; fix or document required Node/Wrangler settings.
+
+- File: `db/migrations/20260408_team_029_daily_quiz_attempts.sql`
+  Line: N/A
+  Description: TODO(TEAM_029): Apply daily quiz attempts migration to Neon DB (required for profile spider chart readiness to include daily quiz data).

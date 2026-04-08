@@ -16,6 +16,7 @@ import {
 import { TrendingUp, Lock, ChevronRight, BookOpen } from 'lucide-react';
 import { apiFetch } from '../services/apiClient';
 import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
+import { getPendingDailyQuizSubmit, syncPendingDailyQuizSubmit } from '../services/dailyQuizSync';
 
 interface DashboardProps {
   user: User;
@@ -34,11 +35,31 @@ type TryoutHistoryRow = {
 };
 
 type RadarPoint = {
-  subtopicId: number;
-  subtopicName: string;
+  subcategoryId: number;
+  subcategoryName: string;
+  topicCode: string | null;
   value: number;
   attempts: number;
 };
+
+type SpiderAxis = { topicCode: 'TIU' | 'TWK' | 'TKP'; subcategoryName: string };
+
+const SPIDER_AXES: SpiderAxis[] = [
+  { topicCode: 'TIU', subcategoryName: 'Verbal' },
+  { topicCode: 'TIU', subcategoryName: 'Numerik' },
+  { topicCode: 'TWK', subcategoryName: 'Pancasila' },
+  { topicCode: 'TWK', subcategoryName: 'UUD 1945' },
+  { topicCode: 'TWK', subcategoryName: 'NKRI' },
+  { topicCode: 'TWK', subcategoryName: 'Bhinneka Tunggal Ika' },
+  { topicCode: 'TWK', subcategoryName: 'Nasionalisme' },
+  { topicCode: 'TKP', subcategoryName: 'Pelayanan Publik' },
+  { topicCode: 'TKP', subcategoryName: 'Jejaring Kerja' },
+  { topicCode: 'TKP', subcategoryName: 'Sosial Budaya' },
+  { topicCode: 'TKP', subcategoryName: 'Profesionalisme' },
+  { topicCode: 'TKP', subcategoryName: 'Anti Radikalisme' },
+];
+
+const MIN_ATTEMPTS_SOLID = 5;
 
 const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => {
   const { replayTour } = useOnboardingTour();
@@ -59,13 +80,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
   const [tryoutHistoryError, setTryoutHistoryError] = useState<string | null>(null);
   const [selectedTryout, setSelectedTryout] = useState<TryoutHistoryRow | null>(null);
 
-  const [radar, setRadar] = useState<{ TWK: RadarPoint[]; TIU: RadarPoint[]; TKP: RadarPoint[] }>({
-    TWK: [],
-    TIU: [],
-    TKP: [],
-  });
+  const [radar, setRadar] = useState<RadarPoint[]>([]);
   const [radarLoading, setRadarLoading] = useState(false);
   const [radarError, setRadarError] = useState<string | null>(null);
+  const [radarSyncWarning, setRadarSyncWarning] = useState(false);
 
   const isPremium = !!(user as any)?.isPro;
 
@@ -101,26 +119,42 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
 
   useEffect(() => {
     if (!isPremium) return;
+    let cancelled = false;
+
+    const run = async () => {
+      const pending = getPendingDailyQuizSubmit();
+      if (!pending) {
+        if (!cancelled) setRadarSyncWarning(false);
+        return;
+      }
+
+      const ok = await syncPendingDailyQuizSubmit().catch(() => false);
+      if (!cancelled) setRadarSyncWarning(!ok);
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPremium]);
+
+  useEffect(() => {
+    if (!isPremium) return;
 
     let cancelled = false;
     const run = async () => {
       setRadarLoading(true);
       setRadarError(null);
       try {
-        const res = await apiFetch('/analytics/subtopic-accuracy');
+        const res = await apiFetch('/analytics/subtopic-readiness');
         if (res.status === 403) {
           if (!cancelled) setRadarError('locked');
           return;
         }
         if (!res.ok) throw new Error('Failed to load radar analytics');
         const json = (await res.json()) as any;
-        const categories = json?.categories ?? {};
-        const next = {
-          TWK: Array.isArray(categories?.TWK) ? (categories.TWK as RadarPoint[]) : [],
-          TIU: Array.isArray(categories?.TIU) ? (categories.TIU as RadarPoint[]) : [],
-          TKP: Array.isArray(categories?.TKP) ? (categories.TKP as RadarPoint[]) : [],
-        };
-        if (!cancelled) setRadar(next);
+        const rows = Array.isArray(json?.data) ? (json.data as RadarPoint[]) : [];
+        if (!cancelled) setRadar(rows);
       } catch {
         if (!cancelled) setRadarError('unavailable');
       } finally {
@@ -189,22 +223,46 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               ) : radarError ? (
                 <div className="flex-1 flex items-center justify-center text-sm font-bold">Gagal memuat.</div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  {(['TWK', 'TIU', 'TKP'] as const).map((code) => (
-                    <div key={code} className="border border-black bg-white rounded-xl p-3">
-                      <div className="font-black text-sm mb-2">{code}</div>
-                      <div className="h-44">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart data={(radar as any)[code] || []}>
-                            <PolarGrid />
-                            <PolarAngleAxis dataKey="subtopicName" tick={{ fontSize: 10 }} />
-                            <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-                            <Radar dataKey="value" stroke="#000000" fill="#D4F938" fillOpacity={0.6} />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      </div>
+                <div className="border border-black bg-white rounded-xl p-3">
+                  <div className="font-black text-sm mb-2">SKD</div>
+                  {radarSyncWarning ? (
+                    <div className="mb-2 text-xs font-bold text-black/80">
+                      Data belum tersinkron—coba lagi.
                     </div>
-                  ))}
+                  ) : null}
+
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart
+                        data={SPIDER_AXES.map((axis) => {
+                          const found = radar.find(
+                            (r) => String(r.topicCode || '').toUpperCase() === axis.topicCode && String(r.subcategoryName || '').toLowerCase() === axis.subcategoryName.toLowerCase()
+                          );
+                          const attempts = Number(found?.attempts ?? 0);
+                          const value = Number(found?.value ?? 0);
+                          const preview = attempts > 0 ? value : 0;
+                          const solid = attempts >= MIN_ATTEMPTS_SOLID ? value : 0;
+                          return {
+                            name: `${axis.topicCode} ${axis.subcategoryName}`,
+                            preview,
+                            value: solid,
+                            attempts,
+                          };
+                        })}
+                      >
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="name" tick={{ fontSize: 10 }} />
+                        <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+
+                        <Radar dataKey="preview" stroke="#000000" fill="#E5E7EB" fillOpacity={0.5} />
+                        <Radar dataKey="value" stroke="#000000" fill="#D4F938" fillOpacity={0.6} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-2 text-[11px] font-bold text-black/80">
+                    Nilai penuh muncul setelah minimal {MIN_ATTEMPTS_SOLID} percobaan per subtopik.
+                  </div>
                 </div>
               )}
             </div>

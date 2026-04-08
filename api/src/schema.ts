@@ -103,6 +103,26 @@ export const tryoutAttemptItems = pgTable('tryout_attempt_items', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// TEAM_029: persist daily quiz submissions for unified profile spider chart readiness analytics
+
+export const dailyQuizAttempts = pgTable('daily_quiz_attempts', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  dayKey: text('day_key').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const dailyQuizAttemptItems = pgTable('daily_quiz_attempt_items', {
+  id: serial('id').primaryKey(),
+  attemptId: text('attempt_id').references(() => dailyQuizAttempts.id).notNull(),
+  questionId: integer('question_id').references(() => questions.id).notNull(),
+  subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id),
+  isCorrect: boolean('is_correct'),
+  selectedWeight: integer('selected_weight'),
+  maxWeight: integer('max_weight'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // TEAM_023: static-QRIS payments (manual-first matching)
 export const payments = pgTable('payments', {
   id: text('id').primaryKey(),

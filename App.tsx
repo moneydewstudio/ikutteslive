@@ -3,6 +3,7 @@ import { ViewState, UserSession, User } from './types';
 import * as QuizService from './services/quizService';
 import { authService } from './services/authService';
 import ProgressBar from './components/ProgressBar';
+import { setPendingDailyQuizSubmit, submitDailyQuizAttempt } from './services/dailyQuizSync';
 import QuizCard from './components/QuizCard';
 import ResultsView from './components/ResultsView';
 import SignupModal from './components/SignupModal';
@@ -254,6 +255,14 @@ const AppContent: React.FC = () => {
     const resultSession = QuizService.calculateResults(finalSession);
     setSession(resultSession);
     QuizService.clearSession();
+
+    // TEAM_029: persist daily quiz submission for profile spider chart analytics (Tryout + Daily Quiz; drills excluded)
+    if (resultSession?.dayKey) {
+      const payload = { dayKey: resultSession.dayKey, answers: resultSession.answers };
+      void submitDailyQuizAttempt(payload).then((ok) => {
+        if (!ok) setPendingDailyQuizSubmit(payload);
+      });
+    }
 
     if (user && user.isPro) {
       setView('RESULTS');
