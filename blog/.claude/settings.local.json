@@ -9,5 +9,9 @@
       "Bash(ls -la *.toml *.json)",
       "Bash(mkdir:*)"
     ]
+  },
+  "enabledPlugins": {
+    "claude-seo@agricidaniel-seo": true,
+    "claude-mem@thedotmack": true
   }
 }

@@ -649,6 +649,7 @@ app.post('/admin/payments/:id/confirm', async (c) => {
       u_update as (
         update users u
         set
+          is_premium = true,
           premium_until = (
             case
               when u.premium_until is not null and u.premium_until > now() then u.premium_until
@@ -663,7 +664,7 @@ app.post('/admin/payments/:id/confirm', async (c) => {
           purchase_count = coalesce(u.purchase_count, 0) + 1,
           last_purchase_type = (select plan_type from p_confirm)
         where u.id = (select user_id from p_confirm)
-        returning u.premium_until as premium_until
+        returning u.premium_until as premium_until, u.is_premium as is_premium
       ),
       a_insert as (
         insert into payment_admin_actions (id, payment_id, admin_id, action, note, created_at)
@@ -674,7 +675,8 @@ app.post('/admin/payments/:id/confirm', async (c) => {
       select
         (select status from p0) as status_before,
         (select count(*)::int from p_confirm) as confirmed_count,
-        (select premium_until from u_update) as premium_until;
+        (select premium_until from u_update) as premium_until,
+        (select is_premium from u_update) as is_premium;
     `);
 
     const row = (res.rows?.[0] as any) ?? null;
@@ -690,7 +692,7 @@ app.post('/admin/payments/:id/confirm', async (c) => {
       return c.json({ error: 'unavailable' }, 503);
     }
 
-    return c.json({ ok: true, status: 'confirmed', premium_until: row.premium_until ? new Date(row.premium_until).toISOString() : null });
+    return c.json({ ok: true, status: 'confirmed', is_premium: row.is_premium, premium_until: row.premium_until ? new Date(row.premium_until).toISOString() : null });
   } catch (e) {
     console.error('TEAM_023 admin confirm failed', e);
     return c.json({ error: 'unavailable' }, 503);
@@ -1443,66 +1445,16 @@ app.post('/exam/start', async (c) => {
 
       const quota = quotas[code];
 
-      // Get subcategories indirectly: topics -> categories -> subcategories
-      const subcats = await db
-        .select({ id: questionSubcategories.id })
-        .from(questionSubcategories)
-        .innerJoin(questionCategories, eq(questionSubcategories.categoryId, questionCategories.id))
-        .where(eq(questionCategories.topicId, topicId))
-        .orderBy(questionSubcategories.id); // deterministic ordering
+      // Direct topic-based selection (no categories/subcategories)
+      const rows = await db
+        .select({ id: questions.id })
+        .from(questions)
+        .where(and(eq(questions.topicId, topicId), eq(questions.isActive, true)))
+        .orderBy(sql`md5((${questions.id})::text || ${seed} || ${code})`)
+        .limit(quota);
 
-      const subIds = (subcats as any[]).map((s) => Number(s.id)).filter((n) => Number.isFinite(n));
-
-      if (!subIds.length) {
-        // Fallback: pick directly from topic if no subcategories
-        const fallback = await db
-          .select({ id: questions.id })
-          .from(questions)
-          .where(and(eq(questions.topicId, topicId), eq(questions.isActive, true)))
-          .orderBy(sql`md5((${questions.id})::text || ${seed})`)
-          .limit(quota);
-        pickedIds.push(...(fallback as any[]).map((q) => Number(q.id)));
-        continue;
-      }
-
-      // Batched selection to avoid N+1 queries
-      const base = Math.floor(quota / subIds.length);
-      let remainder = quota % subIds.length;
-      let missing = 0;
-
-      for (const subId of subIds) {
-        const need = base + (remainder > 0 ? 1 : 0);
-        if (remainder > 0) remainder -= 1;
-        if (need <= 0) continue;
-
-        const rows = await db
-          .select({ id: questions.id })
-          .from(questions)
-          .where(and(eq(questions.subcategoryId, subId), eq(questions.isActive, true)))
-          .orderBy(sql`md5((${questions.id})::text || ${seed} || ${String(subId)})`)
-          .limit(need);
-
-        const ids = (rows as any[]).map((q) => Number(q.id)).filter((n) => Number.isFinite(n));
-        pickedIds.push(...ids);
-        if (ids.length < need) missing += need - ids.length;
-      }
-
-      if (missing > 0) {
-        // Fill missing from same topic (maintains topic purity)
-        const extra = await db
-          .select({ id: questions.id })
-          .from(questions)
-          .where(
-            and(
-              eq(questions.topicId, topicId),
-              eq(questions.isActive, true),
-              pickedIds.length ? notInArray(questions.id, pickedIds) : sql`true`
-            )
-          )
-          .orderBy(sql`md5((${questions.id})::text || ${seed} || 'extra')`)
-          .limit(missing);
-        pickedIds.push(...(extra as any[]).map((q) => Number(q.id)).filter((n) => Number.isFinite(n)));
-      }
+      const ids = (rows as any[]).map((q) => Number(q.id)).filter((n) => Number.isFinite(n));
+      pickedIds.push(...ids);
     }
 
     // Final fallback: cross-topic (violates purity but ensures tryout can start)
@@ -1540,7 +1492,12 @@ app.post('/exam/start', async (c) => {
       questionCount: 110,
     });
   } catch (e) {
-    console.error('TEAM_004 /exam/start failed', e);
+    const err = e as any;
+    console.error('TEAM_004 /exam/start failed', {
+      message: err?.message ?? String(e),
+      cause: err?.cause ?? 'unknown',
+      stack: err?.stack ?? 'no stack',
+    });
     return c.json({ error: 'unavailable' }, 503);
   }
 });

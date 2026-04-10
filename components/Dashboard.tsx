@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { User, UserSession } from '../types';
 import Button from '../components/Button';
 import {
@@ -63,6 +63,10 @@ const MIN_ATTEMPTS_SOLID = 5;
 
 const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => {
   const { replayTour } = useOnboardingTour();
+  // TEAM_029: prevent duplicate fetches from double-mount (StrictMode or production)
+  const didLoadHistoryRef = useRef(false);
+  const didLoadSyncRef = useRef(false);
+  const didLoadRadarRef = useRef(false);
   const chartData = useMemo(
     () =>
       history
@@ -86,6 +90,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
   const [radarSyncWarning, setRadarSyncWarning] = useState(false);
 
   useEffect(() => {
+    // TEAM_029: dedupe: only run fetch once per mount lifecycle
+    if (didLoadHistoryRef.current) return;
+    didLoadHistoryRef.current = true;
     let cancelled = false;
     const run = async () => {
       setTryoutHistoryLoading(true);
@@ -110,10 +117,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     void run();
     return () => {
       cancelled = true;
+      didLoadHistoryRef.current = false;
     };
   }, []);
 
   useEffect(() => {
+    // TEAM_029: dedupe: only run sync once per mount lifecycle
+    if (didLoadSyncRef.current) return;
+    didLoadSyncRef.current = true;
     let cancelled = false;
 
     const run = async () => {
@@ -130,10 +141,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     void run();
     return () => {
       cancelled = true;
+      didLoadSyncRef.current = false;
     };
   }, []);
 
   useEffect(() => {
+    // TEAM_029: dedupe: only run fetch once per mount lifecycle
+    if (didLoadRadarRef.current) return;
+    didLoadRadarRef.current = true;
     let cancelled = false;
     const run = async () => {
       setRadarLoading(true);
@@ -158,6 +173,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     void run();
     return () => {
       cancelled = true;
+      didLoadRadarRef.current = false;
     };
   }, []);
 

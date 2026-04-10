@@ -218,12 +218,12 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
         </div>
       ) : null}
 
-      <div className="flex flex-col md:flex-row gap-3 mb-4">
-        <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
           {(['pending', 'confirmed', 'expired', 'cancelled'] as const).map((s) => (
             <button
               key={s}
-              className={`px-3 py-2 text-xs font-black uppercase border border-black rounded-lg ${
+              className={`px-3 py-2 text-xs font-black uppercase border border-black rounded-lg whitespace-nowrap ${
                 status === s ? 'bg-brand-lime' : 'bg-white'
               }`}
               onClick={() => setStatus(s)}
@@ -233,21 +233,22 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
           ))}
         </div>
 
-        <div className="flex-1 flex flex-col md:flex-row gap-2 md:justify-end">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
-            className="border border-black rounded-lg px-3 py-2 text-sm w-full md:w-72"
+            className="border border-black rounded-lg px-3 py-2 text-sm w-full sm:w-72"
             placeholder="Cari amount / userId / paymentId"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <label className="flex items-center gap-2 text-sm font-bold">
+          <label className="flex items-center gap-2 text-sm font-bold whitespace-nowrap">
             <input type="checkbox" checked={claimedOnly} onChange={(e) => setClaimedOnly(e.target.checked)} />
             Claimed only
           </label>
         </div>
       </div>
 
-      <div className="border border-black rounded-xl overflow-hidden bg-white">
+      {/* Desktop Table */}
+      <div className="hidden md:block border border-black rounded-xl overflow-hidden bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-[900px] w-full text-left">
             <thead className="bg-gray-50 border-b border-black">
@@ -344,12 +345,121 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
         </div>
       </div>
 
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.map((p) => {
+          const canAct = String(p.status) === 'pending';
+          return (
+            <div key={p.id} className="border border-black rounded-xl bg-white p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-black text-lg">Rp {Number(p.amount_expected).toLocaleString('id-ID')}</div>
+                    <button
+                      className="text-xs font-bold underline text-gray-600"
+                      onClick={() => void onCopyAmount(p)}
+                      title="Copy amount"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <div className="text-[11px] text-gray-500 font-medium break-all mt-1">{p.id}</div>
+                </div>
+                <span className={`text-xs font-black uppercase px-2 py-1 rounded border ${
+                  p.status === 'pending' ? 'bg-yellow-100 border-yellow-400 text-yellow-800' :
+                  p.status === 'confirmed' ? 'bg-green-100 border-green-400 text-green-800' :
+                  p.status === 'expired' ? 'bg-gray-100 border-gray-400 text-gray-600' :
+                  'bg-red-100 border-red-400 text-red-800'
+                }`}>
+                  {p.status}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <div className="text-xs text-gray-500 font-medium">Plan</div>
+                  <div className="font-bold">{p.plan_type}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 font-medium">Claimed</div>
+                  <div className="font-medium">{formatTime(p.user_claimed_at)}</div>
+                </div>
+                <div className="col-span-2">
+                  <div className="text-xs text-gray-500 font-medium">User ID</div>
+                  <div className="text-xs font-medium break-all">{p.user_id}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 font-medium">Created</div>
+                  <div className="text-xs font-medium">{formatTime(p.created_at)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 font-medium">Expires</div>
+                  <div className="text-xs font-medium">{formatTime(p.expires_at)}</div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                <Button
+                  size="sm"
+                  variant="lime"
+                  disabled={!canAct}
+                  className="w-full"
+                  onClick={() => {
+                    setModal({ kind: 'confirm', payment: p });
+                    setConfirmChecked(false);
+                    setNote('');
+                    setTransactionRef('');
+                  }}
+                >
+                  Confirm Payment
+                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!canAct}
+                    className="flex-1"
+                    onClick={() => {
+                      setModal({ kind: 'expire', payment: p });
+                      setConfirmChecked(false);
+                      setNote('');
+                      setTransactionRef('');
+                    }}
+                  >
+                    Expire
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!canAct}
+                    className="flex-1"
+                    onClick={() => {
+                      setModal({ kind: 'cancel', payment: p });
+                      setConfirmChecked(false);
+                      setNote('');
+                      setTransactionRef('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {!filtered.length ? (
+          <div className="p-6 text-sm font-medium text-gray-600 text-center border border-black rounded-xl bg-white">
+            {loading ? 'Memuat...' : 'Tidak ada data.'}
+          </div>
+        ) : null}
+      </div>
+
       {modal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg border border-black rounded-xl bg-white p-5">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
+          <div className="w-full max-w-lg border border-black rounded-xl bg-white p-5 my-auto">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="font-black text-lg uppercase">
+              <div className="min-w-0 flex-1">
+                <div className="font-black text-base md:text-lg uppercase">
                   {modal.kind === 'confirm' ? 'Confirm Payment' : modal.kind === 'expire' ? 'Expire Payment' : 'Cancel Payment'}
                 </div>
                 <div className="text-sm text-gray-700 font-medium mt-1">
@@ -364,7 +474,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
               </div>
 
               <button
-                className="text-xs font-black uppercase border border-black rounded-lg px-2 py-1"
+                className="text-xs font-black uppercase border border-black rounded-lg px-2 py-1 shrink-0"
                 onClick={() => {
                   setModal(null);
                   setConfirmChecked(false);
@@ -384,7 +494,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                     checked={confirmChecked}
                     onChange={(e) => setConfirmChecked(e.target.checked)}
                   />
-                  Saya sudah cek transaksi masuk dengan nominal yang sama persis
+                  <span className="leading-tight">Saya sudah cek transaksi masuk dengan nominal yang sama persis</span>
                 </label>
                 <div className="mt-3 grid grid-cols-1 gap-2">
                   <input
@@ -398,7 +508,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                     placeholder="Catatan (optional)"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    rows={3}
+                    rows={2}
                   />
                 </div>
               </div>
@@ -409,17 +519,18 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                   placeholder="Catatan (optional)"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  rows={3}
+                  rows={2}
                 />
               </div>
             )}
 
-            <div className="mt-5 flex gap-2 justify-end">
+            <div className="mt-5 flex flex-col sm:flex-row gap-2 sm:justify-end">
               <Button
                 variant={modal.kind === 'confirm' ? 'lime' : 'outline'}
                 onClick={() => void runAction()}
                 disabled={modal.kind === 'confirm' ? !confirmChecked : false}
                 isLoading={loading}
+                className="w-full sm:w-auto"
               >
                 {modal.kind === 'confirm' ? 'Confirm' : modal.kind === 'expire' ? 'Expire' : 'Cancel'}
               </Button>

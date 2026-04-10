@@ -3,7 +3,7 @@ import { ViewState, UserSession, User } from './types';
 import * as QuizService from './services/quizService';
 import { authService } from './services/authService';
 import ProgressBar from './components/ProgressBar';
-import { setPendingDailyQuizSubmit, submitDailyQuizAttempt } from './services/dailyQuizSync';
+import { setPendingDailyQuizSubmit, submitDailyQuizAttempt, hasSuccessfullySubmittedToday, markSubmittedToday } from './services/dailyQuizSync';
 import QuizCard from './components/QuizCard';
 import ResultsView from './components/ResultsView';
 import SignupModal from './components/SignupModal';
@@ -37,6 +37,8 @@ const AppContent: React.FC = () => {
   // TEAM_012: prevent duplicate Google popup attempts on localhost
   const [isSignupLoading, setIsSignupLoading] = useState(false);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
+  // TEAM_029: prevent duplicate finishQuiz calls from rapid taps
+  const isFinishingRef = React.useRef(false);
 
   const isGuest = !!user && (user.id === 'local_guest' || !user.email);
 
@@ -235,6 +237,8 @@ const AppContent: React.FC = () => {
   const handleOptionSelect = (optionId: string) => {
     if (!session) return;
     const currentQId = session.questionIds[currentQuestionIdx];
+    // TEAM_029: ignore if already answered (answers are final per question)
+    if (session.answers[currentQId]) return;
     const currentQ = QuizService.getQuestionsForSession(session).find((q) => q.id === currentQId);
     const updatedSession = {
       ...session,
@@ -255,6 +259,9 @@ const AppContent: React.FC = () => {
       if (currentQuestionIdx < session.questionIds.length - 1) {
         setCurrentQuestionIdx(prev => prev + 1);
       } else {
+        // TEAM_029: guard against double finishQuiz from rapid taps
+        if (isFinishingRef.current) return;
+        isFinishingRef.current = true;
         finishQuiz(updatedSession);
       }
     }, 250);
@@ -266,11 +273,22 @@ const AppContent: React.FC = () => {
     QuizService.clearSession();
 
     // TEAM_029: persist daily quiz submission for profile spider chart analytics (Tryout + Daily Quiz; drills excluded)
-    if (resultSession?.dayKey) {
-      const payload = { dayKey: resultSession.dayKey, answers: resultSession.answers };
-      void submitDailyQuizAttempt(payload).then((ok) => {
-        if (!ok) setPendingDailyQuizSubmit(payload);
-      });
+    // Enforce one successful submit per day per user
+    const dayKey = resultSession?.dayKey;
+    if (dayKey) {
+      const payload = { dayKey, answers: resultSession.answers };
+      // Skip submit if already successfully submitted today
+      if (hasSuccessfullySubmittedToday(dayKey)) {
+        // Already submitted - proceed to results without API call
+      } else {
+        void submitDailyQuizAttempt(payload).then((ok) => {
+          if (ok) {
+            markSubmittedToday(dayKey);
+          } else {
+            setPendingDailyQuizSubmit(payload);
+          }
+        });
+      }
     }
 
     if (user && user.isPro) {
