@@ -45,6 +45,18 @@ export default {
     }
 
     // Static assets and SPA fallback
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    
+    // Add cache-busting headers to prevent stale deployments
+    const headers = new Headers(response.headers);
+    headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    headers.set('Pragma', 'no-cache');
+    headers.set('Expires', '0');
+    
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
   },
 };
