@@ -304,6 +304,32 @@ export const getAllFormasiInstitutions = async (
     }));
 };
 
+export const getFormasiProvincesByInstitution = async (
+  db: BlogDb,
+  institutionSlug: string,
+): Promise<Array<{ province: string; provinceSlug: string }>> => {
+  const rows = await db
+    .select({
+      province: formasiPages.province,
+      provinceSlug: formasiPages.provinceSlug,
+    })
+    .from(formasiPages)
+    .where(
+      and(
+        eq(formasiPages.pageType, 'province'),
+        sql`${formasiPages.formations_data} @> '[{"institution_slug": "${institutionSlug}"}]'::jsonb`
+      )
+    );
+
+  return rows
+    .filter((row): row is { province: string; provinceSlug: string } =>
+      Boolean(row.province && row.provinceSlug))
+    .map((row) => ({
+      province: row.province,
+      provinceSlug: row.provinceSlug,
+    }));
+};
+
 export const getAllFormasiEducationLevels = async (
   db: BlogDb,
 ): Promise<Array<{ slug: string; educationLevel: string }>> => {

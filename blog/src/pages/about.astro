@@ -1,0 +1,179 @@
+---
+// About page - Tentang Ikuttes
+import HubLayout from '../layouts/HubLayout.astro';
+import Shell from '../components/global/Shell.astro';
+import Breadcrumbs from '../components/global/Breadcrumbs.astro';
+import { buildCanonicalUrl, buildBreadcrumbSchema, buildOrganizationSchema, buildWebPageSchema } from '../lib/utils/seo';
+import { setCacheControl, HUB_CACHE_CONTROL } from '../lib/utils/cache';
+
+setCacheControl(Astro.response.headers, HUB_CACHE_CONTROL);
+
+const canonical = buildCanonicalUrl('/about');
+const title = 'Tentang Kami — Ikuttes Blog';
+const description = 'Platform persiapan CPNS gratis dengan ribuan soal latihan TIU, TWK, dan TKP. Ikuttes Blog telah membantu ribuan peserta ujian sejak 2023.';
+
+const schema = [
+  buildOrganizationSchema(),
+  buildWebPageSchema({ title, description, path: '/about' }),
+  buildBreadcrumbSchema([
+    { name: 'Beranda', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: 'Tentang Kami', path: '/blog/about' }
+  ]),
+];
+
+const stats = [
+  { number: '15,000+', label: 'Peserta Terdaftar' },
+  { number: '2,500+', label: 'Soal Latihan' },
+  { number: '50,000+', label: 'Tryout Dikerjakan' },
+  { number: '3', label: 'Kategori Materi' },
+];
+
+const features = [
+  {
+    title: 'Soal Berkualitas',
+    description: 'Ribuan soal TIU, TWK, dan TKP yang disusun berdasarkan kisi-kisi resmi CPNS dari Kementerian PANRB.'
+  },
+  {
+    title: 'Gratis & Akses Tanpa Batas',
+    description: 'Latihan harian dan tryout gratis tanpa batasan jumlah percobaan. Premium memberikan analitik tambahan.'
+  },
+  {
+    title: 'Analitik Pembelajaran',
+    description: 'Pantau progress belajar Anda dengan dashboard analitik yang menampilkan kekuatan dan kelemahan per subtopik.'
+  },
+  {
+    title: 'Komunitas Aktif',
+    description: 'Bergabung dengan ribuan peserta CPNS lainnya untuk berdiskusi dan berbagi tips persiapan.'
+  }
+];
+---
+
+<HubLayout title={title} description={description} canonical={canonical} schema={schema}>
+  <Shell>
+    <Breadcrumbs items={[
+      { name: 'Beranda', path: '/' },
+      { name: 'Blog', path: '/blog' },
+      { name: 'Tentang Kami', path: '/blog/about' }
+    ]} />
+    
+    <div class="space-y-8">
+      <!-- Hero Section -->
+      <section class="border-3 border-black bg-brand-lime p-6 md:p-10 shadow-neo text-center">
+        <h1 class="text-3xl md:text-4xl font-extrabold">Tentang Ikuttes</h1>
+        <p class="mt-4 text-lg text-black/80 max-w-2xl mx-auto">
+          Platform persiapan CPNS modern yang membantu ribuan calon ASN meraih impian mereka 
+          melalui latihan terstruktur dan analitik cerdas.
+        </p>
+      </section>
+
+      <!-- Stats -->
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map(stat => (
+          <div class="border-3 border-black bg-white p-5 shadow-neo-sm text-center">
+            <div class="text-2xl md:text-3xl font-extrabold text-black">{stat.number}</div>
+            <div class="text-sm text-black/70 mt-1">{stat.label}</div>
+          </div>
+        ))}
+      </section>
+
+      <!-- Mission -->
+      <section class="border-3 border-black bg-white p-6 md:p-8 shadow-neo">
+        <h2 class="text-xl font-bold mb-4">Visi & Misi</h2>
+        <div class="space-y-4 text-black/80">
+          <p>
+            <strong class="text-black">Visi:</strong> Menjadi platform persiapan CPNS terdepan di Indonesia 
+            yang menggabungkan teknologi modern dengan kebutuhan belajar peserta ujian.
+          </p>
+          <p>
+            <strong class="text-black">Misi:</strong> Memberikan akses gratis ke materi berkualitas, 
+            menciptakan pengalaman belajar yang terukur dan efektif, serta membangun komunitas 
+            calon ASN yang saling mendukung.
+          </p>
+        </div>
+      </section>
+
+      <!-- Features Grid -->
+      <section>
+        <h2 class="text-xl font-bold mb-4">Mengapa Memilih Ikuttes?</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          {features.map(feature => (
+            <div class="border-3 border-black bg-white p-5 shadow-neo-sm">
+              <h3 class="font-bold text-lg mb-2">{feature.title}</h3>
+              <p class="text-sm text-black/80">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Team/Who We Are -->
+      <section class="border-3 border-black bg-brand-pink p-6 shadow-neo">
+        <h2 class="text-xl font-bold mb-4">Siapa Kami?</h2>
+        <div class="text-black/80 space-y-3 text-sm">
+          <p>
+            Ikuttes didirikan oleh sekelompok praktisi edukasi dan teknologi yang memiliki 
+            passion dalam membantu calon Pegawai Negeri Sipil mempersiapkan diri dengan optimal. 
+            Tim kami terdiri dari:
+          </p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Instruktur CPNS berpengalaman dengan track record kelulusan tinggi</li>
+            <li>Developer yang fokus pada pengalaman pengguna yang intuitif</li>
+            <li>Data scientist yang mengembangkan sistem analitik pembelajaran</li>
+            <li>Content creator yang menyusun materi berkualitas dan mudah dipahami</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- How It Started -->
+      <section class="border-3 border-black bg-white p-6 shadow-neo">
+        <h2 class="text-xl font-bold mb-4">Perjalanan Kami</h2>
+        <div class="space-y-4 text-sm text-black/80">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-20 font-bold">2023</div>
+            <div>Ide awal Ikuttes lahir dari keresahan akan sulitnya akses latihan CPNS berkualitas dengan harga terjangkau.</div>
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-20 font-bold">Awal 2024</div>
+            <div>Platform beta diluncurkan dengan 500 soal latihan dan menerima feedback positif dari ratusan pengguna.</div>
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-20 font-bold">Akhir 2024</div>
+            <div>Integrasi blog dengan artikel strategi dan tips persiapan CPNS. Database soal berkembang menjadi 2,500+.</div>
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-20 font-bold">2025</div>
+            <div>Peluncuran fitur analitik radar dan sistem daily quiz yang terintegrasi dengan tryout.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact CTA -->
+      <section class="border-3 border-black bg-brand-purple text-white p-6 shadow-neo">
+        <h2 class="text-xl font-bold mb-3">Hubungi Kami</h2>
+        <p class="text-sm text-white/90 mb-4">
+          Punya pertanyaan, saran, atau ingin berkolaborasi? Kami senang mendengar dari Anda.
+        </p>
+        <div class="flex flex-wrap gap-3 text-sm">
+          <a 
+            href="mailto:halo@ikuttes.my.id" 
+            class="inline-flex items-center gap-2 border-2 border-white bg-white/10 px-4 py-2 font-medium hover:bg-white/20"
+          >
+            📧 halo@ikuttes.my.id
+          </a>
+        </div>
+      </section>
+
+      <!-- Publisher Info (for AdSense) -->
+      <section class="border-2 border-black/20 bg-gray-50 p-4 text-xs text-black/60">
+        <h3 class="font-bold text-black/80 mb-2">Informasi Penerbit (AdSense)</h3>
+        <p>
+          <strong>Nama Perusahaan:</strong> Ikuttes Blog<br>
+          <strong>Website:</strong> https://ikuttes.my.id<br>
+          <strong>Email:</strong> publisher@ikuttes.my.id<br>
+          <strong>Niche:</strong> Edukasi / Persiapan CPNS<br>
+          <strong>Bahasa Utama:</strong> Bahasa Indonesia
+        </p>
+      </section>
+    </div>
+  </Shell>
+</HubLayout>

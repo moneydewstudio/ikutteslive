@@ -1,17 +1,16 @@
 ---
-// TEAM_030: Province formasi page (/blog/formasi/:province/)
-import ArticleLayout from '../../../layouts/ArticleLayout.astro';
-import Shell from '../../../components/global/Shell.astro';
-import ContentBlocks from '../../../components/article/ContentBlocks.astro';
-import CtaCard from '../../../components/global/CtaCard.astro';
+// TEAM_030: Education level formasi page (/blog/formasi/untuk/:slug/)
+import ArticleLayout from '../../../../layouts/ArticleLayout.astro';
+import Shell from '../../../../components/global/Shell.astro';
+import ContentBlocks from '../../../../components/article/ContentBlocks.astro';
+import CtaCard from '../../../../components/global/CtaCard.astro';
 
-import { getRuntimeEnv } from '../../../lib/utils/runtime';
-import { getDb } from '../../../lib/db/client';
+import { getRuntimeEnv } from '../../../../lib/utils/runtime';
+import { getDb } from '../../../../lib/db/client';
 import {
   getFormasiPageBySlug,
-  getFormasiCitiesByProvince,
   getAllFormasiInstitutions,
-} from '../../../lib/db/queries';
+} from '../../../../lib/db/queries';
 
 import {
   buildSiteSchema,
@@ -19,14 +18,14 @@ import {
   buildBreadcrumbSchema,
   buildWebPageSchema,
   normalizeSeoConfig,
-} from '../../../lib/utils/seo';
+} from '../../../../lib/utils/seo';
 
-import { injectCtaBlock } from '../../../lib/blogContent';
-import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL, NOT_FOUND_CACHE_CONTROL } from '../../../lib/utils/cache';
+import { injectCtaBlock } from '../../../../lib/blogContent';
+import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL, NOT_FOUND_CACHE_CONTROL } from '../../../../lib/utils/cache';
 
-const { province } = Astro.params;
+const { slug } = Astro.params;
 
-if (!province) {
+if (!slug) {
   Astro.response.status = 404;
   Astro.response.statusText = 'Not found';
   setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
@@ -36,10 +35,10 @@ if (!province) {
 const env = getRuntimeEnv(Astro.locals);
 const db = getDb(env);
 
-// Fetch province page
-const page = await getFormasiPageBySlug(db, province);
+const pageSlug = `untuk-${slug}`;
+const page = await getFormasiPageBySlug(db, pageSlug);
 
-if (!page || page.pageType !== 'province') {
+if (!page || page.pageType !== 'education') {
   Astro.response.status = 404;
   Astro.response.statusText = 'Not found';
   setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
@@ -48,7 +47,7 @@ if (!page || page.pageType !== 'province') {
 
 setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
 
-const canonicalPath = `/formasi/${page.provinceSlug}`;
+const canonicalPath = `/formasi/untuk/${slug}`;
 
 const blocks = injectCtaBlock(page.contentBlocks, 'practice');
 
@@ -65,15 +64,12 @@ const schema = [
   buildOrganizationSchema(),
   buildBreadcrumbSchema([
     { name: 'Formasi CPNS', path: '/formasi' },
-    { name: page.province ?? province, path: canonicalPath },
+    { name: page.educationLevel ?? slug, path: canonicalPath },
   ]),
   buildWebPageSchema({ title: seo.title, description: seo.description ?? null, path: canonicalPath }),
 ].filter(Boolean);
 
-// Fetch cities in this province
-const cities = await getFormasiCitiesByProvince(db, province);
-
-// Fetch institutions for related links
+// Get institutions for related links
 const institutions = await getAllFormasiInstitutions(db);
 ---
 
@@ -87,7 +83,7 @@ const institutions = await getAllFormasiInstitutions(db);
   <Shell>
     <article class="grid gap-6">
       <header class="border-3 border-black bg-white p-6 shadow-neo">
-        <div class="text-xs font-black uppercase tracking-wider text-brand-lime">FORMASI CPNS</div>
+        <div class="text-xs font-black uppercase tracking-wider text-brand-lime">FORMASI BY PENDIDIKAN</div>
         <h1 class="mt-2 text-2xl font-extrabold">{page.title}</h1>
         {seo.description ? <p class="mt-3 text-sm text-black/80">{seo.description}</p> : null}
         {page.hasPlaceholderData ? (
@@ -99,32 +95,14 @@ const institutions = await getAllFormasiInstitutions(db);
 
       <ContentBlocks blocks={blocks} />
 
-      {cities.length > 0 && (
-        <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-          <h2 class="text-lg font-extrabold">Formasi per Kota/Kabupaten</h2>
-          <p class="mt-2 text-sm text-black/70">Lihat formasi CPNS di kota/kabupaten di {page.province}:</p>
-          <div class="mt-4 grid gap-2">
-            {cities.map((city) => (
-              <a
-                href={`/blog/formasi/${province}/${city.citySlug}`}
-                class="flex items-center justify-between border-2 border-black bg-white px-4 py-3 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
-              >
-                <span class="font-bold">{city.city}</span>
-                <span class="text-sm text-black/60">Lihat formasi →</span>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
       {institutions.length > 0 && (
         <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-          <h2 class="text-lg font-extrabold">Instansi dengan Formasi di {page.province}</h2>
+          <h2 class="text-lg font-extrabold">Instansi yang Menerima {page.educationLevel}</h2>
           <p class="mt-2 text-sm text-black/70">Cek formasi instansi favorit:</p>
           <div class="mt-4 flex flex-wrap gap-2">
-            {institutions.slice(0, 6).map((inst) => (
+            {institutions.map((inst) => (
               <a
-                href={`/blog/formasi/${inst.institutionSlug}`}
+                href={`/blog/formasi/institusi/${inst.institutionSlug}`}
                 class="inline-block border-2 border-black bg-white px-3 py-2 text-sm font-bold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
               >
                 {inst.institution}
@@ -137,14 +115,14 @@ const institutions = await getAllFormasiInstitutions(db);
       <CtaCard style="hard" />
 
       <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-        <h2 class="text-lg font-extrabold">Pelajari Materi SKD</h2>
-        <p class="mt-2 text-sm text-black/80">Persiapkan diri untuk tes SKD dengan latihan soal harian:</p>
+        <h2 class="text-lg font-extrabold">Latihan Soal SKD untuk {page.educationLevel}</h2>
+        <p class="mt-2 text-sm text-black/80">Persiapkan tes kompetensi dasar dengan latihan:</p>
         <div class="mt-4">
           <a
             class="inline-flex items-center justify-center border-3 border-black bg-brand-lime px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
             href="https://ikuttes.my.id/"
           >
-            Mulai Latihan SKD
+            Mulai Latihan Sekarang
           </a>
         </div>
       </section>

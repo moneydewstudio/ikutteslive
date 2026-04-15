@@ -326,3 +326,40 @@ Need new dynamic route in Astro:
 4. **Scope:** Just locations, or include institutions + education + special?
 
 Ready to build? Need decisions on above, then I'll create the technical spec + migration + page templates.
+
+---
+
+## Progress Log
+
+### 2026-04-15: Step 2 Complete - Real CPNS 2024 Data Integration
+
+**Status:** ✅ Real data module created, seed generated, blog deployed
+
+**Files Created/Modified:**
+- `blog/data/cpns2024RealData.ts` — Real CPNS 2024 formation data module
+- `blog/scripts/generateFormasiContent.ts` — Updated to use real data
+- `db/seed/20260415_formasi_real_data.sql` — Generated seed with 41 pages, 10,558 positions
+
+**Data Summary:**
+| Category | Count | Key Data Points |
+|----------|-------|-----------------|
+| Institutions | 10 | Kemenkumham (3,258), Kejaksaan (1,250), MA (3,200), Kemenkeu (1,180), Kemenag (1,150), etc. |
+| Provinces | 10 | Jawa Barat (4,500), DKI Jakarta (3,800), Jawa Timur (3,200), Jawa Tengah (2,800), etc. |
+| Cities | 17 | Bandung, Surabaya, Jakarta Timur, Semarang, Makassar, Medan, etc. |
+| Education Levels | 4 | SMA (2,300), D3 (1,800), S1 (5,958), S2 (500) |
+| **Total Pages** | **41** | **10,558 total formation positions** |
+
+**Technical Details:**
+- `has_placeholder_data = false` for all pages
+- `data_source = 'BKN 2024 Official'`
+- Real JSONB `formations_data` embedded in each record
+- Content includes actual formation tables, not placeholders
+
+**Next Step:**
+Apply new seed to database:
+```bash
+psql $DATABASE_URL -c "TRUNCATE TABLE formasi_pages;"
+psql $DATABASE_URL -f db/seed/20260415_formasi_real_data.sql
+```
+
+**Live Deployment:** https://ikuttes-blog.robimaulanaspsi.workers.dev

@@ -82,7 +82,7 @@ const educationLevels = await getAllFormasiEducationLevels(db);
           <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {provinces.map((prov) => (
               <a
-                href={`/blog/formasi/${prov.provinceSlug}`}
+                href={`/blog/formasi/provinsi/${prov.provinceSlug}`}
                 class="flex items-center justify-between border-2 border-black bg-white px-4 py-3 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
               >
                 <span class="font-bold">{prov.province}</span>
@@ -103,7 +103,7 @@ const educationLevels = await getAllFormasiEducationLevels(db);
           <div class="mt-4 flex flex-wrap gap-2">
             {institutions.map((inst) => (
               <a
-                href={`/blog/formasi/${inst.institutionSlug}`}
+                href={`/blog/formasi/institusi/${inst.institutionSlug}`}
                 class="inline-block border-2 border-black bg-white px-3 py-2 text-sm font-bold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
               >
                 {inst.institution}
@@ -123,7 +123,7 @@ const educationLevels = await getAllFormasiEducationLevels(db);
           <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {educationLevels.map((edu) => (
               <a
-                href={`/blog/formasi/${edu.slug}`}
+                href={`/blog/formasi/untuk/${edu.slug}`}
                 class="flex items-center justify-between border-2 border-black bg-white px-4 py-3 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
               >
                 <span class="font-bold capitalize">{edu.educationLevel.replace(/-/g, ' ')}</span>

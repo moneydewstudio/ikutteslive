@@ -1,0 +1,171 @@
+---
+// Privacy Policy untuk AdSense compliance
+import HubLayout from '../layouts/HubLayout.astro';
+import Shell from '../components/global/Shell.astro';
+import Breadcrumbs from '../components/global/Breadcrumbs.astro';
+import { buildCanonicalUrl, buildBreadcrumbSchema, buildOrganizationSchema } from '../lib/utils/seo';
+import { setCacheControl, HUB_CACHE_CONTROL } from '../lib/utils/cache';
+
+setCacheControl(Astro.response.headers, HUB_CACHE_CONTROL);
+
+const canonical = buildCanonicalUrl('/privacy-policy');
+const title = 'Kebijakan Privasi — Ikuttes Blog';
+const description = 'Kebijakan privasi Ikuttes Blog menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi data pengguna sesuai standar Google AdSense.';
+
+const schema = [
+  buildOrganizationSchema(),
+  buildBreadcrumbSchema([
+    { name: 'Beranda', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: 'Kebijakan Privasi', path: '/blog/privacy-policy' }
+  ]),
+];
+
+const lastUpdated = '16 April 2026';
+---
+
+<HubLayout title={title} description={description} canonical={canonical} schema={schema}>
+  <Shell>
+    <Breadcrumbs items={[
+      { name: 'Beranda', path: '/' },
+      { name: 'Blog', path: '/blog' },
+      { name: 'Kebijakan Privasi', path: '/blog/privacy-policy' }
+    ]} />
+    
+    <article class="border-3 border-black bg-white p-6 md:p-8 shadow-neo">
+      <header class="mb-8 border-b-2 border-black/10 pb-6">
+        <h1 class="text-2xl md:text-3xl font-extrabold">Kebijakan Privasi</h1>
+        <p class="mt-2 text-sm text-black/60">
+          Terakhir diperbarui: {lastUpdated}
+        </p>
+      </header>
+
+      <div class="prose prose-sm max-w-none text-black/80 space-y-6">
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">1. Pendahuluan</h2>
+          <p>
+            Selamat datang di Ikuttes Blog. Privasi pengguna adalah prioritas utama kami. 
+            Kebijakan privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, mengungkapkan, 
+            dan melindungi informasi pribadi Anda saat menggunakan platform kami.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">2. Informasi yang Kami Kumpulkan</h2>
+          <p class="mb-2">Kami mengumpulkan informasi berikut:</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Informasi Akun:</strong> Nama, alamat email, dan data profil saat registrasi</li>
+            <li><strong>Data Penggunaan:</strong> Statistik latihan harian, skor tryout, dan progress belajar</li>
+            <li><strong>Informasi Teknis:</strong> Alamat IP, jenis browser, perangkat yang digunakan, dan log akses</li>
+            <li><strong>Cookie:</strong> Data sesi dan preferensi pengguna</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">3. Penggunaan Data untuk Iklan (Google AdSense)</h2>
+          <p class="mb-2">
+            Ikuttes Blog menggunakan Google AdSense untuk menampilkan iklan. 
+            Dengan menggunakan platform kami, Anda menyetujui penggunaan data berikut untuk personalisasi iklan:
+          </p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Cookie dan pengenal perangkat</li>
+            <li>Data lokasi geografis umum</li>
+            <li>Riwayat penelusuran dan interaksi dengan situs</li>
+            <li>Data demografis dan minat (inferensi)</li>
+          </ul>
+          <p class="mt-3 text-sm bg-brand-lime/30 p-3 border-l-4 border-black">
+            <strong>Catatan:</strong> Anda dapat menonaktifkan personalisasi iklan kapan saja melalui 
+            <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" class="underline font-medium">Pengaturan Iklan Google</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">4. Cara Kami Menggunakan Informasi</h2>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Menyediakan dan meningkatkan layanan latihan CPNS</li>
+            <li>Menampilkan iklan yang relevan melalui Google AdSense</li>
+            <li>Menganalisis performa platform dan perilaku pengguna</li>
+            <li>Mengirimkan notifikasi terkait akun dan pembaruan materi</li>
+            <li>Mencegah penipuan dan menyediakan keamanan akun</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">5. Cookie dan Teknologi Pelacakan</h2>
+          <p class="mb-2">Kami menggunakan cookie dan teknologi serupa untuk:</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Mengingat preferensi pengguna dan sesi login</li>
+            <li>Menganalisis traffic dan penggunaan platform</li>
+            <li>Mengaktifkan personalisasi iklan oleh Google AdSense</li>
+            <li>Meningkatkan pengalaman pengguna secara keseluruhan</li>
+          </ul>
+          <p class="mt-3">
+            Anda dapat mengelola preferensi cookie melalui pengaturan browser Anda. 
+            Namun, menonaktifkan cookie mungkin memengaruhi fungsionalitas platform.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">6. Pembagian Informasi</h2>
+          <p class="mb-2">Kami tidak menjual informasi pribadi Anda. Data hanya dibagikan dengan:</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Google (AdSense):</strong> Untuk penyajian dan personalisasi iklan</li>
+            <li><strong>Penyedia Layanan:</strong> Hosting, analitik, dan infrastruktur teknis</li>
+            <li><strong>Kewajiban Hukum:</strong> Jika diwajibkan oleh peraturan perundangan</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">7. Keamanan Data</h2>
+          <p>
+            Kami menerapkan langkah-langkah keamanan teknis dan organisasi untuk melindungi data Anda, 
+            termasuk enkripsi SSL/TLS, autentikasi dua faktor, dan akses terbatas ke database. 
+            Namun, tidak ada sistem yang 100% aman, dan kami tidak dapat menjamin keamanan absolut.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">8. Hak Pengguna</h2>
+          <p class="mb-2">Anda memiliki hak untuk:</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Mengakses dan memperbarui informasi profil Anda</li>
+            <li>Meminta penghapusan data akun</li>
+            <li>Menonaktifkan personalisasi iklan</li>
+            <li>Menolak penggunaan cookie non-esensial</li>
+            <li>Mengekspor data pribadi Anda</li>
+          </ul>
+          <p class="mt-3">
+            Untuk menggunakan hak-hak ini, silakan hubungi kami di email yang tercantum di bagian kontak.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">9. Perubahan Kebijakan Privasi</h2>
+          <p>
+            Kami dapat memperbarui kebijakan privasi ini sewaktu-waktu. Perubahan signifikan akan 
+            diumumkan melalui email atau notifikasi di platform. Penggunaan berkelanjutan atas 
+            layanan kami setelah perubahan berarti Anda menerima kebijakan yang diperbarui.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-bold text-black mb-3">10. Kontak</h2>
+          <p>
+            Jika Anda memiliki pertanyaan tentang kebijakan privasi ini, silakan hubungi kami:
+          </p>
+          <div class="mt-3 p-4 bg-gray-50 border-2 border-black/10 rounded">
+            <p class="font-medium">Email: privacy@ikuttes.my.id</p>
+            <p class="text-sm text-black/60 mt-1">Respon biasanya dalam 1-2 hari kerja</p>
+          </div>
+        </section>
+
+        <section class="pt-6 border-t-2 border-black/10">
+          <p class="text-sm text-black/60">
+            Dengan menggunakan Ikuttes Blog, Anda menyetujui kebijakan privasi ini. 
+            Jika Anda tidak setuju, harap berhenti menggunakan layanan kami.
+          </p>
+        </section>
+      </div>
+    </article>
+  </Shell>
+</HubLayout>

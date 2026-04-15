@@ -1,0 +1,215 @@
+---
+// FAQ page - Pertanyaan Umum
+import HubLayout from '../layouts/HubLayout.astro';
+import Shell from '../components/global/Shell.astro';
+import Breadcrumbs from '../components/global/Breadcrumbs.astro';
+import { buildCanonicalUrl, buildBreadcrumbSchema, buildOrganizationSchema, buildFaqSchema } from '../lib/utils/seo';
+import { setCacheControl, HUB_CACHE_CONTROL } from '../lib/utils/cache';
+
+setCacheControl(Astro.response.headers, HUB_CACHE_CONTROL);
+
+const canonical = buildCanonicalUrl('/faq');
+const title = 'FAQ — Pertanyaan Umum Ikuttes';
+const description = 'Jawaban untuk pertanyaan umum tentang penggunaan Ikuttes Blog, latihan CPNS, fitur premium, dan teknis lainnya.';
+
+const faqs = [
+  {
+    category: 'Umum',
+    questions: [
+      {
+        q: 'Apa itu Ikuttes Blog?',
+        a: 'Ikuttes Blog adalah platform persiapan CPNS gratis yang menyediakan soal latihan TIU (Tes Intelegensi Umum), TWK (Tes Wawasan Kebangsaan), dan TKP (Tes Karakteristik Pribadi). Platform ini dirancang untuk membantu calon ASN mempersiapkan diri dengan latihan terstruktur dan analitik performa.'
+      },
+      {
+        q: 'Apakah Ikuttes Blog gratis?',
+        a: 'Ya, fitur utama Ikuttes Blog 100% gratis termasuk daily quiz, drills per kategori, dan tryout. Kami juga menawarkan fitur premium untuk analitik detail dan akses tambahan yang dapat diaktifkan melalui pembayaran sekali (lifetime access).'
+      },
+      {
+        q: 'Bagaimana cara mulai menggunakan Ikuttes?',
+        a: 'Cukup kunjungi ikuttes.my.id, daftar akun gratis dengan email atau Google, lalu langsung mulai latihan. Tidak perlu instalasi aplikasi karena Ikuttes berbasis web yang bisa diakses dari browser apa pun.'
+      }
+    ]
+  },
+  {
+    category: 'Latihan & Soal',
+    questions: [
+      {
+        q: 'Berapa jumlah soal yang tersedia?',
+        a: 'Saat ini terdapat lebih dari 2,500 soal yang mencakup ketiga kategori CPNS: TIU (verbal, numerik, figural), TWK (Pancasila, UUD 1945, NKRI, Bhinneka Tunggal Ika), dan TKP (karakteristik pribadi berbobot).'
+      },
+      {
+        q: 'Apakah soal-soalnya sesuai kisi-kisi terbaru?',
+        a: 'Ya, semua soal disusun berdasarkan kisi-kisi resmi dari Kementerian PANRB dan diperbarui secara berkala mengikuti perubahan format ujian CPNS.'
+      },
+      {
+        q: 'Apa perbedaan Daily Quiz, Drills, dan Tryout?',
+        a: '<strong>Daily Quiz:</strong> 5 soal gratis setiap hari dengan pembahasan detail.<br><strong>Drills:</strong> Latihan fokus per kategori (20 soal TIU/TWK/TKP).<br><strong>Tryout:</strong> Simulasi ujian lengkap 110 soal dengan sistem CAT seperti ujian asli.'
+      },
+      {
+        q: 'Apakah ada pembahasan untuk setiap soal?',
+        a: 'Ya, setiap soal dilengkapi dengan pembahasan lengkap yang menjelaskan konsep dan cara penyelesaian. Pembahasan muncul setelah Anda menjawab soal tersebut.'
+      }
+    ]
+  },
+  {
+    category: 'Akun & Premium',
+    questions: [
+      {
+        q: 'Apa keuntungan menjadi pengguna Premium?',
+        a: 'Premium member mendapatkan: (1) Analitik radar lengkap untuk 12 subtopik SKD, (2) Akses unlimited tryout, (3) Riwayat latihan tersimpan di cloud, (4) Statistik readiness score, dan (5) Prioritas update fitur baru.'
+      },
+      {
+        q: 'Berapa harga Premium?',
+        a: 'Premium Ikuttes ditawarkan dengan harga terjangkau dan akses lifetime (sekali bayar, akses selamanya). Harga exact dapat dilihat di halaman Profil setelah login.'
+      },
+      {
+        q: 'Bagaimana cara upgrade ke Premium?',
+        a: 'Login ke akun Anda, buka halaman Profil, klik tombol Upgrade Premium, dan ikuti instruksi pembayaran. Setelah pembayaran dikonfirmasi, fitur premium langsung aktif.'
+      },
+      {
+        q: 'Apakah data latihan saya tersimpan?',
+        a: 'Ya, untuk pengguna terdaftar, semua hasil tryout dan daily quiz tersimpan di database kami dan dapat diakses kapan saja melalui halaman Profil.'
+      }
+    ]
+  },
+  {
+    category: 'Teknis',
+    questions: [
+      {
+        q: 'Browser apa yang didukung?',
+        a: 'Ikuttes berjalan optimal di Chrome, Firefox, Safari, dan Edge versi terbaru. Untuk pengalaman terbaik, kami merekomendasikan Chrome atau Safari versi mobile.'
+      },
+      {
+        q: 'Apakah bisa diakses dari HP?',
+        a: 'Ya, Ikuttes sepenuhnya responsif dan dioptimalkan untuk akses dari smartphone. Anda bisa latihan kapan saja, di mana saja.'
+      },
+      {
+        q: 'Mengapa saya tidak bisa login?',
+        a: 'Pastikan Anda menggunakan browser yang diperbarui dan mengaktifkan JavaScript. Jika masalah berlanjut, coba hapus cache browser atau hubungi kami di halo@ikuttes.my.id.'
+      }
+    ]
+  },
+  {
+    category: 'Iklan & Privasi',
+    questions: [
+      {
+        q: 'Mengapa ada iklan di Ikuttes?',
+        a: 'Iklan membantu kami menjaga platform tetap gratis untuk semua pengguna. Kami bekerja sama dengan Google AdSense untuk menampilkan iklan yang relevan dan tidak mengganggu pengalaman belajar.'
+      },
+      {
+        q: 'Bagaimana data saya digunakan untuk iklan?',
+        a: 'Google AdSense dapat menggunakan cookie dan data penelusuran untuk personalisasi iklan. Anda dapat menonaktifkan personalisasi kapan saja melalui <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" class="underline">Pengaturan Iklan Google</a>. Lihat <a href="/blog/privacy-policy" class="underline">Kebijakan Privasi</a> lengkap kami.'
+      },
+      {
+        q: 'Apakah data pribadi saya dijual?',
+        a: 'Tidak. Kami tidak menjual data pribadi pengguna. Informasi yang kami kumpulkan hanya digunakan untuk meningkatkan layanan dan analitik pembelajaran. Lihat kebijakan privasi kami untuk detail lengkap.'
+      }
+    ]
+  }
+];
+
+// Build FAQ schema for structured data
+// Convert FAQ data to schema format
+const faqItems = faqs.flatMap(cat => 
+  cat.questions.map(q => ({
+    question: q.q,
+    answer: q.a.replace(/<[^>]*>/g, '') // Strip HTML for schema
+  }))
+);
+
+const faqSchema = buildFaqSchema(faqItems);
+
+const schema = [
+  buildOrganizationSchema(),
+  ...(faqSchema ? [faqSchema] : []),
+  buildBreadcrumbSchema([
+    { name: 'Beranda', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: 'FAQ', path: '/blog/faq' }
+  ]),
+];
+---
+
+<HubLayout title={title} description={description} canonical={canonical} schema={schema}>
+  <Shell>
+    <Breadcrumbs items={[
+      { name: 'Beranda', path: '/' },
+      { name: 'Blog', path: '/blog' },
+      { name: 'FAQ', path: '/blog/faq' }
+    ]} />
+    
+    <div class="space-y-8">
+      <!-- Header -->
+      <section class="border-3 border-black bg-brand-lime p-6 md:p-8 shadow-neo">
+        <h1 class="text-2xl md:text-3xl font-extrabold">Pertanyaan Umum (FAQ)</h1>
+        <p class="mt-3 text-black/80">
+          Temukan jawaban untuk pertanyaan seputar penggunaan Ikuttes, fitur latihan, 
+          akun premium, dan hal teknis lainnya.
+        </p>
+      </section>
+
+      <!-- FAQ Categories -->
+      {faqs.map((category, catIndex) => (
+        <section class="border-3 border-black bg-white shadow-neo">
+          <div class="bg-black text-white p-4">
+            <h2 class="font-bold text-lg">{category.category}</h2>
+          </div>
+          <div class="divide-y-2 divide-black/10">
+            {category.questions.map((item, qIndex) => (
+              <div class="p-4 md:p-6">
+                <h3 class="font-bold text-black mb-2 flex items-start gap-2">
+                  <span class="text-brand-lime font-extrabold">Q:</span>
+                  <span>{item.q}</span>
+                </h3>
+                <div class="pl-6 text-sm text-black/80 space-y-2">
+                  <p set:html={item.a} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      <!-- Still Have Questions -->
+      <section class="border-3 border-black bg-brand-pink p-6 shadow-neo">
+        <h2 class="text-xl font-bold mb-3">Masih Punya Pertanyaan?</h2>
+        <p class="text-sm text-black/80 mb-4">
+          Jika tidak menemukan jawaban yang Anda cari, silakan hubungi tim kami. 
+          Kami akan merespons dalam 1-2 hari kerja.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a 
+            href="mailto:halo@ikuttes.my.id"
+            class="inline-flex items-center gap-2 border-3 border-black bg-white px-4 py-2 text-sm font-bold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+          >
+            📧 Email Kami
+          </a>
+          <a 
+            href="/blog"
+            class="inline-flex items-center gap-2 border-3 border-black bg-black text-white px-4 py-2 text-sm font-bold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+          >
+            📖 Baca Blog
+          </a>
+        </div>
+      </section>
+
+      <!-- Quick Links -->
+      <section class="grid md:grid-cols-2 gap-4">
+        <a 
+          href="/blog/privacy-policy"
+          class="border-3 border-black bg-white p-5 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+        >
+          <h3 class="font-bold mb-1">Kebijakan Privasi</h3>
+          <p class="text-xs text-black/70">Pelajari cara kami mengelola data dan iklan</p>
+        </a>
+        <a 
+          href="/blog/about"
+          class="border-3 border-black bg-white p-5 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+        >
+          <h3 class="font-bold mb-1">Tentang Kami</h3>
+          <p class="text-xs text-black/70">Kenali tim dan visi Ikuttes Blog</p>
+        </a>
+      </section>
+    </div>
+  </Shell>
+</HubLayout>
