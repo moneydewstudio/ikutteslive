@@ -635,8 +635,119 @@ INSERT INTO formasi_pages (
 
 ---
 
+## Content Generation Strategy (Added)
+
+### Problem
+51 pages × manual writing = 25+ hours. Too slow.
+
+### Solution: Template + Script
+
+**Step 1: Content Templates**
+```typescript
+// templates/formasiTemplates.ts
+const provinceTemplate = (province: string, cities: string[]) => ({
+  title: `Formasi CPNS ${province} 2024 — Instansi, Kuota & Persyaratan`,
+  metaDescription: `Info lengkap formasi CPNS ${province}: instansi, kuota, persyaratan, dan cara daftar. Data terbaru 2024.`,
+  contentBlocks: [
+    { type: 'paragraph', text: `Pendaftaran CPNS ${province} membuka ribuan peluang...` },
+    { type: 'heading', level: 2, text: 'Daftar Formasi per Instansi' },
+    { type: 'formation_table', data: '[PLACEHOLDER_DATA]' },
+    { type: 'heading', level: 2, text: 'Persyaratan Umum' },
+    { type: 'list', ordered: false, items: ['WNI', 'Usia 18-35 tahun', 'Sehat jasmani dan rohani'] },
+    { type: 'cta', style: 'hard' }
+  ],
+  formationsData: [
+    { institution: '[Instansi A]', position: '[Jabatan]', quota: 0, education_required: '[Tingkat]' }
+  ]
+});
+```
+
+**Step 2: Generator Script**
+```typescript
+// scripts/generateFormasiContent.ts
+const provinces = [
+  { name: 'Jawa Barat', slug: 'jawa-barat', cities: ['Bandung', 'Bekasi', 'Depok'] },
+  // ... 9 more
+];
+
+const institutions = ['Kemenkumham', 'Kejaksaan Agung', 'Kemenhub', ...];
+const educationLevels = ['sma', 'd3', 's1', 'pendidikan', 'kesehatan', 'teknik'];
+
+// Generate SQL INSERTs
+const generateSql = () => {
+  const inserts = [];
+  
+  // Provinces
+  for (const p of provinces) {
+    inserts.push(generateProvinceInsert(p));
+    for (const c of p.cities) {
+      inserts.push(generateCityInsert(p, c));
+    }
+  }
+  
+  // Institutions
+  for (const i of institutions) {
+    inserts.push(generateInstitutionInsert(i));
+  }
+  
+  // Education
+  for (const e of educationLevels) {
+    inserts.push(generateEducationInsert(e));
+  }
+  
+  return inserts.join('\n');
+};
+```
+
+**Step 3: Output**
+- File: `db/seed/20260413_formasi_seed.sql`
+- 51 INSERT statements
+- Placeholder data marked with `[...]` or `TBA`
+
+**Step 4: Review & Backfill**
+- Review top 10 pages manually
+- Mark `has_placeholder_data = false` for reviewed pages
+- Backfill real data in Week 3-4 based on traffic
+
+### Template Variants
+
+**Province Template:**
+- H1: Formasi CPNS [Province] 2024
+- Intro: 100 words about province opportunities
+- Formation table (placeholder)
+- City links (2-3 cities)
+- Requirements list
+- SKD CTA block
+
+**City Template:**
+- H1: Formasi CPNS [City], [Province]
+- Intro: 80 words about city context
+- Formation table (placeholder)
+- Parent province link
+- Related cities links
+- SKD CTA block
+
+**Institution Template:**
+- H1: Formasi CPNS [Institution] 2024 — Seluruh Indonesia
+- Intro: 120 words about institution
+- National quota summary
+- Province breakdown table
+- Special requirements
+- SKD CTA block
+
+**Education Template:**
+- H1: Formasi CPNS untuk Lulusan [Level]
+- Intro: 100 words about opportunities
+- Institution list accepting this level
+- Position types
+- Competition tips
+- SKD CTA block
+
+---
+
 ## Ready to Execute
 
 **51 pages. 2 weeks. Conversion-first.**
 
-Start with Week 1 Day 1 (Database migration)?
+Day 1: DB migration ✓ COMPLETE
+Next: Apply migration to Neon DB or proceed to content generator script?

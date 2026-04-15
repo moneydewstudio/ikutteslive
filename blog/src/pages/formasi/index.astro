@@ -1,0 +1,163 @@
+---
+// TEAM_030: Formasi CPNS hub page (/blog/formasi/)
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import Shell from '../../components/global/Shell.astro';
+import CtaCard from '../../components/global/CtaCard.astro';
+
+import { getRuntimeEnv } from '../../lib/utils/runtime';
+import { getDb } from '../../lib/db/client';
+import {
+  getAllFormasiProvinces,
+  getAllFormasiInstitutions,
+  getAllFormasiEducationLevels,
+} from '../../lib/db/queries';
+
+import {
+  buildSiteSchema,
+  buildOrganizationSchema,
+  buildBreadcrumbSchema,
+  buildWebPageSchema,
+  normalizeSeoConfig,
+} from '../../lib/utils/seo';
+
+import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL } from '../../lib/utils/cache';
+
+const env = getRuntimeEnv(Astro.locals);
+const db = getDb(env);
+
+setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
+
+const title = 'Formasi CPNS 2024 — Info Lengkap Provinsi, Instansi & Persyaratan';
+const description = 'Info lengkap formasi CPNS seluruh Indonesia: provinsi, kota, instansi, dan persyaratan. Data terbaru dan cara daftar.';
+const canonicalPath = '/formasi';
+
+const seo = normalizeSeoConfig({
+  title,
+  description,
+  canonicalPath,
+  noindex: false,
+  ogType: 'website',
+});
+
+const schema = [
+  buildSiteSchema(),
+  buildOrganizationSchema(),
+  buildBreadcrumbSchema([
+    { name: 'Formasi CPNS', path: canonicalPath },
+  ]),
+  buildWebPageSchema({ title, description, path: canonicalPath }),
+].filter(Boolean);
+
+// Fetch all categories
+const provinces = await getAllFormasiProvinces(db);
+const institutions = await getAllFormasiInstitutions(db);
+const educationLevels = await getAllFormasiEducationLevels(db);
+---
+
+<ArticleLayout
+  title={seo.title}
+  description={seo.description ?? null}
+  canonical={seo.canonical}
+  noindex={seo.noindex}
+  schema={schema}
+>
+  <Shell>
+    <article class="grid gap-8">
+      <header class="border-3 border-black bg-white p-6 shadow-neo">
+        <div class="text-xs font-black uppercase tracking-wider text-brand-lime">PUSAT INFORMASI</div>
+        <h1 class="mt-2 text-2xl font-extrabold">Formasi CPNS 2024</h1>
+        <p class="mt-3 text-sm text-black/80">
+          Informasi lengkap formasi CPNS seluruh Indonesia. Cek formasi berdasarkan provinsi, 
+          instansi, atau tingkat pendidikan Anda.
+        </p>
+      </header>
+
+      <CtaCard style="hard" />
+
+      {/* Provinces Section */}
+      <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
+        <h2 class="text-lg font-extrabold">Formasi per Provinsi</h2>
+        <p class="mt-2 text-sm text-black/70">Pilih provinsi untuk melihat formasi lengkap:</p>
+        {provinces.length > 0 ? (
+          <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {provinces.map((prov) => (
+              <a
+                href={`/blog/formasi/${prov.provinceSlug}`}
+                class="flex items-center justify-between border-2 border-black bg-white px-4 py-3 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
+              >
+                <span class="font-bold">{prov.province}</span>
+                <span class="text-sm text-black/60">Lihat →</span>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p class="mt-4 text-sm text-black/50">Data provinsi sedang dimuat...</p>
+        )}
+      </section>
+
+      {/* Institutions Section */}
+      <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
+        <h2 class="text-lg font-extrabold">Formasi per Instansi</h2>
+        <p class="mt-2 text-sm text-black/70">Cek formasi instansi favorit Anda:</p>
+        {institutions.length > 0 ? (
+          <div class="mt-4 flex flex-wrap gap-2">
+            {institutions.map((inst) => (
+              <a
+                href={`/blog/formasi/${inst.institutionSlug}`}
+                class="inline-block border-2 border-black bg-white px-3 py-2 text-sm font-bold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
+              >
+                {inst.institution}
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p class="mt-4 text-sm text-black/50">Data instansi sedang dimuat...</p>
+        )}
+      </section>
+
+      {/* Education Levels Section */}
+      <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
+        <h2 class="text-lg font-extrabold">Formasi by Pendidikan</h2>
+        <p class="mt-2 text-sm text-black/70">Cek formasi sesuai jenjang pendidikan Anda:</p>
+        {educationLevels.length > 0 ? (
+          <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {educationLevels.map((edu) => (
+              <a
+                href={`/blog/formasi/${edu.slug}`}
+                class="flex items-center justify-between border-2 border-black bg-white px-4 py-3 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
+              >
+                <span class="font-bold capitalize">{edu.educationLevel.replace(/-/g, ' ')}</span>
+                <span class="text-sm text-black/60">Lihat →</span>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p class="mt-4 text-sm text-black/50">Data pendidikan sedang dimuat...</p>
+        )}
+      </section>
+
+      {/* SKD CTA */}
+      <section class="border-3 border-black bg-brand-lime p-6 shadow-neo">
+        <h2 class="text-lg font-extrabold">Siap Hadapi SKD?</h2>
+        <p class="mt-2 text-sm text-black/80">
+          Setelah lolos administrasi, ujian SKD (Seleksi Kompetensi Dasar) adalah tahapan berikutnya. 
+          Mayoritas peserta gagal di tahap ini. Persiapkan diri dari sekarang!
+        </p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <a
+            class="inline-flex items-center justify-center border-3 border-black bg-white px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+            href="https://ikuttes.my.id/?view=DRILLS"
+          >
+            Latihan Soal Harian
+          </a>
+          <a
+            class="inline-flex items-center justify-center border-3 border-black bg-black text-white px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+            href="https://ikuttes.my.id/?view=TRYOUT"
+          >
+            Simulasi CAT
+          </a>
+        </div>
+      </section>
+    </article>
+  </Shell>
+</ArticleLayout>

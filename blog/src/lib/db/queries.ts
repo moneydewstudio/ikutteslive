@@ -1,8 +1,9 @@
 // TEAM_010: Blog DB queries for hubs and programmatic pages
+// TEAM_030: Added formasi page queries
 
 import { and, desc, eq, sql } from 'drizzle-orm';
 import type { ContentBlock, HubRecord, ProgrammaticPageRecord } from '../blogContent';
-import { hubs, programmaticPages } from './schema';
+import { hubs, programmaticPages, formasiPages } from './schema';
 import type { BlogDb } from './client';
 
 const normalizeBlocks = (value: unknown): ContentBlock[] =>
@@ -170,6 +171,181 @@ export const getProgrammaticPagesForSitemap = async (
 
   return rows.map((row) => ({
     hub: row.hub,
+    slug: row.slug,
+    updatedAt: row.updatedAt ?? null,
+  }));
+};
+
+// TEAM_030: Formasi page queries
+export type FormasiPageRecord = {
+  id: string;
+  slug: string;
+  pageType: string;
+  province: string | null;
+  provinceSlug: string | null;
+  city: string | null;
+  citySlug: string | null;
+  institution: string | null;
+  institutionSlug: string | null;
+  educationLevel: string | null;
+  title: string;
+  metaDescription: string | null;
+  targetKeywords: string[];
+  contentBlocks: ContentBlock[];
+  formationsData: unknown;
+  totalQuota: number | null;
+  totalInstitutions: number | null;
+  hasPlaceholderData: boolean;
+  dataSource: string | null;
+  updatedAt: Date | null;
+};
+
+const normalizeFormasiPage = (row: typeof formasiPages.$inferSelect): FormasiPageRecord => ({
+  id: row.id,
+  slug: row.slug,
+  pageType: row.pageType,
+  province: row.province ?? null,
+  provinceSlug: row.provinceSlug ?? null,
+  city: row.city ?? null,
+  citySlug: row.citySlug ?? null,
+  institution: row.institution ?? null,
+  institutionSlug: row.institutionSlug ?? null,
+  educationLevel: row.educationLevel ?? null,
+  title: row.title,
+  metaDescription: row.metaDescription ?? null,
+  targetKeywords: Array.isArray(row.targetKeywords) ? row.targetKeywords as string[] : [],
+  contentBlocks: normalizeBlocks(row.contentBlocks),
+  formationsData: row.formationsData,
+  totalQuota: row.totalQuota ?? null,
+  totalInstitutions: row.totalInstitutions ?? null,
+  hasPlaceholderData: row.hasPlaceholderData ?? true,
+  dataSource: row.dataSource ?? null,
+  updatedAt: row.updatedAt ?? null,
+});
+
+export const getFormasiPageBySlug = async (db: BlogDb, slug: string): Promise<FormasiPageRecord | null> => {
+  const rows = await db.select().from(formasiPages).where(eq(formasiPages.slug, slug)).limit(1);
+  if (!rows.length) return null;
+  return normalizeFormasiPage(rows[0]);
+};
+
+export const getFormasiPagesByProvince = async (db: BlogDb, provinceSlug: string): Promise<FormasiPageRecord[]> => {
+  const rows = await db
+    .select()
+    .from(formasiPages)
+    .where(eq(formasiPages.provinceSlug, provinceSlug))
+    .orderBy(formasiPages.city);
+  return rows.map(normalizeFormasiPage);
+};
+
+export const getFormasiCitiesByProvince = async (
+  db: BlogDb,
+  provinceSlug: string,
+): Promise<Array<{ slug: string; city: string; citySlug: string }>> => {
+  const rows = await db
+    .select({
+      slug: formasiPages.slug,
+      city: formasiPages.city,
+      citySlug: formasiPages.citySlug,
+    })
+    .from(formasiPages)
+    .where(and(eq(formasiPages.provinceSlug, provinceSlug), eq(formasiPages.pageType, 'city')));
+
+  return rows
+    .filter((row): row is { slug: string; city: string; citySlug: string } => Boolean(row.city && row.citySlug))
+    .map((row) => ({
+      slug: row.slug,
+      city: row.city,
+      citySlug: row.citySlug,
+    }));
+};
+
+export const getAllFormasiProvinces = async (
+  db: BlogDb,
+): Promise<Array<{ slug: string; province: string; provinceSlug: string }>> => {
+  const rows = await db
+    .select({
+      slug: formasiPages.slug,
+      province: formasiPages.province,
+      provinceSlug: formasiPages.provinceSlug,
+    })
+    .from(formasiPages)
+    .where(eq(formasiPages.pageType, 'province'));
+
+  return rows
+    .filter((row): row is { slug: string; province: string; provinceSlug: string } =>
+      Boolean(row.province && row.provinceSlug))
+    .map((row) => ({
+      slug: row.slug,
+      province: row.province,
+      provinceSlug: row.provinceSlug,
+    }));
+};
+
+export const getAllFormasiInstitutions = async (
+  db: BlogDb,
+): Promise<Array<{ slug: string; institution: string; institutionSlug: string }>> => {
+  const rows = await db
+    .select({
+      slug: formasiPages.slug,
+      institution: formasiPages.institution,
+      institutionSlug: formasiPages.institutionSlug,
+    })
+    .from(formasiPages)
+    .where(eq(formasiPages.pageType, 'institution'));
+
+  return rows
+    .filter((row): row is { slug: string; institution: string; institutionSlug: string } =>
+      Boolean(row.institution && row.institutionSlug))
+    .map((row) => ({
+      slug: row.slug,
+      institution: row.institution,
+      institutionSlug: row.institutionSlug,
+    }));
+};
+
+export const getAllFormasiEducationLevels = async (
+  db: BlogDb,
+): Promise<Array<{ slug: string; educationLevel: string }>> => {
+  const rows = await db
+    .select({
+      slug: formasiPages.slug,
+      educationLevel: formasiPages.educationLevel,
+    })
+    .from(formasiPages)
+    .where(eq(formasiPages.pageType, 'education'));
+
+  return rows
+    .filter((row): row is { slug: string; educationLevel: string } => Boolean(row.educationLevel))
+    .map((row) => ({
+      slug: row.slug,
+      educationLevel: row.educationLevel,
+    }));
+};
+
+export const getFormasiPageCount = async (db: BlogDb): Promise<number> => {
+  const rows = await db
+    .select({ count: sql<number>`cast(count(*) as int)` })
+    .from(formasiPages);
+  return rows[0]?.count ?? 0;
+};
+
+export const getFormasiPagesForSitemap = async (
+  db: BlogDb,
+  offset: number,
+  limit: number,
+): Promise<Array<{ slug: string; updatedAt: Date | null }>> => {
+  const rows = await db
+    .select({
+      slug: formasiPages.slug,
+      updatedAt: formasiPages.updatedAt,
+    })
+    .from(formasiPages)
+    .orderBy(desc(formasiPages.updatedAt))
+    .limit(limit)
+    .offset(offset);
+
+  return rows.map((row) => ({
     slug: row.slug,
     updatedAt: row.updatedAt ?? null,
   }));
