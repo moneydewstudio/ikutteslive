@@ -32,7 +32,7 @@ export const GET: APIRoute = async (context) => {
   const rows = await getFormasiPagesForSitemap(db, offset, limit);
 
   const urls = rows.map((row) => ({
-    loc: `${BLOG_SITE_URL}${BLOG_BASE_PATH}/formasi/${row.slug}`,
+    loc: `${BLOG_SITE_URL}${BLOG_BASE_PATH}/formasi/${row.hub}/${row.slug}`,
     lastmod: row.updatedAt ? new Date(row.updatedAt).toISOString().slice(0, 10) : undefined,
   }));
 

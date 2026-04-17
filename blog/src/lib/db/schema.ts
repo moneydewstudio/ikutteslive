@@ -20,6 +20,7 @@ export const programmaticPages = pgTable('programmatic_pages', {
   metaDescription: varchar('meta_description', { length: 160 }),
   h1: varchar('h1', { length: 120 }).notNull(),
   contentBlocks: jsonb('content_blocks').$type<ContentBlock[]>().notNull(),
+  formationsData: jsonb('formations_data'), // TEAM_031: formation tables for CPNS pages
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 

@@ -1,11 +1,10 @@
 ---
-// TEAM_017: programmatic page (flat route /:slug)
+// TEAM_032: programmatic page (flat route /:slug) - refactored to use ProgrammaticArticle
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 import Shell from '../components/global/Shell.astro';
-import ContentBlocks from '../components/article/ContentBlocks.astro';
-import RelatedLinks from '../components/article/RelatedLinks.astro';
-import CtaCard from '../components/global/CtaCard.astro';
 import HubLinks from '../components/hub/HubLinks.astro';
+import CtaCard from '../components/global/CtaCard.astro';
+import ProgrammaticArticle from '../components/article/ProgrammaticArticle.astro';
 
 import { getRuntimeEnv } from '../lib/utils/runtime';
 import { getDb } from '../lib/db/client';
@@ -32,6 +31,7 @@ import {
 import { extractFaqPairs, getBlocksWordCount, injectCtaBlock } from '../lib/blogContent';
 import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL, NOT_FOUND_CACHE_CONTROL } from '../lib/utils/cache';
 import { HUB_SLUGS } from '../lib/constants';
+import type { ProgrammaticPageRecord } from '../lib/blogContent';
 
 const slug = Astro.params.slug;
 
@@ -45,7 +45,11 @@ const env = getRuntimeEnv(Astro.locals);
 const db = getDb(env);
 const isHub = Boolean(slug && HUB_SLUGS.includes(slug as (typeof HUB_SLUGS)[number]));
 const hubRecord = isHub && slug ? await getHubBySlug(db, slug) : null;
+const FORMASI_HUBS = ['provinsi', 'kota', 'institusi', 'pendidikan'];
 const page = !isHub && slug ? await getProgrammaticPageBySlug(db, slug) : null;
+
+// Exclude formasi pages from [slug].astro - they must use nested URLs
+const isFormasiPage = page && FORMASI_HUBS.includes(page.hub);
 
 if (isHub && !hubRecord) {
   Astro.response.status = 404;
@@ -53,14 +57,14 @@ if (isHub && !hubRecord) {
   setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
 }
 
-if (!isHub && !page) {
+if (!isHub && (!page || isFormasiPage)) {
   Astro.response.status = 404;
   Astro.response.statusText = 'Not found';
   setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
 }
 
 // Set normal caching only for successful responses
-if ((isHub && hubRecord) || (!isHub && page)) {
+if ((isHub && hubRecord) || (!isHub && page && !isFormasiPage)) {
   setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
 }
 
@@ -70,8 +74,10 @@ const canonicalPath = isHub
     ? `/${page.slug}`
     : Astro.url.pathname;
 
-const blocks = page ? injectCtaBlock(page.contentBlocks, page.intent) : [];
-const wordCount = getBlocksWordCount(blocks);
+const processedPage: ProgrammaticPageRecord | null = page 
+  ? { ...page, contentBlocks: injectCtaBlock(page.contentBlocks, page.intent) }
+  : null;
+const wordCount = processedPage ? getBlocksWordCount(processedPage.contentBlocks) : 0;
 
 const seo = isHub
   ? normalizeSeoConfig({
@@ -97,7 +103,7 @@ const seo = isHub
         ogType: 'article',
       });
 
-const faqs = extractFaqPairs(blocks);
+const faqs = processedPage ? extractFaqPairs(processedPage.contentBlocks) : [];
 
 const schema = isHub
   ? [
@@ -188,40 +194,13 @@ const hubItems = hubItemsRows.map((row) => ({
       </div>
     </Shell>
   </ArticleLayout>
-) : (
-  <ArticleLayout
-    title={seo.title}
-    description={seo.description ?? null}
-    canonical={seo.canonical}
-    noindex={seo.noindex}
+) : processedPage ? (
+  <ProgrammaticArticle
+    page={processedPage}
+    seo={seo}
     schema={schema}
-  >
-    <Shell>
-      <article class="grid gap-6">
-        <header class="border-3 border-black bg-white p-6 shadow-neo">
-          <div class="text-xs font-black uppercase tracking-wider">{(page?.hub ?? '').toUpperCase()}</div>
-          <h1 class="mt-2 text-2xl font-extrabold">{page?.h1 ?? seo.title}</h1>
-          {seo.description ? <p class="mt-3 text-sm text-black/80">{seo.description}</p> : null}
-        </header>
-
-        <ContentBlocks blocks={blocks} />
-
-        <RelatedLinks title="Artikel terkait" items={relatedSameHub} />
-        <RelatedLinks title="Baca juga" items={alsoRead} />
-
-        <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-          <h2 class="text-lg font-extrabold">Lanjutkan latihan</h2>
-          <p class="mt-2 text-sm text-black/80">Jangan berhenti di teori. Latihan singkat setiap hari lebih efektif.</p>
-          <div class="mt-4">
-            <a
-              class="inline-flex items-center justify-center border-3 border-black bg-brand-lime px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
-              href="https://ikuttes.my.id/"
-            >
-              Mulai Daily Quiz
-            </a>
-          </div>
-        </section>
-      </article>
-    </Shell>
-  </ArticleLayout>
-)}
+    relatedSameHub={relatedSameHub}
+    alsoRead={alsoRead}
+    showFormations={false}
+  />
+) : null}

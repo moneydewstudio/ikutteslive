@@ -1,0 +1,54 @@
+---
+// TEAM_031: Formation table component for CPNS pages
+import type { FormationEntry } from '../../lib/blogContent';
+
+interface Props {
+  formations: FormationEntry[];
+  caption?: string;
+}
+
+const { formations, caption } = Astro.props;
+
+const formatQuota = (quota: number): string => quota.toLocaleString('id-ID');
+---
+
+<div class="border-3 border-black bg-white shadow-neo-sm overflow-hidden">
+  {caption && (
+    <div class="bg-brand-lime px-4 py-2 border-b-3 border-black">
+      <p class="text-sm font-bold">{caption}</p>
+    </div>
+  )}
+  
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-black text-white">
+        <tr>
+          <th class="px-3 py-2 text-left font-bold">Instansi</th>
+          <th class="px-3 py-2 text-left font-bold">Jabatan</th>
+          <th class="px-3 py-2 text-right font-bold">Kuota</th>
+          <th class="px-3 py-2 text-left font-bold">Pendidikan</th>
+        </tr>
+      </thead>
+      <tbody>
+        {formations.map((f, idx) => (
+          <tr class={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+            <td class="px-3 py-2 font-medium">{f.institution}</td>
+            <td class="px-3 py-2">
+              {f.position}
+              {f.additional_requirements && (
+                <p class="text-xs text-black/60 mt-1">{f.additional_requirements}</p>
+              )}
+            </td>
+            <td class="px-3 py-2 text-right font-bold">{formatQuota(f.quota)}</td>
+            <td class="px-3 py-2">
+              {f.education_required}
+              {f.major_required && f.major_required !== 'Semua jurusan' && (
+                <p class="text-xs text-black/60">{f.major_required}</p>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>

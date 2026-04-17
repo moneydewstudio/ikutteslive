@@ -1,0 +1,130 @@
+---
+// TEAM_032: Formasi detail page - refactored to use ProgrammaticArticle
+import ProgrammaticArticle from '../../../components/article/ProgrammaticArticle.astro';
+
+import { getRuntimeEnv } from '../../../lib/utils/runtime';
+import { getDb } from '../../../lib/db/client';
+import { 
+  getProgrammaticPageBySlug, 
+  getHubBySlug,
+  getProgrammaticPagesByHub 
+} from '../../../lib/db/queries';
+
+import {
+  buildArticleSchema,
+  buildBreadcrumbSchema,
+  buildFaqSchema,
+  buildOrganizationSchema,
+  buildSiteSchema,
+  buildWebPageSchema,
+  normalizeSeoConfig,
+  shouldNoIndex,
+} from '../../../lib/utils/seo';
+
+import { extractFaqPairs, getBlocksWordCount, injectCtaBlock } from '../../../lib/blogContent';
+import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL, NOT_FOUND_CACHE_CONTROL } from '../../../lib/utils/cache';
+import type { ProgrammaticPageRecord } from '../../../lib/blogContent';
+
+// Valid formasi categories
+const VALID_CATEGORIES = ['provinsi', 'kota', 'institusi', 'pendidikan'] as const;
+
+const category = Astro.params.category;
+const slug = Astro.params.slug;
+
+// Validate inputs
+if (!category || !slug || !VALID_CATEGORIES.includes(category as typeof VALID_CATEGORIES[number])) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not found';
+  setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
+}
+
+const env = getRuntimeEnv(Astro.locals);
+const db = getDb(env);
+
+// Fetch page data
+const page = slug ? await getProgrammaticPageBySlug(db, slug) : null;
+
+// Validate page exists and belongs to this category
+if (!page || page.hub !== category) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not found';
+  setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
+}
+
+// Fetch hub data for breadcrumb
+const hubRecord = category ? await getHubBySlug(db, category) : null;
+
+// Process content
+const processedPage: ProgrammaticPageRecord | null = page 
+  ? { ...page, contentBlocks: injectCtaBlock(page.contentBlocks, page.intent) }
+  : null;
+const wordCount = processedPage ? getBlocksWordCount(processedPage.contentBlocks) : 0;
+const faqs = processedPage ? extractFaqPairs(processedPage.contentBlocks) : [];
+
+// SEO
+const canonicalPath = `/formasi/${category}/${slug}`;
+const seo = page
+  ? normalizeSeoConfig({
+      title: page.title,
+      description: page.metaDescription,
+      canonicalPath,
+      noindex: shouldNoIndex(wordCount, page.metaDescription),
+      ogType: 'article',
+    })
+  : normalizeSeoConfig({
+      title: 'Formasi CPNS',
+      description: null,
+      canonicalPath,
+      noindex: true,
+      ogType: 'article',
+    });
+
+// Schema
+const schema = page
+  ? [
+      buildSiteSchema(),
+      buildOrganizationSchema(),
+      buildBreadcrumbSchema([
+        { name: 'Ikuttes Blog', path: '/' },
+        { name: 'Formasi CPNS', path: '/formasi' },
+        { name: hubRecord?.title ?? category ?? '', path: `/formasi/${category}` },
+        { name: page.h1, path: canonicalPath },
+      ]),
+      buildWebPageSchema({ title: seo.title, description: seo.description ?? null, path: canonicalPath }),
+      buildArticleSchema({
+        title: seo.title,
+        description: seo.description ?? null,
+        path: canonicalPath,
+        updatedAt: page.updatedAt ?? null,
+      }),
+    ].filter(Boolean)
+  : [];
+
+const faqSchema = faqs.length > 0 ? buildFaqSchema(faqs) : null;
+if (faqSchema) schema.push(faqSchema);
+
+// Related pages in same category
+const relatedRows = category ? await getProgrammaticPagesByHub(db, category, 7) : [];
+const relatedPages = relatedRows
+  .filter((row) => row.slug !== slug)
+  .slice(0, 6)
+  .map((row) => ({
+    href: `/blog/formasi/${category}/${row.slug}`,
+    title: row.title,
+    updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString().slice(0, 10) : null,
+  }));
+
+setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
+---
+
+{processedPage && (
+  <ProgrammaticArticle
+    page={processedPage}
+    seo={seo}
+    schema={schema}
+    relatedSameHub={relatedPages}
+    hubRecord={hubRecord}
+    category={category}
+    showFormations={true}
+  />
+)}

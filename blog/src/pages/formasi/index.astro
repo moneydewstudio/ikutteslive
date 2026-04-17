@@ -1,16 +1,12 @@
 ---
-// TEAM_030: Formasi CPNS hub page (/blog/formasi/)
+// TEAM_031: Formasi CPNS hub page (/blog/formasi/) - Hub-based architecture
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 import Shell from '../../components/global/Shell.astro';
 import CtaCard from '../../components/global/CtaCard.astro';
 
 import { getRuntimeEnv } from '../../lib/utils/runtime';
 import { getDb } from '../../lib/db/client';
-import {
-  getAllFormasiProvinces,
-  getAllFormasiInstitutions,
-  getAllFormasiEducationLevels,
-} from '../../lib/db/queries';
+import { getHubCategoriesWithCounts } from '../../lib/db/queries';
 
 import {
   buildSiteSchema,
@@ -43,15 +39,22 @@ const schema = [
   buildSiteSchema(),
   buildOrganizationSchema(),
   buildBreadcrumbSchema([
+    { name: 'Ikuttes Blog', path: '/' },
     { name: 'Formasi CPNS', path: canonicalPath },
   ]),
   buildWebPageSchema({ title, description, path: canonicalPath }),
 ].filter(Boolean);
 
-// Fetch all categories
-const provinces = await getAllFormasiProvinces(db);
-const institutions = await getAllFormasiInstitutions(db);
-const educationLevels = await getAllFormasiEducationLevels(db);
+// Category display config
+const categoryConfig: Record<string, { title: string; description: string; color: string }> = {
+  provinsi: { title: 'Formasi per Provinsi', description: 'Pilih provinsi untuk melihat formasi lengkap', color: 'bg-brand-lime' },
+  kota: { title: 'Formasi per Kota', description: 'Cari formasi berdasarkan kota/kabupaten', color: 'bg-brand-pink' },
+  institusi: { title: 'Formasi per Instansi', description: 'Cek formasi instansi favorit Anda', color: 'bg-brand-purple' },
+  pendidikan: { title: 'Formasi by Pendidikan', description: 'Cek formasi sesuai jenjang pendidikan', color: 'bg-brand-blue' },
+};
+
+// Fetch hub categories with counts
+const categories = await getHubCategoriesWithCounts(db);
 ---
 
 <ArticleLayout
@@ -74,67 +77,28 @@ const educationLevels = await getAllFormasiEducationLevels(db);
 
       <CtaCard style="hard" />
 
-      {/* Provinces Section */}
-      <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-        <h2 class="text-lg font-extrabold">Formasi per Provinsi</h2>
-        <p class="mt-2 text-sm text-black/70">Pilih provinsi untuk melihat formasi lengkap:</p>
-        {provinces.length > 0 ? (
-          <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {provinces.map((prov) => (
+      {/* Hub Categories */}
+      {categories.map((cat) => {
+        const config = categoryConfig[cat.hub] ?? { title: cat.title, description: '', color: 'bg-brand-lime' };
+        return (
+          <section class={`border-3 border-black bg-white p-6 shadow-neo-sm ${config.color}20`}>
+            <h2 class="text-lg font-extrabold">{config.title}</h2>
+            <p class="mt-2 text-sm text-black/70">{config.description}:</p>
+            <div class="mt-4 flex items-center gap-4">
+              <span class="text-2xl font-black">{cat.count}</span>
+              <span class="text-sm text-black/60">halaman tersedia</span>
+            </div>
+            <div class="mt-4">
               <a
-                href={`/blog/formasi/provinsi/${prov.provinceSlug}`}
-                class="flex items-center justify-between border-2 border-black bg-white px-4 py-3 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
+                href={`/blog/formasi/${cat.hub}`}
+                class={`inline-flex items-center justify-center border-3 border-black ${config.color} px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none`}
               >
-                <span class="font-bold">{prov.province}</span>
-                <span class="text-sm text-black/60">Lihat →</span>
+                Lihat Semua {config.title}
               </a>
-            ))}
-          </div>
-        ) : (
-          <p class="mt-4 text-sm text-black/50">Data provinsi sedang dimuat...</p>
-        )}
-      </section>
-
-      {/* Institutions Section */}
-      <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-        <h2 class="text-lg font-extrabold">Formasi per Instansi</h2>
-        <p class="mt-2 text-sm text-black/70">Cek formasi instansi favorit Anda:</p>
-        {institutions.length > 0 ? (
-          <div class="mt-4 flex flex-wrap gap-2">
-            {institutions.map((inst) => (
-              <a
-                href={`/blog/formasi/institusi/${inst.institutionSlug}`}
-                class="inline-block border-2 border-black bg-white px-3 py-2 text-sm font-bold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
-              >
-                {inst.institution}
-              </a>
-            ))}
-          </div>
-        ) : (
-          <p class="mt-4 text-sm text-black/50">Data instansi sedang dimuat...</p>
-        )}
-      </section>
-
-      {/* Education Levels Section */}
-      <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-        <h2 class="text-lg font-extrabold">Formasi by Pendidikan</h2>
-        <p class="mt-2 text-sm text-black/70">Cek formasi sesuai jenjang pendidikan Anda:</p>
-        {educationLevels.length > 0 ? (
-          <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {educationLevels.map((edu) => (
-              <a
-                href={`/blog/formasi/untuk/${edu.slug}`}
-                class="flex items-center justify-between border-2 border-black bg-white px-4 py-3 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover:bg-brand-lime/10 transition-all"
-              >
-                <span class="font-bold capitalize">{edu.educationLevel.replace(/-/g, ' ')}</span>
-                <span class="text-sm text-black/60">Lihat →</span>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <p class="mt-4 text-sm text-black/50">Data pendidikan sedang dimuat...</p>
-        )}
-      </section>
+            </div>
+          </section>
+        );
+      })}
 
       {/* SKD CTA */}
       <section class="border-3 border-black bg-brand-lime p-6 shadow-neo">

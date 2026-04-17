@@ -1,0 +1,92 @@
+---
+// TEAM_032: Shared programmatic article component
+// Used by [slug].astro and formasi/[category]/[slug].astro
+
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import Shell from '../global/Shell.astro';
+import ContentBlocks from './ContentBlocks.astro';
+import FormationsTable from './FormationsTable.astro';
+import RelatedLinks from './RelatedLinks.astro';
+import CtaCard from '../global/CtaCard.astro';
+
+import type { ProgrammaticPageRecord, HubRecord } from '../../lib/blogContent';
+import type { SeoConfig } from '../../lib/utils/seo';
+
+interface Props {
+  page: ProgrammaticPageRecord;
+  seo: SeoConfig;
+  schema: unknown[];
+  relatedSameHub: Array<{ href: string; title: string; updatedAt: string | null }>;
+  alsoRead?: Array<{ href: string; title: string; updatedAt: string | null }>;
+  hubRecord?: HubRecord | null;
+  category?: string;
+  showFormations?: boolean;
+}
+
+const { 
+  page, 
+  seo, 
+  schema, 
+  relatedSameHub, 
+  alsoRead = [], 
+  hubRecord = null,
+  category = '',
+  showFormations = false 
+} = Astro.props;
+
+const formatQuota = (quota: number): string => quota.toLocaleString('id-ID');
+
+const totalQuota = showFormations && page.formationsData 
+  ? page.formationsData.reduce((sum, f) => sum + f.quota, 0) 
+  : 0;
+
+// Hub badge text
+const hubBadge = category 
+  ? `${hubRecord?.title ?? category} • FORMasi CPNS 2024`
+  : (page?.hub ?? '').toUpperCase();
+
+// Related sections titles
+const sameHubTitle = category ? 'Lihat Juga' : 'Artikel terkait';
+const alsoReadTitle = 'Baca juga';
+---
+
+<ArticleLayout
+  title={seo.title}
+  description={seo.description ?? null}
+  canonical={seo.canonical}
+  noindex={seo.noindex}
+  schema={schema}
+>
+  <Shell>
+    <article class="grid gap-6">
+      <header class="border-3 border-black bg-white p-6 shadow-neo">
+        <div class="text-xs font-black uppercase tracking-wider text-brand-lime">
+          {hubBadge}
+        </div>
+        <h1 class="mt-2 text-2xl font-extrabold">{page.h1}</h1>
+        {seo.description ? <p class="mt-3 text-sm text-black/80">{seo.description}</p> : null}
+      </header>
+
+      <ContentBlocks blocks={page.contentBlocks} />
+
+      {/* Formation Table Section (conditional) */}
+      {showFormations && page.formationsData && page.formationsData.length > 0 && (
+        <section class="grid gap-4">
+          <h2 class="text-xl font-extrabold">Daftar Formasi dan Kuota</h2>
+          <FormationsTable 
+            formations={page.formationsData} 
+            caption={`Total ${formatQuota(totalQuota)} kuota tersedia`}
+          />
+        </section>
+      )}
+
+      <RelatedLinks title={sameHubTitle} items={relatedSameHub} />
+
+      {alsoRead.length > 0 && (
+        <RelatedLinks title={alsoReadTitle} items={alsoRead} />
+      )}
+
+      <CtaCard style="hard" />
+    </article>
+  </Shell>
+</ArticleLayout>

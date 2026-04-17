@@ -1,13 +1,16 @@
 // TEAM_010: Blog DB queries for hubs and programmatic pages
 // TEAM_030: Added formasi page queries
 
-import { and, desc, eq, sql } from 'drizzle-orm';
-import type { ContentBlock, HubRecord, ProgrammaticPageRecord } from '../blogContent';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import type { ContentBlock, FormationEntry, HubRecord, ProgrammaticPageRecord } from '../blogContent';
 import { hubs, programmaticPages, formasiPages } from './schema';
 import type { BlogDb } from './client';
 
 const normalizeBlocks = (value: unknown): ContentBlock[] =>
   Array.isArray(value) ? (value as ContentBlock[]) : [];
+
+const normalizeFormations = (value: unknown): FormationEntry[] | null =>
+  Array.isArray(value) ? (value as FormationEntry[]) : null;
 
 const normalizePage = (row: typeof programmaticPages.$inferSelect): ProgrammaticPageRecord => ({
   id: row.id,
@@ -19,6 +22,7 @@ const normalizePage = (row: typeof programmaticPages.$inferSelect): Programmatic
   metaDescription: row.metaDescription ?? null,
   h1: row.h1,
   contentBlocks: normalizeBlocks(row.contentBlocks),
+  formationsData: normalizeFormations(row.formationsData),
   updatedAt: row.updatedAt ?? null,
 });
 
@@ -176,7 +180,60 @@ export const getProgrammaticPagesForSitemap = async (
   }));
 };
 
-// TEAM_030: Formasi page queries
+// TEAM_031: Formasi hub category queries
+export const getProgrammaticPagesByHub = async (
+  db: BlogDb,
+  hub: string,
+  limit: number = 50,
+): Promise<Pick<ProgrammaticPageRecord, 'slug' | 'title' | 'updatedAt'>[]> => {
+  const rows = await db
+    .select({
+      slug: programmaticPages.slug,
+      title: programmaticPages.title,
+      updatedAt: programmaticPages.updatedAt,
+    })
+    .from(programmaticPages)
+    .where(eq(programmaticPages.hub, hub))
+    .orderBy(desc(programmaticPages.updatedAt))
+    .limit(limit);
+
+  return rows.map((row) => ({
+    slug: row.slug,
+    title: row.title,
+    updatedAt: row.updatedAt ?? null,
+  }));
+};
+
+export type HubCategory = {
+  hub: string;
+  title: string;
+  count: number;
+};
+
+export const getHubCategoriesWithCounts = async (db: BlogDb): Promise<HubCategory[]> => {
+  const formasiHubs = ['provinsi', 'kota', 'institusi', 'pendidikan'];
+  const results: HubCategory[] = [];
+
+  for (const hubSlug of formasiHubs) {
+    const hubRow = await getHubBySlug(db, hubSlug);
+    if (!hubRow) continue;
+
+    const countRows = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(programmaticPages)
+      .where(eq(programmaticPages.hub, hubSlug));
+
+    results.push({
+      hub: hubSlug,
+      title: hubRow.title,
+      count: countRows[0]?.count ?? 0,
+    });
+  }
+
+  return results;
+};
+
+// TEAM_030: Formasi page queries (deprecated - use programmatic_pages instead)
 export type FormasiPageRecord = {
   id: string;
   slug: string;
@@ -304,32 +361,6 @@ export const getAllFormasiInstitutions = async (
     }));
 };
 
-export const getFormasiProvincesByInstitution = async (
-  db: BlogDb,
-  institutionSlug: string,
-): Promise<Array<{ province: string; provinceSlug: string }>> => {
-  const rows = await db
-    .select({
-      province: formasiPages.province,
-      provinceSlug: formasiPages.provinceSlug,
-    })
-    .from(formasiPages)
-    .where(
-      and(
-        eq(formasiPages.pageType, 'province'),
-        sql`${formasiPages.formations_data} @> '[{"institution_slug": "${institutionSlug}"}]'::jsonb`
-      )
-    );
-
-  return rows
-    .filter((row): row is { province: string; provinceSlug: string } =>
-      Boolean(row.province && row.provinceSlug))
-    .map((row) => ({
-      province: row.province,
-      provinceSlug: row.provinceSlug,
-    }));
-};
-
 export const getAllFormasiEducationLevels = async (
   db: BlogDb,
 ): Promise<Array<{ slug: string; educationLevel: string }>> => {
@@ -349,30 +380,36 @@ export const getAllFormasiEducationLevels = async (
     }));
 };
 
+// TEAM_032: Updated to use programmatic_pages with formasi hubs
 export const getFormasiPageCount = async (db: BlogDb): Promise<number> => {
   const rows = await db
     .select({ count: sql<number>`cast(count(*) as int)` })
-    .from(formasiPages);
+    .from(programmaticPages)
+    .where(inArray(programmaticPages.hub, ['provinsi', 'kota', 'institusi', 'pendidikan']));
   return rows[0]?.count ?? 0;
 };
 
+// TEAM_032: Updated to use programmatic_pages with formasi hubs
 export const getFormasiPagesForSitemap = async (
   db: BlogDb,
   offset: number,
   limit: number,
-): Promise<Array<{ slug: string; updatedAt: Date | null }>> => {
+): Promise<Array<{ slug: string; hub: string; updatedAt: Date | null }>> => {
   const rows = await db
     .select({
-      slug: formasiPages.slug,
-      updatedAt: formasiPages.updatedAt,
+      slug: programmaticPages.slug,
+      hub: programmaticPages.hub,
+      updatedAt: programmaticPages.updatedAt,
     })
-    .from(formasiPages)
-    .orderBy(desc(formasiPages.updatedAt))
+    .from(programmaticPages)
+    .where(inArray(programmaticPages.hub, ['provinsi', 'kota', 'institusi', 'pendidikan']))
+    .orderBy(desc(programmaticPages.updatedAt))
     .limit(limit)
     .offset(offset);
 
   return rows.map((row) => ({
     slug: row.slug,
+    hub: row.hub,
     updatedAt: row.updatedAt ?? null,
   }));
 };

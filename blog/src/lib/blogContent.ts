@@ -9,6 +9,17 @@ export type ContentBlock =
 
 export type ProgrammaticIntent = 'practice' | 'definition';
 
+// TEAM_031: Formation entry for CPNS pages
+export type FormationEntry = {
+  institution: string;
+  position: string;
+  quota: number;
+  education_required: string;
+  major_required?: string;
+  location?: string;
+  additional_requirements?: string;
+};
+
 export type HubRecord = {
   slug: string;
   title: string;
@@ -26,6 +37,7 @@ export type ProgrammaticPageRecord = {
   metaDescription: string | null;
   h1: string;
   contentBlocks: ContentBlock[];
+  formationsData: FormationEntry[] | null; // TEAM_031
   updatedAt: Date | null;
 };
 

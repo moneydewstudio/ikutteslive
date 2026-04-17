@@ -1,0 +1,134 @@
+---
+// TEAM_031: Formasi category hub page (/blog/formasi/[category]/)
+// Shows all pages within a category (provinces, cities, institutions, education levels)
+import ArticleLayout from '../../../layouts/ArticleLayout.astro';
+import Shell from '../../../components/global/Shell.astro';
+import HubLinks from '../../../components/hub/HubLinks.astro';
+import CtaCard from '../../../components/global/CtaCard.astro';
+
+import { getRuntimeEnv } from '../../../lib/utils/runtime';
+import { getDb } from '../../../lib/db/client';
+import { getHubBySlug, getProgrammaticPagesByHub } from '../../../lib/db/queries';
+
+import {
+  buildSiteSchema,
+  buildOrganizationSchema,
+  buildBreadcrumbSchema,
+  buildWebPageSchema,
+  normalizeSeoConfig,
+} from '../../../lib/utils/seo';
+
+import { setCacheControl, PROGRAMMATIC_CACHE_CONTROL, NOT_FOUND_CACHE_CONTROL } from '../../../lib/utils/cache';
+
+// Valid formasi categories
+const VALID_CATEGORIES = ['provinsi', 'kota', 'institusi', 'pendidikan'] as const;
+type Category = typeof VALID_CATEGORIES[number];
+
+const category = Astro.params.category as Category;
+
+// Validate category
+if (!category || !VALID_CATEGORIES.includes(category)) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not found';
+  setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
+}
+
+const env = getRuntimeEnv(Astro.locals);
+const db = getDb(env);
+
+// Fetch hub data
+const hubRecord = category ? await getHubBySlug(db, category) : null;
+
+if (category && !hubRecord) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not found';
+  setCacheControl(Astro.response.headers, NOT_FOUND_CACHE_CONTROL);
+}
+
+// Fetch all pages in this category
+const pages = hubRecord ? await getProgrammaticPagesByHub(db, category, 100) : [];
+
+// Map to HubLinks format
+const hubItems = pages.map((page) => ({
+  href: `/blog/formasi/${category}/${page.slug}`,
+  title: page.title,
+  updatedAt: page.updatedAt ? new Date(page.updatedAt).toISOString().slice(0, 10) : null,
+}));
+
+// SEO
+const canonicalPath = `/formasi/${category}`;
+const seo = normalizeSeoConfig({
+  title: hubRecord?.title ?? 'Formasi CPNS',
+  description: hubRecord?.metaDescription ?? null,
+  canonicalPath,
+  noindex: false,
+  ogType: 'website',
+});
+
+const schema = [
+  buildSiteSchema(),
+  buildOrganizationSchema(),
+  buildBreadcrumbSchema([
+    { name: 'Ikuttes Blog', path: '/' },
+    { name: 'Formasi CPNS', path: '/formasi' },
+    { name: hubRecord?.title ?? category ?? '', path: canonicalPath },
+  ]),
+  buildWebPageSchema({ title: seo.title, description: seo.description ?? null, path: canonicalPath }),
+].filter(Boolean);
+
+setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
+---
+
+<ArticleLayout
+  title={seo.title}
+  description={seo.description ?? null}
+  canonical={seo.canonical}
+  noindex={seo.noindex}
+  schema={schema}
+>
+  <Shell>
+    <div class="grid gap-8">
+      <section class="border-3 border-black bg-white p-6 shadow-neo">
+        <div class="text-xs font-black uppercase tracking-wider text-brand-lime">FORMasi CPNS 2024</div>
+        <h1 class="mt-2 text-2xl font-extrabold">{hubRecord?.title ?? category}</h1>
+        {hubRecord?.introduction ? (
+          <p class="mt-3 text-sm text-black/80">{hubRecord.introduction}</p>
+        ) : null}
+        <p class="mt-2 text-sm text-black/70">
+          Total {pages.length} halaman tersedia.
+        </p>
+      </section>
+
+      <CtaCard style="hard" />
+
+      <section>
+        <h2 class="text-lg font-extrabold">Pilih {hubRecord?.title ?? category}</h2>
+        <div class="mt-5">
+          <HubLinks items={hubItems} />
+        </div>
+      </section>
+
+      <section class="border-3 border-black bg-brand-lime p-6 shadow-neo">
+        <h2 class="text-lg font-extrabold">Siap Hadapi SKD?</h2>
+        <p class="mt-2 text-sm text-black/80">
+          Setelah lolos administrasi, ujian SKD (Seleksi Kompetensi Dasar) adalah tahapan berikutnya.
+          Persiapkan diri dari sekarang!
+        </p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <a
+            class="inline-flex items-center justify-center border-3 border-black bg-white px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+            href="https://ikuttes.my.id/?view=DRILLS"
+          >
+            Latihan Soal Harian
+          </a>
+          <a
+            class="inline-flex items-center justify-center border-3 border-black bg-black text-white px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+            href="https://ikuttes.my.id/?view=TRYOUT"
+          >
+            Simulasi CAT
+          </a>
+        </div>
+      </section>
+    </div>
+  </Shell>
+</ArticleLayout>
