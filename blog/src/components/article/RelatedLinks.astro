@@ -1,5 +1,7 @@
 ---
-// TEAM_017: internal linking blocks for related content discovery
+// TEAM_033: RelatedLinks - Design System Refactor
+// Uses unified Card component
+import Card from '../global/Card.astro';
 
 type Item = {
   href: string;
@@ -16,19 +18,17 @@ const { title, items } = Astro.props;
 ---
 
 {items.length ? (
-  <section class="border-3 border-black bg-white p-6 shadow-neo-sm">
-    <h2 class="text-lg font-extrabold">{title}</h2>
-    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+  <section class="bg-white rounded-[28px] border-2 border-stone-800 p-6 shadow-[0px_2px_0px_0px_rgba(41,37,36,1)]">
+    <h2 class="text-xl font-bold text-stone-800 mb-5">{title}</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
       {items.map((item) => (
-        <a
+        <Card
+          variant="default"
+          size="sm"
           href={item.href}
-          class="block border-3 border-black bg-white p-4 shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
-        >
-          <div class="text-sm font-extrabold leading-snug">{item.title}</div>
-          {item.updatedAt ? (
-            <div class="mt-1 text-xs text-black/60">Update: {item.updatedAt}</div>
-          ) : null}
-        </a>
+          title={item.title}
+          updatedAt={item.updatedAt}
+        />
       ))}
     </div>
   </section>

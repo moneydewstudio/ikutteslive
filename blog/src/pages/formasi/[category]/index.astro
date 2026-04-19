@@ -1,10 +1,10 @@
 ---
-// TEAM_031: Formasi category hub page (/blog/formasi/[category]/)
-// Shows all pages within a category (provinces, cities, institutions, education levels)
+// TEAM_033: Formasi category hub page - Design System Refactor
 import ArticleLayout from '../../../layouts/ArticleLayout.astro';
 import Shell from '../../../components/global/Shell.astro';
 import HubLinks from '../../../components/hub/HubLinks.astro';
-import CtaCard from '../../../components/global/CtaCard.astro';
+import Card from '../../../components/global/Card.astro';
+import Breadcrumbs from '../../../components/global/Breadcrumbs.astro';
 
 import { getRuntimeEnv } from '../../../lib/utils/runtime';
 import { getDb } from '../../../lib/db/client';
@@ -87,48 +87,71 @@ setCacheControl(Astro.response.headers, PROGRAMMATIC_CACHE_CONTROL);
   schema={schema}
 >
   <Shell>
-    <div class="grid gap-8">
-      <section class="border-3 border-black bg-white p-6 shadow-neo">
-        <div class="text-xs font-black uppercase tracking-wider text-brand-lime">FORMasi CPNS 2024</div>
-        <h1 class="mt-2 text-2xl font-extrabold">{hubRecord?.title ?? category}</h1>
-        {hubRecord?.introduction ? (
-          <p class="mt-3 text-sm text-black/80">{hubRecord.introduction}</p>
-        ) : null}
-        <p class="mt-2 text-sm text-black/70">
-          Total {pages.length} halaman tersedia.
+    <Breadcrumbs items={[
+      { name: 'Ikuttes Blog', path: '/' },
+      { name: 'Formasi CPNS', path: '/formasi' },
+      { name: hubRecord?.title ?? category ?? '', path: canonicalPath },
+    ]} />
+
+    <div class="space-y-8">
+      {/* Header */}
+      <header class="bg-white rounded-lg border border-border p-6 md:p-8">
+        <div class="inline-block px-3 py-1 rounded-md bg-tiu/20 text-caption font-medium uppercase tracking-wider mb-4">
+          Formasi CPNS 2024
+        </div>
+        <h1 class="text-heading-1 text-text mb-4">{hubRecord?.title ?? category}</h1>
+        {hubRecord?.introduction && (
+          <p class="text-body text-text-secondary leading-relaxed mb-3">{hubRecord.introduction}</p>
+        )}
+        <p class="text-body-sm text-text-muted">
+          Total {pages.length} halaman tersedia
         </p>
-      </section>
+      </header>
 
-      <CtaCard style="hard" />
-
+      {/* Hub Links */}
       <section>
-        <h2 class="text-lg font-extrabold">Pilih {hubRecord?.title ?? category}</h2>
-        <div class="mt-5">
-          <HubLinks items={hubItems} />
+        <h2 class="text-heading-3 text-text mb-5">Pilih {hubRecord?.title ?? category}</h2>
+        <HubLinks items={hubItems} />
+      </section>
+
+      {/* SKD CTA */}
+      <section class="bg-tiu/10 rounded-xl p-6 md:p-8 border border-tiu/20">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-heading-3 text-text mb-2">Siap Hadapi SKD?</h2>
+            <p class="text-body text-text-secondary">
+              Setelah lolos administrasi, ujian SKD adalah tahapan berikutnya. Persiapkan diri dari sekarang!
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <a
+              href="https://ikuttes.my.id/?view=DRILLS"
+              class="inline-flex items-center justify-center px-5 py-2.5 bg-secondary text-text font-medium rounded-md hover:bg-secondary-hover transition-colors"
+            >
+              Latihan Soal Harian
+            </a>
+            <a
+              href="https://ikuttes.my.id/?view=TRYOUT"
+              class="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-text-inverted font-medium rounded-md hover:bg-primary-hover transition-colors"
+            >
+              Simulasi CAT
+            </a>
+          </div>
         </div>
       </section>
 
-      <section class="border-3 border-black bg-brand-lime p-6 shadow-neo">
-        <h2 class="text-lg font-extrabold">Siap Hadapi SKD?</h2>
-        <p class="mt-2 text-sm text-black/80">
-          Setelah lolos administrasi, ujian SKD (Seleksi Kompetensi Dasar) adalah tahapan berikutnya.
-          Persiapkan diri dari sekarang!
-        </p>
-        <div class="mt-4 flex flex-wrap gap-3">
-          <a
-            class="inline-flex items-center justify-center border-3 border-black bg-white px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
-            href="https://ikuttes.my.id/?view=DRILLS"
-          >
-            Latihan Soal Harian
-          </a>
-          <a
-            class="inline-flex items-center justify-center border-3 border-black bg-black text-white px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
-            href="https://ikuttes.my.id/?view=TRYOUT"
-          >
-            Simulasi CAT
-          </a>
-        </div>
-      </section>
+      {/* CTA Card - Warm Cream */}
+      <Card
+        variant="cream"
+        size="lg"
+        href="https://ikuttes.my.id/"
+        icon="🎯"
+        eyebrow="Selanjutnya"
+        title="Persiapkan Diri untuk CPNS"
+        description="Setelah cek formasi, mulai latihan soal sekarang. Daily Quiz gratis dengan pembahasan lengkap."
+        buttonLabel="Mulai Latihan →"
+        external
+      />
     </div>
   </Shell>
 </ArticleLayout>

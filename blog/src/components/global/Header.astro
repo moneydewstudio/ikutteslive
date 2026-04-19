@@ -1,49 +1,128 @@
 ---
-// TEAM_010: blog header with hub navigation
-// TEAM_016: align blog header with SPA header styling + nav, and hide on scroll down
+// TEAM_033: Header - Design System Refactor
+// Clean navigation with improved hierarchy and states
 ---
 
 <header
   id="site-header"
-  class="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full transition-transform duration-300"
+  class="sticky top-0 z-sticky bg-[#FFFBF5] border-b-2 border-stone-800 h-16 flex items-center justify-between px-4 md:px-6 w-full transition-transform duration-300 shadow-[0_2px_0px_0px_rgba(41,37,36,0.15)]"
 >
-  <div class="flex items-center gap-2 cursor-pointer">
-    <a href="/" class="flex items-center gap-2">
-      <div class="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-        <div class="w-4 h-4 bg-brand-lime rounded-full"></div>
-      </div>
-      <span class="font-black text-xl tracking-tight">Ikuttes</span>
-    </a>
-  </div>
+  <!-- Logo - Neo-playful -->
+  <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+    <div class="w-10 h-10 bg-gradient-to-br from-indigo-200 to-purple-200 rounded-2xl flex items-center justify-center border-2 border-indigo-900 shadow-[0px_2px_0px_0px_rgba(49,46,129,1)]">
+      <span class="text-xl">🎯</span>
+    </div>
+    <span class="font-bold text-lg tracking-tight text-stone-800">Ikuttes</span>
+  </a>
 
+  <!-- Navigation - Always visible like main app -->
   <nav
-    class="flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide overflow-x-auto whitespace-nowrap max-w-[60vw] md:max-w-none"
+    class="hidden sm:flex items-center gap-1 md:gap-2"
     aria-label="Main navigation"
   >
-    <a href="/?view=QUIZ" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Latihan</a>
-    <a href="/?view=DRILLS" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Drill</a>
-    <a href="/?view=BONUS" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Bonus</a>
-    <a href="/?view=TRYOUT" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Tryout</a>
-    <a href="/?view=PROFILE" class="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Statistik</a>
-    <a href="/blog/" class="px-2 py-1 hover:text-gray-600 transition-colors text-black">Blog</a>
+    <a href="/?view=QUIZ" class="px-2 md:px-3 py-2 text-xs md:text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-lg hover:bg-stone-200/50 whitespace-nowrap">
+      Latihan
+    </a>
+    <a href="/?view=DRILLS" class="px-2 md:px-3 py-2 text-xs md:text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-lg hover:bg-stone-200/50 whitespace-nowrap">
+      Drill
+    </a>
+    <a href="/?view=BONUS" class="hidden md:block px-2 md:px-3 py-2 text-xs md:text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-lg hover:bg-stone-200/50 whitespace-nowrap">
+      Bonus
+    </a>
+    <a href="/?view=TRYOUT" class="px-2 md:px-3 py-2 text-xs md:text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-lg hover:bg-stone-200/50 whitespace-nowrap">
+      Tryout
+    </a>
+    <a href="/?view=PROFILE" class="hidden md:block px-2 md:px-3 py-2 text-xs md:text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-lg hover:bg-stone-200/50 whitespace-nowrap">
+      Statistik
+    </a>
+    <a href="/blog/" class="px-2 md:px-3 py-2 text-xs md:text-sm font-semibold text-stone-800 bg-stone-200 rounded-lg border-2 border-stone-800 shadow-[0px_2px_0px_0px_rgba(41,37,36,1)] hover:translate-y-[2px] hover:shadow-none transition-all duration-100 whitespace-nowrap">
+      Blog
+    </a>
   </nav>
 
-  <div>
-    <a
-      href="/"
-      class="inline-flex items-center justify-center font-bold transition-all duration-200 focus:outline-none disabled:opacity-70 disabled:pointer-events-none active:scale-[0.98] bg-brand-black text-white hover:bg-gray-800 border border-transparent px-4 py-2 text-sm"
-    >
-      Masuk
-    </a>
-  </div>
+  <!-- CTA Button -->
+  <a
+    href="/"
+    class="hidden sm:inline-flex items-center justify-center text-xs md:text-sm font-medium bg-stone-800 text-white hover:bg-stone-700 px-3 md:px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+  >
+    Masuk
+  </a>
 </header>
 
+<!-- Mobile Bottom Nav - Matching main app BottomNav.tsx exactly -->
+<nav
+  class="fixed bottom-0 left-0 right-0 bg-white border-t border-black p-4 pb-6 z-50 sm:hidden"
+  aria-label="Mobile navigation"
+>
+  <div class="flex justify-between items-center max-w-sm mx-auto px-4">
+    {/* Drills - Zap icon (Lucide) */}
+    <a
+      href="/?view=BONUS"
+      class="flex flex-col items-center justify-center rounded-lg transition-all duration-200 text-gray-400 hover:text-gray-600"
+    >
+      <svg class="w-6 h-6 mb-1 fill-none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    {/* Latihan - PenTool icon (Lucide) */}
+    <a
+      href="/?view=QUIZ"
+      class="flex flex-col items-center justify-center rounded-lg transition-all duration-200 text-gray-400 hover:text-gray-600"
+    >
+      <svg class="w-6 h-6 mb-1 fill-none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="m12 19 7-7 3 3-7 7-3-3z" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="m2 2 7.5 8.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M11 13a1 1 0 1 0-2 0 1 1 0 0 0 2 0z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    {/* Tryout - Trophy icon (Lucide) */}
+    <a
+      href="/?view=TRYOUT"
+      class="flex flex-col items-center justify-center rounded-lg transition-all duration-200 text-gray-400 hover:text-gray-600"
+    >
+      <svg class="w-6 h-6 mb-1 fill-none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M6 9H4v11h12V9h-2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 9H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 9v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="m8 22 4-2 4 2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    {/* Blog - BookOpen icon (Lucide) - Active state */}
+    <a
+      href="/blog/"
+      class="flex flex-col items-center justify-center rounded-lg transition-all duration-200 text-black transform scale-110"
+    >
+      <svg class="w-6 h-6 mb-1 fill-black" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="w-1 h-1 bg-black rounded-full"></span>
+    </a>
+
+    {/* Profil - User icon (Lucide) */}
+    <a
+      href="/?view=PROFILE"
+      class="flex flex-col items-center justify-center rounded-lg transition-all duration-200 text-gray-400 hover:text-gray-600"
+    >
+      <svg class="w-6 h-6 mb-1 fill-none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+</nav>
+
 <script is:inline>
-  // TEAM_016: hide the header when scrolling down, show when scrolling up
+  // TEAM_033: Header interactions - hide on scroll
   (() => {
     const header = document.getElementById('site-header');
     if (!header) return;
 
+    // Hide header on scroll down
     let lastScrollY = window.scrollY;
     let isHidden = false;
 

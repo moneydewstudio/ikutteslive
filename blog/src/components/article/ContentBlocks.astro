@@ -1,8 +1,8 @@
 ---
-// TEAM_010: render programmatic content blocks without Markdown parsing
-// TEAM_022: add Ezoic mid-content placement (201) after first paragraph
+// TEAM_033: ContentBlocks - Design System Refactor
+// Proper typography hierarchy, spacing, and clean card styling
 import type { ContentBlock } from '../../lib/blogContent';
-import CtaCard from '../global/CtaCard.astro';
+import Card from '../global/Card.astro';
 
 type Props = {
   blocks: ContentBlock[];
@@ -11,10 +11,14 @@ type Props = {
 const { blocks } = Astro.props;
 ---
 
-<div class="space-y-5">
+<div class="space-y-6">
   {blocks.map((block, idx) => {
     if (block.type === 'paragraph') {
-      const rendered = <p class="leading-relaxed text-black/90">{block.text}</p>;
+      const rendered = (
+        <p class="text-base leading-relaxed text-stone-700">
+          {block.text}
+        </p>
+      );
       // Insert Ezoic mid-content ad after the first paragraph only
       if (idx === 0) {
         return (
@@ -33,45 +37,58 @@ const { blocks } = Astro.props;
     }
     if (block.type === 'heading') {
       return block.level === 2 ? (
-        <h2 class="mt-8 text-xl font-extrabold">{block.text}</h2>
+        <h2 class="mt-8 mb-4 text-2xl font-bold text-stone-800 leading-tight">
+          {block.text}
+        </h2>
       ) : (
-        <h3 class="mt-6 text-lg font-extrabold">{block.text}</h3>
+        <h3 class="mt-6 mb-3 text-xl font-semibold text-stone-800 leading-snug">
+          {block.text}
+        </h3>
       );
     }
     if (block.type === 'list') {
       return block.ordered ? (
-        <ol class="list-decimal space-y-2 pl-5">
+        <ol class="list-decimal space-y-2 pl-6 text-base text-stone-600">
           {block.items.map((item) => (
-            <li class="leading-relaxed">{item}</li>
+            <li class="leading-relaxed pl-2">{item}</li>
           ))}
         </ol>
       ) : (
-        <ul class="list-disc space-y-2 pl-5">
+        <ul class="list-disc space-y-2 pl-6 text-base text-stone-600">
           {block.items.map((item) => (
-            <li class="leading-relaxed">{item}</li>
+            <li class="leading-relaxed pl-2">{item}</li>
           ))}
         </ul>
       );
     }
     if (block.type === 'cta') {
-      return <CtaCard style={block.style} />;
+      return (
+        <Card
+          variant="cream"
+          size="lg"
+          icon="🚀"
+          eyebrow="Ayo Mulai"
+          title="Siap untuk latihan?"
+          description="Akses ribuan soal latihan CPNS dengan pembahasan lengkap. Gratis!"
+          href="https://ikuttes.my.id/"
+          buttonLabel="Mulai Daily Quiz"
+          external
+        />
+      );
     }
     if (block.type === 'question_preview') {
       return (
-        <div class="border-3 border-black bg-white p-4 shadow-neo-sm">
-          <div class="text-xs font-black uppercase tracking-wider">Contoh soal</div>
-          <div class="mt-2 text-sm text-black/80">
-            Kode soal: <span class="font-mono font-semibold">{block.questionId}</span>
-          </div>
-          <div class="mt-3">
-            <a
-              class="inline-flex items-center justify-center border-3 border-black bg-brand-lime px-4 py-2 text-sm font-extrabold shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
-              href="https://ikuttes.my.id/"
-            >
-              Kerjakan di Daily Quiz
-            </a>
-          </div>
-        </div>
+        <Card
+          variant="outline"
+          size="md"
+          icon="📝"
+          eyebrow="Contoh Soal"
+          title={`Kode: ${block.questionId}`}
+          description="Latihan soal ini tersedia di Daily Quiz. Kerjakan untuk melihat pembahasan lengkap."
+          href="https://ikuttes.my.id/"
+          buttonLabel="Kerjakan di Daily Quiz"
+          external
+        />
       );
     }
     return null;

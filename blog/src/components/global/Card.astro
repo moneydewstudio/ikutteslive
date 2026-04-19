@@ -1,0 +1,243 @@
+---
+// TEAM_033: Playful Card Component - Soft pastel organic shapes
+// Inspired by friendly educational app design
+
+type CardVariant = 'default' | 'lavender' | 'peach' | 'mint' | 'rose' | 'sky' | 'cream' | 'outline';
+type CardSize = 'sm' | 'md' | 'lg' | 'stat';
+
+interface Props {
+  variant?: CardVariant;
+  size?: CardSize;
+  href?: string;
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  icon?: string;
+  stat?: string | number;
+  statLabel?: string;
+  updatedAt?: string | null;
+  buttonLabel?: string;
+  external?: boolean;
+}
+
+const {
+  variant = 'default',
+  size = 'md',
+  href,
+  title,
+  description,
+  eyebrow,
+  icon,
+  stat,
+  statLabel,
+  updatedAt,
+  buttonLabel,
+  external = false,
+} = Astro.props;
+
+// Neo-playful color schemes - bold outlines + pastel fills
+const variantStyles: Record<CardVariant, { bg: string; border: string; accent: string; text: string; eyebrow: string; shadow: string }> = {
+  'default': {
+    bg: 'bg-white',
+    border: 'border-stone-800',
+    accent: 'bg-stone-200',
+    text: 'text-stone-800',
+    eyebrow: 'text-stone-500',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(41,37,36,1)]'
+  },
+  'lavender': {
+    bg: 'bg-gradient-to-br from-indigo-100 via-purple-50 to-white',
+    border: 'border-indigo-900',
+    accent: 'bg-indigo-300',
+    text: 'text-indigo-900',
+    eyebrow: 'text-indigo-600',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(49,46,129,1)]'
+  },
+  'peach': {
+    bg: 'bg-gradient-to-br from-orange-100 via-amber-50 to-white',
+    border: 'border-orange-900',
+    accent: 'bg-orange-300',
+    text: 'text-orange-900',
+    eyebrow: 'text-orange-700',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(124,45,18,1)]'
+  },
+  'mint': {
+    bg: 'bg-gradient-to-br from-emerald-100 via-teal-50 to-white',
+    border: 'border-emerald-900',
+    accent: 'bg-emerald-300',
+    text: 'text-emerald-900',
+    eyebrow: 'text-emerald-700',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(6,78,59,1)]'
+  },
+  'rose': {
+    bg: 'bg-gradient-to-br from-rose-100 via-pink-50 to-white',
+    border: 'border-rose-900',
+    accent: 'bg-rose-300',
+    text: 'text-rose-900',
+    eyebrow: 'text-rose-700',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(136,19,55,1)]'
+  },
+  'sky': {
+    bg: 'bg-gradient-to-br from-sky-100 via-cyan-50 to-white',
+    border: 'border-sky-900',
+    accent: 'bg-sky-300',
+    text: 'text-sky-900',
+    eyebrow: 'text-sky-700',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(12,74,110,1)]'
+  },
+  'cream': {
+    bg: 'bg-gradient-to-br from-amber-100 via-yellow-50 to-white',
+    border: 'border-amber-900',
+    accent: 'bg-amber-300',
+    text: 'text-amber-900',
+    eyebrow: 'text-amber-700',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(120,53,15,1)]'
+  },
+  'outline': {
+    bg: 'bg-white',
+    border: 'border-stone-800',
+    accent: 'bg-stone-200',
+    text: 'text-stone-800',
+    eyebrow: 'text-stone-500',
+    shadow: 'shadow-[0px_2px_0px_0px_rgba(41,37,36,1)]'
+  }
+};
+
+const style = variantStyles[variant];
+
+// Organic rounded corners - asymmetric for playful feel
+const sizeClasses: Record<CardSize, string> = {
+  'sm': 'p-4 rounded-[20px]',
+  'md': 'p-5 rounded-[24px]',
+  'lg': 'p-6 rounded-[28px]',
+  'stat': 'p-5 rounded-[24px]'
+};
+
+// Neo-playful solid shadow + fast hover
+const baseClasses = `
+  block
+  relative
+  overflow-hidden
+  border-2
+  transition-all
+  duration-100
+  ease-out
+  hover:translate-y-[2px]
+  hover:shadow-none
+  ${style.shadow}
+  ${style.bg}
+  ${style.border}
+  ${sizeClasses[size]}
+`;
+
+const externalProps = external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+---
+
+{href ? (
+  <a href={href} class={baseClasses} {...externalProps}>
+    {/* Decorative accent blob */}
+    <div class={`absolute -top-4 -right-4 w-20 h-20 ${style.accent} rounded-full opacity-40 blur-2xl`}></div>
+    <div class={`absolute -bottom-4 -left-4 w-16 h-16 ${style.accent} rounded-full opacity-30 blur-xl`}></div>
+
+    <div class="relative">
+      {eyebrow && (
+        <div class={`text-xs font-medium uppercase tracking-wider ${style.eyebrow} mb-2`}>
+          {eyebrow}
+        </div>
+      )}
+
+      {icon && (
+        <div class={`inline-flex items-center justify-center w-12 h-12 ${style.accent} rounded-2xl mb-4 text-2xl`}>
+          {icon}
+        </div>
+      )}
+
+      {stat !== undefined && (
+        <div class={`text-4xl font-bold ${style.text} mb-1 tabular-nums`}>
+          {stat}
+        </div>
+      )}
+
+      {statLabel && (
+        <div class={`text-sm ${style.eyebrow} mb-4`}>
+          {statLabel}
+        </div>
+      )}
+
+      <h3 class={`text-lg font-bold ${style.text} leading-tight`}>
+        {title}
+      </h3>
+
+      {description && (
+        <p class={`mt-3 text-sm ${style.eyebrow} leading-relaxed`}>
+          {description}
+        </p>
+      )}
+
+      {buttonLabel && (
+        <div class="mt-4 flex items-center">
+          <span class={`inline-flex items-center text-sm font-semibold ${style.text} group`}>
+            {buttonLabel}
+            <svg class="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+      )}
+
+      {updatedAt && (
+        <div class={`mt-3 text-xs ${style.eyebrow}`}>
+          Update: {updatedAt}
+        </div>
+      )}
+    </div>
+  </a>
+) : (
+  <div class={baseClasses}>
+    {/* Decorative accent blob */}
+    <div class={`absolute -top-4 -right-4 w-20 h-20 ${style.accent} rounded-full opacity-40 blur-2xl`}></div>
+    <div class={`absolute -bottom-4 -left-4 w-16 h-16 ${style.accent} rounded-full opacity-30 blur-xl`}></div>
+
+    <div class="relative">
+      {eyebrow && (
+        <div class={`text-xs font-medium uppercase tracking-wider ${style.eyebrow} mb-2`}>
+          {eyebrow}
+        </div>
+      )}
+
+      {icon && (
+        <div class={`inline-flex items-center justify-center w-12 h-12 ${style.accent} rounded-2xl mb-4 text-2xl`}>
+          {icon}
+        </div>
+      )}
+
+      {stat !== undefined && (
+        <div class={`text-4xl font-bold ${style.text} mb-1 tabular-nums`}>
+          {stat}
+        </div>
+      )}
+
+      {statLabel && (
+        <div class={`text-sm ${style.eyebrow} mb-4`}>
+          {statLabel}
+        </div>
+      )}
+
+      <h3 class={`text-lg font-bold ${style.text} leading-tight`}>
+        {title}
+      </h3>
+
+      {description && (
+        <p class={`mt-3 text-sm ${style.eyebrow} leading-relaxed`}>
+          {description}
+        </p>
+      )}
+
+      {updatedAt && (
+        <div class={`mt-3 text-xs ${style.eyebrow}`}>
+          Update: {updatedAt}
+        </div>
+      )}
+    </div>
+  </div>
+)}

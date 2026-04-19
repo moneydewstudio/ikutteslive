@@ -1,12 +1,13 @@
 ---
-// TEAM_010: shared page shell with header/footer
+// TEAM_033: Shell - Design System Refactor
+// Proper container sizing and layout spacing
 import Header from './Header.astro';
 import Footer from './Footer.astro';
 ---
 
-<div class="min-h-screen">
+<div class="min-h-screen flex flex-col">
   <Header />
-  <main class="mx-auto max-w-5xl px-4 py-8">
+  <main class="flex-1 container-main py-8 md:py-12 pb-24 sm:pb-8 md:pb-12">
     <slot />
   </main>
   <Footer />

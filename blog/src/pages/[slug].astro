@@ -1,9 +1,10 @@
 ---
-// TEAM_032: programmatic page (flat route /:slug) - refactored to use ProgrammaticArticle
+// TEAM_033: programmatic page - Neo-playful design refactor
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 import Shell from '../components/global/Shell.astro';
 import HubLinks from '../components/hub/HubLinks.astro';
-import CtaCard from '../components/global/CtaCard.astro';
+import Card from '../components/global/Card.astro';
+import Breadcrumbs from '../components/global/Breadcrumbs.astro';
 import ProgrammaticArticle from '../components/article/ProgrammaticArticle.astro';
 
 import { getRuntimeEnv } from '../lib/utils/runtime';
@@ -176,20 +177,66 @@ const hubItems = hubItemsRows.map((row) => ({
     schema={schema}
   >
     <Shell>
-      <div class="grid gap-8">
-        <section class="border-3 border-black bg-white p-6 shadow-neo">
-          <h1 class="text-2xl font-extrabold">{seo.title}</h1>
-          {seo.description ? <p class="mt-3 text-sm text-black/80">{seo.description}</p> : null}
-        </section>
+      <Breadcrumbs items={[
+        { name: 'Ikuttes Blog', path: '/' },
+        { name: (hubRecord?.slug ?? slug ?? '').toUpperCase(), path: canonicalPath },
+      ]} />
 
-        <CtaCard style="hard" />
+      <div class="space-y-8">
+        {/* Hub Header - Neo-playful */}
+        <Card
+          variant="outline"
+          size="lg"
+          title={seo.title}
+          description={seo.description}
+        />
 
+        {/* Hub CTA - Match hub color */}
+        {hubRecord?.slug === 'tiu' && (
+          <Card
+            variant="lavender"
+            size="lg"
+            href="https://ikuttes.my.id/?view=DRILLS"
+            icon="🧠"
+            eyebrow="Latihan"
+            title="Daily Quiz TIU"
+            description="Latihan soal TIU harian dengan pembahasan lengkap. Verbal, numerik, dan logika."
+            buttonLabel="Mulai Latihan →"
+            external
+          />
+        )}
+        {hubRecord?.slug === 'twk' && (
+          <Card
+            variant="peach"
+            size="lg"
+            href="https://ikuttes.my.id/?view=DRILLS"
+            icon="🇮🇩"
+            eyebrow="Latihan"
+            title="Daily Quiz TWK"
+            description="Latihan soal TWK harian dengan pembahasan lengkap. Pancasila, UUD 1945, NKRI."
+            buttonLabel="Mulai Latihan →"
+            external
+          />
+        )}
+        {hubRecord?.slug === 'tkp' && (
+          <Card
+            variant="mint"
+            size="lg"
+            href="https://ikuttes.my.id/?view=DRILLS"
+            icon="🌟"
+            eyebrow="Latihan"
+            title="Daily Quiz TKP"
+            description="Latihan soal TKP harian dengan pembahasan lengkap. Studi kasus situasional."
+            buttonLabel="Mulai Latihan →"
+            external
+          />
+        )}
+
+        {/* Articles Section */}
         <section>
-          <h2 class="text-lg font-extrabold">Artikel terbaru</h2>
-          <p class="mt-2 text-sm text-black/70">Pilih materi lalu langsung latihan di Daily Quiz.</p>
-          <div class="mt-5">
-            <HubLinks items={hubItems} />
-          </div>
+          <h2 class="text-heading-3 text-stone-800 mb-2">Artikel terbaru</h2>
+          <p class="text-body-sm text-stone-500 mb-5">Pilih materi lalu langsung latihan di Daily Quiz.</p>
+          <HubLinks items={hubItems} />
         </section>
       </div>
     </Shell>

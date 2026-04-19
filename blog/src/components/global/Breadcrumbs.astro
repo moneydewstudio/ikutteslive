@@ -1,4 +1,7 @@
 ---
+// TEAM_033: Breadcrumbs - Design System Refactor
+// Cleaner styling with proper hierarchy
+
 type Props = {
   items: Array<{ name: string; path: string }>;
 };
@@ -7,16 +10,22 @@ const { items } = Astro.props;
 ---
 
 <nav aria-label="Breadcrumb" class="mb-6">
-  <ol class="flex items-center gap-2 text-sm">
+  <ol class="flex items-center flex-wrap gap-1 text-body-sm">
     {items.map((item, index) => (
-      <li class="flex items-center gap-2">
-        {index > 0 && <span aria-hidden="true" class="text-black/60">/</span>}
+      <li class="flex items-center">
+        {index > 0 && (
+          <span aria-hidden="true" class="mx-2 text-text-muted">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        )}
         {index < items.length - 1 ? (
-          <a href={item.path} class="text-black/80 hover:text-black transition-colors">
+          <a href={item.path} class="text-text-secondary hover:text-text transition-colors">
             {item.name}
           </a>
         ) : (
-          <span aria-current="page" class="text-black font-medium">
+          <span aria-current="page" class="text-text font-medium">
             {item.name}
           </span>
         )}

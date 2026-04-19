@@ -1,17 +1,89 @@
 ---
-// TEAM_010: minimal blog footer
+// TEAM_033: Footer - Design System Refactor
+// Full site footer with navigation and links
 ---
 
-<footer class="border-t-3 border-black bg-brand-cream">
-  <div class="mx-auto max-w-5xl px-4 py-8 text-sm">
-    <div class="font-semibold">Ikuttes</div>
-    <div class="mt-2 text-black/70">
-      Blog CPNS untuk mengarahkan kamu ke latihan harian.
+<footer class="bg-[#FDF6E9] border-t border-stone-100 mt-auto relative" style="background-image: url(&quot;data:image/svg+xml,%3Csvg width='100' height='20' viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M21.184 20c.357-.13.72-.264 1.088-.402l1.768-.661C33.64 15.347 39.647 14 50 14c10.271 0 15.362 1.222 24.629 4.928.955.383 1.869.74 2.75 1.072h6.225c-2.51-.73-5.139-1.691-8.233-2.928C65.888 13.278 60.562 12 50 12c-10.626 0-16.855 1.397-26.66 5.063l-1.767.662c-2.475.923-4.66 1.674-6.724 2.275h6.335zm0-20C13.258 2.892 8.077 4 0 4V2c5.744 0 9.951-.574 14.85-2h6.334zM77.38 0C85.239 2.966 90.502 4 100 4V2c-6.842 0-11.386-.542-16.396-2h-6.225zM0 14c8.44 0 13.718-1.21 22.272-4.402l1.768-.661C33.64 5.347 39.647 4 50 4c10.271 0 15.362 1.222 24.629 4.928C84.112 12.722 89.438 14 100 14v-2c-10.271 0-15.362-1.222-24.629-4.928C65.888 3.278 60.562 2 50 2 39.374 2 33.145 3.397 23.34 7.063l-1.767.662C13.223 10.84 8.163 12 0 12v2z' fill='%23A8A29E' fill-opacity='0.15' fill-rule='evenodd'/%3E%3C/svg%3E&quot;);">
+  <div class="container-main py-12 md:py-16">
+    <!-- Top Section -->
+    <div class="grid md:grid-cols-4 gap-8 mb-12">
+      <!-- Brand -->
+      <div class="md:col-span-1">
+        <a href="/" class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-indigo-200 to-purple-200 rounded-2xl flex items-center justify-center border-2 border-indigo-900 shadow-[0px_2px_0px_0px_rgba(49,46,129,1)]">
+            <span class="text-xl">🎯</span>
+          </div>
+          <span class="font-bold text-lg text-stone-800">Ikuttes</span>
+        </a>
+        <p class="text-body-sm text-stone-600 leading-relaxed">
+          Platform persiapan CPNS modern dengan latihan harian TIU, TWK, dan TKP.
+        </p>
+      </div>
+
+      <!-- Navigation -->
+      <div>
+        <h3 class="text-caption font-semibold uppercase tracking-wider text-text-secondary mb-4">Materi</h3>
+        <ul class="space-y-2">
+          <li><a href="/blog/tiu" class="text-body-sm text-text-secondary hover:text-text transition-colors">TIU - Intelegensi</a></li>
+          <li><a href="/blog/twk" class="text-body-sm text-text-secondary hover:text-text transition-colors">TWK - Wawasan</a></li>
+          <li><a href="/blog/tkp" class="text-body-sm text-text-secondary hover:text-text transition-colors">TKP - Karakteristik</a></li>
+          <li><a href="/blog/formasi" class="text-body-sm text-text-secondary hover:text-text transition-colors">Formasi CPNS</a></li>
+        </ul>
+      </div>
+
+      <!-- Resources -->
+      <div>
+        <h3 class="text-caption font-semibold uppercase tracking-wider text-text-secondary mb-4">Resources</h3>
+        <ul class="space-y-2">
+          <li><a href="/blog/about" class="text-body-sm text-text-secondary hover:text-text transition-colors">Tentang Kami</a></li>
+          <li><a href="/blog/faq" class="text-body-sm text-text-secondary hover:text-text transition-colors">FAQ</a></li>
+          <li><a href="https://ikuttes.my.id/?view=TRYOUT" class="text-body-sm text-text-secondary hover:text-text transition-colors">Simulasi CAT</a></li>
+          <li><a href="https://ikuttes.my.id/?view=DRILLS" class="text-body-sm text-text-secondary hover:text-text transition-colors">Latihan Soal</a></li>
+        </ul>
+      </div>
+
+      <!-- Legal -->
+      <div>
+        <h3 class="text-caption font-semibold uppercase tracking-wider text-text-secondary mb-4">Legal</h3>
+        <ul class="space-y-2">
+          <li><a href="/blog/privacy-policy" class="text-body-sm text-text-secondary hover:text-text transition-colors">Kebijakan Privasi</a></li>
+          <li><a href="/blog/terms" class="text-body-sm text-text-secondary hover:text-text transition-colors">Syarat Penggunaan</a></li>
+          <li><a href="mailto:halo@ikuttes.my.id" class="text-body-sm text-text-secondary hover:text-text transition-colors">Kontak</a></li>
+        </ul>
+      </div>
     </div>
-    <div class="mt-4">
-      <a class="underline-offset-4 hover:underline" href="https://ikuttes.my.id/">
-        Mulai Daily Quiz
-      </a>
+
+    <!-- CTA Section - Neo-playful -->
+    <div class="border-t-2 border-stone-200 pt-8 mb-8">
+      <div class="bg-gradient-to-br from-amber-100 via-orange-50 to-white rounded-[28px] border-2 border-amber-900 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden shadow-[0px_2px_0px_0px_rgba(120,53,15,1)]">
+        {/* Decorative blobs */}
+        <div class="absolute -top-8 -right-8 w-32 h-32 bg-orange-200 rounded-full opacity-40 blur-3xl"></div>
+        <div class="absolute -bottom-8 -left-8 w-24 h-24 bg-amber-200 rounded-full opacity-30 blur-2xl"></div>
+
+        <div class="relative">
+          <h3 class="text-heading-4 text-amber-900 mb-2">Siap untuk latihan? 🚀</h3>
+          <p class="text-body-sm text-amber-800">Akses ribuan soal latihan CPNS dengan pembahasan lengkap.</p>
+        </div>
+        <a
+          href="https://ikuttes.my.id/"
+          class="relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-orange-400 to-amber-400 text-white font-medium text-sm rounded-2xl border-2 border-amber-900 shadow-[0px_2px_0px_0px_rgba(120,53,15,1)] hover:translate-y-[2px] hover:shadow-none transition-all duration-100"
+        >
+          Mulai Daily Quiz
+          <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="border-t-2 border-stone-200 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      <p class="text-caption text-stone-500">
+        © {new Date().getFullYear()} Ikuttes. All rights reserved.
+      </p>
+      <p class="text-caption text-stone-500">
+        Dibuat dengan 💜 untuk calon ASN Indonesia
+      </p>
     </div>
   </div>
 </footer>
