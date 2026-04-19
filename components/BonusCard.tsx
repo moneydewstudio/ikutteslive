@@ -41,18 +41,18 @@ const BonusCard: React.FC<BonusCardProps> = ({ pack, onClick }) => {
       <div className="mt-4">
         {pack.price === 'Terkunci' ? (
           <div>
-            {/* TEAM_033: Contextual paywall - show value before gate */}
-            <div className="text-xs font-medium text-gray-600 mb-2">
-              12 soal lanjutan untuk mengatasi kelemahan ini
+            {/* TEAM_032: Clear lock explanation - why not just value */}
+            <div className="flex items-center gap-1.5 mb-2">
+              <Lock className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-xs font-bold text-gray-500 uppercase">Terkunci Hari Ini</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-sm text-brand-orange">+8 poin ke skor Tryout</span>
-              <Lock className="w-4 h-4 text-gray-400" />
+            <div className="text-xs font-medium text-gray-600 mb-2">
+              Buka dengan Premium untuk latihan semua kategori tanpa batas
             </div>
           </div>
         ) : (
           <Button fullWidth size="sm" variant="black" className="justify-between group-hover:bg-gray-800">
-            Klaim Paket <ArrowUpRight className="w-4 h-4" />
+            Mulai Drill <ArrowUpRight className="w-4 h-4" />
           </Button>
         )}
       </div>

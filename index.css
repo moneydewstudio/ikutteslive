@@ -41,6 +41,7 @@ html {
   .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
   .animate-scale-in { animation: scaleIn 0.3s ease-out; }
   .animate-slide-in-right { animation: slideInRight 0.3s ease-out; }
+  .animate-shimmer { animation: shimmer 2s infinite; }
 }
 
 @keyframes fadeIn {
@@ -61,4 +62,9 @@ html {
 @keyframes slideInRight {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }

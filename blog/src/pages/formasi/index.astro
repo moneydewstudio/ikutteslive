@@ -47,7 +47,7 @@ const schema = [
 ].filter(Boolean);
 
 // Category display config with playful colors
-const categoryConfig: Record<string, { title: string; description: string; variant: 'lavender' | 'peach' | 'mint' | 'sky' }> = {
+const categoryConfig: Record<string, { title: string; description: string; variant: 'lavender' | 'peach' | 'mint' | 'sky' | 'outline' }> = {
   provinsi: { title: 'Formasi per Provinsi', description: 'Pilih provinsi untuk melihat formasi lengkap', variant: 'lavender' },
   kota: { title: 'Formasi per Kota', description: 'Cari formasi berdasarkan kota/kabupaten', variant: 'peach' },
   institusi: { title: 'Formasi per Instansi', description: 'Cek formasi instansi favorit Anda', variant: 'mint' },
@@ -87,7 +87,7 @@ const categories = await getHubCategoriesWithCounts(db);
       <div class="grid gap-4 sm:grid-cols-2">
         {categories.map((cat) => {
           const config = categoryConfig[cat.hub] ?? { title: cat.title, description: '', variant: 'outline' };
-          const icons: Record<string, string> = {
+          const icons = {
             provinsi: '🗺️',
             kota: '🏙️',
             institusi: '🏛️',

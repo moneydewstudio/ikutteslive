@@ -14,7 +14,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from 'recharts';
-import { TrendingUp, ChevronRight, BookOpen } from 'lucide-react';
+import { TrendingUp, ChevronRight, BookOpen, AlertCircle, TrendingUp as TrendingUpIcon, CheckCircle2 } from 'lucide-react';
 import { apiFetch } from '../services/apiClient';
 import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
 import { getPendingDailyQuizSubmit, syncPendingDailyQuizSubmit } from '../services/dailyQuizSync';
@@ -186,29 +186,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
         {/* LEFT COLUMN: Profile & Key Metrics */}
         <div className="md:w-1/3 flex flex-col border-b md:border-b-0 md:border-r border-black bg-bg">
             
-            {/* User Profile Cell */}
-            <div className="p-6 border-b border-black flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full border border-black bg-brand-cream overflow-hidden">
-                      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+            {/* User Profile Cell - TEAM_034: Tidied layout */}
+            <div className="p-4 border-b border-black">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full border border-black bg-brand-cream overflow-hidden flex-shrink-0">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" className="w-full h-full" />
                   </div>
-                  <div>
-                      <h2 className="font-black text-xl">{user.name || 'Tamu'}</h2>
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Statistik Pembelajaran</span>
-                  </div>
-               </div>
-               <Button variant="outline" size="sm" onClick={replayTour}>
-                 <BookOpen className="w-4 h-4 mr-2" />
-                 Panduan
-               </Button>
+                  <h2 className="font-black text-lg leading-tight truncate">{user.name || 'Tamu'}</h2>
+                </div>
+                <button 
+                  onClick={replayTour}
+                  className="flex-shrink-0 p-2 border border-black hover:bg-gray-100 transition-colors"
+                  title="Panduan"
+                >
+                  <BookOpen className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {/* TEAM_033: Delta Banner - Progress towards passing grade */}
-            <div className="border-b border-black">
+            {/* TEAM_034: Compact DeltaBar - Progress indicator only */}
+            <div className="border-b border-black bg-brand-cream">
               <DeltaBanner
                 onContinueClick={onStartQuiz}
-                continueLabel="Lanjutkan Latihan"
+                continueLabel="Latihan"
                 tryoutHistory={tryoutHistory}
+                compact={true}
               />
             </div>
 

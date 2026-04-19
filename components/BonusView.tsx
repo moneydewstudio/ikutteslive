@@ -5,6 +5,7 @@ import { User } from '../types';
 import * as QuizService from '../services/quizService';
 import OnboardingTour from '../src/components/OnboardingTour';
 import { usePaywall } from '../src/contexts/PaywallContext';
+import { apiFetch } from '../services/apiClient';
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
@@ -13,11 +14,22 @@ interface BonusViewProps {
   onStartDrill: (category: DrillCategory) => void;
 }
 
+type TryoutHistoryRow = {
+  id: string;
+  total: number;
+  twk: number;
+  tiu: number;
+  tkp: number;
+  passed: boolean | null;
+  createdAt: string;
+};
+
 // TEAM_018: repurpose Bonus page into Drills entry (3 cards with free/premium gating)
 const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
   const { openPaywall } = usePaywall();
   const [todayCategory, setTodayCategory] = useState<DrillCategory | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [tryoutHistory, setTryoutHistory] = useState<TryoutHistoryRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,6 +49,25 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // TEAM_034: Fetch tryoutHistory for consistent DeltaBanner score
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const res = await apiFetch('/tryout/history');
+        if (res.status === 403) return;
+        if (!res.ok) throw new Error('Failed to load tryout history');
+        const json = (await res.json()) as any;
+        const rows = Array.isArray(json?.history) ? (json.history as TryoutHistoryRow[]) : [];
+        if (!cancelled) setTryoutHistory(rows);
+      } catch {
+        // Silently fail - DeltaBanner will use local data
+      }
+    };
+    void run();
+    return () => { cancelled = true; };
   }, []);
 
   const isPremium = !!user?.isPro;
@@ -71,16 +102,17 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
   return (
     <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
       
-      {/* Header */}
+      {/* Header - TEAM_032: Clearer explanation of what drills are */}
       <div className="p-8 border-b border-black bg-brand-cream">
-         <h1 className="text-5xl font-black uppercase tracking-tight mb-4">Drills</h1>
-         <p className="text-lg max-w-xl">Latihan fokus per kategori. Untuk akun Gratis, hanya 1 drill terbuka per hari.</p>
+         <h1 className="text-5xl font-black uppercase tracking-tight mb-4">Latihan Per Bagian</h1>
+         <p className="text-lg max-w-xl">Fokus latihan TWK, TIU, atau TKP secara terpisah. Tiap drill = 20 soal. Gratis: 1 kategori terbuka per hari.</p>
       </div>
 
       {/* TEAM_033: Delta Banner - Progress towards passing grade */}
       <DeltaBanner
         onContinueClick={() => onStartDrill(todayCategory || 'TIU')}
         continueLabel={`Latihan ${todayCategory || 'Harian'} →`}
+        tryoutHistory={tryoutHistory}
         compact
       />
 

@@ -7,22 +7,23 @@ interface BottomNavProps {
   onChange: (view: ViewState) => void;
 }
 
+// TEAM_032: Mobile navigation with labels for clarity
 const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
   const navItems = [
-    // TEAM_020: reorder bottom nav so Drills is the default/first entry
-    // TEAM_018: use BONUS as the Drills entry; DRILLS is an internal runner view
-    { id: 'BONUS', icon: Zap, label: 'Drills' },
-    { id: 'QUIZ', icon: PenTool, label: 'Latihan' },
-    { id: 'TRYOUT', icon: Trophy, label: 'Tryout' },
-    { id: 'BLOG', icon: BookOpen, label: 'Blog' },
-    { id: 'PROFILE', icon: User, label: 'Profil' },
+    // Primary: Tryout first (matches desktop hierarchy)
+    { id: 'TRYOUT', icon: Trophy, label: 'Tryout', shortLabel: 'Tryout' },
+    // Secondary: Drill (per-category practice)
+    { id: 'BONUS', icon: Zap, label: 'Drill', shortLabel: 'Drill' },
+    // Secondary: Kuis Harian
+    { id: 'QUIZ', icon: PenTool, label: 'Kuis Harian', shortLabel: 'Kuis' },
+    { id: 'BLOG', icon: BookOpen, label: 'Blog', shortLabel: 'Blog' },
+    { id: 'PROFILE', icon: User, label: 'Profil', shortLabel: 'Profil' },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black p-4 pb-6 z-50" data-tour="nav-bar">
-      <div className="flex justify-between items-center max-w-sm mx-auto px-4">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black py-2 pb-safe z-50" data-tour="nav-bar">
+      <div className="flex justify-between items-end max-w-md mx-auto px-2">
         {navItems.map((item) => {
-          // TEAM_020: highlight Drills while inside the DRILLS runner view
           const isActive =
             currentView === item.id ||
             (item.id === 'QUIZ' && currentView === 'RESULTS') ||
@@ -40,18 +41,26 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
                 }
               }}
               className={`
-                flex flex-col items-center justify-center rounded-lg transition-all duration-200
-                ${isActive ? 'text-black transform scale-110' : 'text-gray-400 hover:text-gray-600'}
+                flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all duration-200 min-w-[56px]
+                ${isActive ? 'text-black' : 'text-gray-400 hover:text-gray-600'}
               `}
               data-tour={item.id === 'QUIZ' ? 'nav-latihan' : undefined}
             >
-              <Icon 
-                className={`w-6 h-6 mb-1 ${isActive ? 'fill-black' : 'fill-none'}`} 
-                strokeWidth={isActive ? 2 : 2} 
-              />
-              {isActive && (
-                 <span className="w-1 h-1 bg-black rounded-full"></span>
-              )}
+              <div className={`
+                relative p-1.5 rounded-lg transition-all
+                ${isActive ? 'bg-black text-white' : 'bg-transparent'}
+              `}>
+                <Icon 
+                  className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} 
+                  strokeWidth={isActive ? 2.5 : 2} 
+                />
+              </div>
+              <span className={`
+                text-[10px] font-bold mt-1 leading-none
+                ${isActive ? 'text-black' : 'text-gray-500'}
+              `}>
+                {item.shortLabel}
+              </span>
             </button>
           );
         })}

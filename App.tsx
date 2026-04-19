@@ -19,6 +19,8 @@ import { recordAnswerEvent } from './services/userEvents';
 import { OnboardingTourProvider } from './src/contexts/OnboardingTourContext';
 import { PaywallProvider, usePaywall } from './src/contexts/PaywallContext';
 import AdminPayments from './components/AdminPayments';
+import GoalSettingModal from './components/GoalSettingModal';
+import { apiFetch } from './services/apiClient';
 
 // TEAM_001: switch Latihan session creation to API-backed questions (Neon via Worker)
 
@@ -142,6 +144,7 @@ const AppContent: React.FC = () => {
               if (prev.isPro === nextIsPro) return prev;
               return { ...prev, isPro: nextIsPro };
             });
+
           } catch (e) {
             console.warn('TEAM_012 /auth/sync failed; premium status will default to free', e);
           }
@@ -347,15 +350,43 @@ const Header = () => (
       <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
     </div>
 
-    {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}
+    {/* TEAM_032: Clear navigation hierarchy - Tryout primary, others secondary */}
     <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
-      {/* TEAM_018: repurpose BONUS tab into Drills entry; DRILLS view is internal runner */}
-      <button onClick={() => setView('BONUS')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}>Drills</button>
-      <button onClick={handleLatihanClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}>Latihan</button>
-      <button onClick={() => setView('TRYOUT')} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}>Tryout</button>
+      {/* Primary path: Tryout (full simulation) - emphasized */}
+      <button 
+        onClick={() => setView('TRYOUT')} 
+        className={`px-3 py-2 rounded transition-all ${
+          view === 'TRYOUT' 
+            ? 'bg-black text-white shadow-md' 
+            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+        }`}
+      >
+        Tryout
+      </button>
+      
+      {/* Secondary: Drill (per-category practice) */}
+      <button 
+        onClick={() => setView('BONUS')} 
+        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}
+      >
+        Drill
+      </button>
+      
+      {/* Secondary: Kuis Harian */}
+      <button 
+        onClick={handleLatihanClick} 
+        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}
+      >
+        Kuis Harian
+      </button>
+      
       <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
-      <button onClick={handleProfileClick} className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}>Profil</button>
-      {/* TEAM_015: link to Astro blog served under /blog */}
+      <button 
+        onClick={handleProfileClick} 
+        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}
+      >
+        Profil
+      </button>
     </nav>
 
     <div>
@@ -531,6 +562,32 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
   handleProfileClick,
 }) => {
   const { openPaywall } = usePaywall();
+  // TEAM_033: Goal Setting for Outcome-Driven Loop
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [hasCheckedGoals, setHasCheckedGoals] = useState(false);
+
+  // TEAM_033: Check if user has set goals when authenticated
+  useEffect(() => {
+    if (!user?.email || hasCheckedGoals) return;
+    
+    const checkGoals = async () => {
+      try {
+        const prefsRes = await apiFetch('/user/preferences');
+        if (prefsRes.ok) {
+          const prefs = await prefsRes.json();
+          if (!prefs.hasSetGoals) {
+            setShowGoalModal(true);
+          }
+        }
+        setHasCheckedGoals(true);
+      } catch (e) {
+        console.warn('TEAM_033 failed to check user preferences', e);
+        setHasCheckedGoals(true);
+      }
+    };
+    
+    checkGoals();
+  }, [user?.email, hasCheckedGoals]);
 
   const handleGoPro = useCallback(() => {
     openPaywall('interstitial_premium_cta');
@@ -543,27 +600,36 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
         <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
       </div>
 
-      {/* TEAM_008: fix desktop menu spacing by adding consistent gap + clickable padding on nav items */}
+      {/* TEAM_032: Clear navigation hierarchy - Tryout primary, others secondary */}
       <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
-        {/* TEAM_018: repurpose BONUS tab into Drills entry; DRILLS view is internal runner */}
+        {/* Primary path: Tryout (full simulation) - emphasized */}
+        <button
+          onClick={() => setView('TRYOUT')}
+          className={`px-3 py-2 rounded transition-all ${
+            view === 'TRYOUT'
+              ? 'bg-black text-white shadow-md'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          Tryout
+        </button>
+        
+        {/* Secondary: Drill */}
         <button
           onClick={() => setView('BONUS')}
           className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}
         >
-          Drills
+          Drill
         </button>
+        
+        {/* Secondary: Kuis Harian */}
         <button
           onClick={handleLatihanClick}
           className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}
         >
-          Latihan
+          Kuis Harian
         </button>
-        <button
-          onClick={() => setView('TRYOUT')}
-          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'TRYOUT' ? 'text-black' : 'text-gray-400'}`}
-        >
-          Tryout
-        </button>
+        
         <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">
           Blog
         </a>
@@ -632,6 +698,18 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
           onConfirm={handleSignupConfirm}
           isLoading={isSignupLoading}
           reason={signupReason ?? undefined}
+        />
+      )}
+
+      {/* TEAM_033: Goal Setting Modal - Outcome-Driven Loop */}
+      {showGoalModal && user && (
+        <GoalSettingModal
+          isOpen={showGoalModal}
+          onClose={() => setShowGoalModal(false)}
+          onSave={(goals) => {
+            console.log('TEAM_033 goals saved:', goals);
+          }}
+          userEmail={user.email}
         />
       )}
     </div>

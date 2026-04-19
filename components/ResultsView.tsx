@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { UserSession } from '../types';
 import Button from './Button';
-import { ChevronDown, ChevronUp, Check, X, Share2, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, X, Share2, RefreshCw, TrendingUp, AlertCircle, BookOpen } from 'lucide-react';
 import { getQuestionsForSession } from '../services/quizService';
 import { getExplanation } from '../services/backend';
 import ShareResultModal from './ShareResultModal';
@@ -201,6 +201,32 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
 
   const percentage = Math.round((correctAnswers / totalQuestions) * 100);
   const readiness = session.readiness >= 80 ? 'Sangat Siap' : session.readiness >= 60 ? 'Siap' : session.readiness >= 40 ? 'Cukup Siap' : 'Perlu Latihan';
+
+  // TEAM_032: Context-aware result messaging
+  const getResultMessage = (pct: number) => {
+    if (pct >= 80) return {
+      headline: 'Skor Tinggi! 🌟',
+      subtext: 'Pertahankan performa ini dengan latihan rutin. Kamu sudah di jalur yang benar.',
+      mood: 'excellent' as const
+    };
+    if (pct >= 60) return {
+      headline: 'Menuju Siap 📈',
+      subtext: 'Tingkatkan latihan untuk mencapai passing grade. Konsistensi adalah kunci.',
+      mood: 'good' as const
+    };
+    if (pct >= 40) return {
+      headline: 'Perlu Latihan Intensif 💪',
+      subtext: 'Jangan khawatir, skor ini normal untuk pemula. Yuk, latihan tiap hari!',
+      mood: 'needs-work' as const
+    };
+    return {
+      headline: 'Waktunya Mulai Belajar 📚',
+      subtext: 'Semua expert dulunya pemula. Mulai dengan latihan harian, ya!',
+      mood: 'starting' as const
+    };
+  };
+
+  const resultMessage = getResultMessage(percentage);
   const shareData: DailyQuizShareData = {
     kind: 'daily_quiz',
     userName: 'User', // TODO: Get from user context
@@ -260,8 +286,22 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
 
         {/* Right: Actions */}
         <div className="md:w-1/2 bg-white p-8 flex flex-col justify-center items-start space-y-4">
-          <h2 className="text-3xl font-black uppercase mb-2">Langkah Selanjutnya</h2>
-          <p className="text-gray-600 mb-6 max-w-sm">Bagus! Semakin hari pasti makin siap. Pamerkan progres latihan hari ini ke kontak kamu sekarang!</p>
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-black uppercase mb-2 ${
+            resultMessage.mood === 'excellent' ? 'bg-green-100 text-green-800' :
+            resultMessage.mood === 'good' ? 'bg-brand-lime/30 text-black' :
+            resultMessage.mood === 'needs-work' ? 'bg-brand-orange/20 text-brand-orange' :
+            'bg-gray-100 text-gray-600'
+          }`}>
+            {resultMessage.mood === 'excellent' && <Check className="w-3.5 h-3.5" />}
+            {resultMessage.mood === 'good' && <TrendingUp className="w-3.5 h-3.5" />}
+            {resultMessage.mood === 'needs-work' && <AlertCircle className="w-3.5 h-3.5" />}
+            {resultMessage.mood === 'starting' && <BookOpen className="w-3.5 h-3.5" />}
+            {percentage >= 60 ? 'Di Atas Rata-rata' : 'Perlu Peningkatan'}
+          </div>
+          
+          <h2 className="text-3xl font-black uppercase leading-tight">{resultMessage.headline}</h2>
+          <p className="text-gray-600 mb-6 max-w-sm">{resultMessage.subtext}</p>
+          
           <div className="flex w-full gap-3">
             <Button onClick={onRetryClick} variant="outline" fullWidth>
               <RefreshCw className="w-4 h-4 mr-2" /> Coba Lagi

@@ -35,14 +35,8 @@ const schema = [
       {/* Hero Section */}
       <section class="text-center py-8 md:py-12">
         <h1 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4 leading-tight">
-          Belajar CPNS, langsung ke latihan
+          Belajar Materi CPNS, langsung lanjut ke latihan
         </h1>
-        <p class="text-lg text-stone-600 max-w-2xl mx-auto mb-6 leading-relaxed">
-          Pilih materi di bawah, baca ringkasnya, lalu kerjakan Daily Quiz di Ikuttes.
-        </p>
-        <p class="text-sm text-stone-500">
-          Terakhir diperbarui: {new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-        </p>
       </section>
 
       {/* Hub Cards - Playful Pastel */}
@@ -51,7 +45,6 @@ const schema = [
           variant="lavender"
           size="lg"
           href="/blog/tiu"
-          icon="🧠"
           eyebrow="Materi"
           title="TIU"
           description="Tes Intelegensi Umum: verbal, numerik, dan logika analitis."
@@ -60,7 +53,6 @@ const schema = [
           variant="peach"
           size="lg"
           href="/blog/twk"
-          icon="🇮🇩"
           eyebrow="Materi"
           title="TWK"
           description="Tes Wawasan Kebangsaan: Pancasila, UUD 1945, NKRI, Bhinneka."
@@ -69,7 +61,6 @@ const schema = [
           variant="mint"
           size="lg"
           href="/blog/tkp"
-          icon="🌟"
           eyebrow="Materi"
           title="TKP"
           description="Tes Karakteristik Pribadi: soal situasional berbobot."
@@ -81,7 +72,6 @@ const schema = [
         variant="sky"
         size="lg"
         href="/blog/formasi"
-        icon="📋"
         eyebrow="Informasi"
         title="Formasi CPNS 2024"
         description="Cek formasi lengkap berdasarkan provinsi, instansi, dan pendidikan. Data terbaru untuk persiapan pendaftaran."
@@ -131,15 +121,15 @@ const schema = [
         <Card
           variant="rose"
           size="stat"
-          stat="10.000+"
+          stat="500+"
           statLabel="Peserta Terbantu"
           title=""
         />
         <Card
           variant="sky"
           size="stat"
-          stat="2.500+"
-          statLabel="Soal Latihan"
+          stat="1.600+"
+          statLabel="Soal Latihan Standar BKN, Menyerupai Soal Asli"
           title=""
         />
         <Card
@@ -157,19 +147,28 @@ const schema = [
           title=""
         />
       </section>
+          <!-- CTA Section - Neo-playful -->
+    <div class="border-t-2 border-stone-200 pt-8 mb-8">
+      <div class="bg-gradient-to-br from-amber-100 via-orange-50 to-white rounded-[28px] border-2 border-amber-900 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden shadow-[0px_2px_0px_0px_rgba(120,53,15,1)]">
+        {/* Decorative blobs */}
+        <div class="absolute -top-8 -right-8 w-32 h-32 bg-orange-200 rounded-full opacity-40 blur-3xl"></div>
+        <div class="absolute -bottom-8 -left-8 w-24 h-24 bg-amber-200 rounded-full opacity-30 blur-2xl"></div>
 
-      {/* CTA Card - Warm Cream */}
-      <Card
-        variant="cream"
-        size="lg"
-        href="https://ikuttes.my.id/"
-        icon="🚀"
-        eyebrow="Ayo Mulai"
-        title="Mulai Latihan Sekarang"
-        description="Akses ribuan soal latihan CPNS dengan pembahasan lengkap. TIU, TWK, TKP — semua ada!"
-        buttonLabel="Buka Daily Quiz →"
-        external
-      />
+        <div class="relative">
+          <h3 class="text-heading-4 text-amber-900 mb-2">Siap untuk latihan? 🚀</h3>
+          <p class="text-body-sm text-amber-800">Akses ribuan soal latihan CPNS dengan pembahasan lengkap.</p>
+        </div>
+        <a
+          href="https://ikuttes.my.id/"
+          class="relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-orange-400 to-amber-400 text-white font-medium text-sm rounded-2xl border-2 border-amber-900 shadow-[0px_2px_0px_0px_rgba(120,53,15,1)] hover:translate-y-[2px] hover:shadow-none transition-all duration-100"
+        >
+          Mulai Daily Quiz
+          <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+      </div>
+    </div>
     </div>
   </Shell>
 </HubLayout>
