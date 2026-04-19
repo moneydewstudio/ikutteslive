@@ -150,3 +150,11 @@ export const paymentAdminActions = pgTable('payment_admin_actions', {
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// TEAM_033: user goal preferences for Outcome-Driven Loop (auth-only)
+export const userPreferences = pgTable('user_preferences', {
+  userId: text('user_id').references(() => users.id).primaryKey(),
+  targetScore: integer('target_score').default(300).notNull(),
+  examDate: timestamp('exam_date', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});

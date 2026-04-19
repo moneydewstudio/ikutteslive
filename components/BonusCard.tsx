@@ -40,9 +40,15 @@ const BonusCard: React.FC<BonusCardProps> = ({ pack, onClick }) => {
 
       <div className="mt-4">
         {pack.price === 'Terkunci' ? (
-          <div className="flex items-center justify-between text-gray-400">
-            <span className="font-bold text-sm">Akses Premium</span>
-            <Lock className="w-4 h-4" />
+          <div>
+            {/* TEAM_033: Contextual paywall - show value before gate */}
+            <div className="text-xs font-medium text-gray-600 mb-2">
+              12 soal lanjutan untuk mengatasi kelemahan ini
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-brand-orange">+8 poin ke skor Tryout</span>
+              <Lock className="w-4 h-4 text-gray-400" />
+            </div>
           </div>
         ) : (
           <Button fullWidth size="sm" variant="black" className="justify-between group-hover:bg-gray-800">

@@ -30,6 +30,7 @@ import {
   dailyQuizAttemptItems,
   tryoutAttempts,
   tryoutAttemptItems,
+  userPreferences,
 } from './schema';
 import { and, desc, eq, inArray, notInArray, or, sql } from 'drizzle-orm';
 import { SignJWT, jwtVerify } from 'jose';
@@ -1769,6 +1770,96 @@ app.post('/exam/:examId/submit', async (c) => {
     });
   } catch (e) {
     console.error('TEAM_004 /exam/:examId/submit failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_033: user preferences endpoints for Outcome-Driven Loop goals (auth-only)
+app.get('/user/preferences', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'unauthorized' }, 401);
+
+  const db = await getDb(c.env);
+  try {
+    const prefs = await db
+      .select({
+        targetScore: userPreferences.targetScore,
+        examDate: userPreferences.examDate,
+        updatedAt: userPreferences.updatedAt,
+      })
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, user.id))
+      .limit(1);
+
+    if (prefs.length === 0) {
+      // Return defaults
+      return c.json({
+        targetScore: 300,
+        examDate: null,
+        hasSetGoals: false,
+      });
+    }
+
+    return c.json({
+      targetScore: prefs[0].targetScore,
+      examDate: prefs[0].examDate,
+      hasSetGoals: true,
+    });
+  } catch (e) {
+    console.error('TEAM_033 /user/preferences GET failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+app.post('/user/preferences', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'unauthorized' }, 401);
+
+  let body: { targetScore?: number; examDate?: string | null };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'invalid body' }, 400);
+  }
+
+  // Validate targetScore
+  const targetScore = Number(body.targetScore);
+  if (!Number.isFinite(targetScore) || targetScore < 200 || targetScore > 500) {
+    return c.json({ error: 'targetScore must be between 200 and 500' }, 400);
+  }
+
+  // Validate examDate if provided
+  let examDate: Date | null = null;
+  if (body.examDate) {
+    const parsed = new Date(body.examDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return c.json({ error: 'invalid examDate' }, 400);
+    }
+    examDate = parsed;
+  }
+
+  const db = await getDb(c.env);
+  try {
+    await db
+      .insert(userPreferences)
+      .values({
+        userId: user.id,
+        targetScore,
+        examDate,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: {
+          targetScore,
+          examDate,
+          updatedAt: new Date(),
+        },
+      });
+
+    return c.json({ ok: true });
+  } catch (e) {
+    console.error('TEAM_033 /user/preferences POST failed', e);
     return c.json({ error: 'unavailable' }, 503);
   }
 });

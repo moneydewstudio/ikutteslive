@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { User, UserSession } from '../types';
 import Button from '../components/Button';
+import DeltaBanner from '../components/DeltaBanner';
 import {
   LineChart,
   Line,
@@ -200,6 +201,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
                  <BookOpen className="w-4 h-4 mr-2" />
                  Panduan
                </Button>
+            </div>
+
+            {/* TEAM_033: Delta Banner - Progress towards passing grade */}
+            <div className="border-b border-black">
+              <DeltaBanner
+                onContinueClick={onStartQuiz}
+                continueLabel="Lanjutkan Latihan"
+                tryoutHistory={tryoutHistory}
+              />
             </div>
 
             {/* Radar Charts */}

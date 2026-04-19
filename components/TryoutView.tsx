@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, Calendar, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2, Share2 } from 'lucide-react';
+import { Clock, Calendar, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2, Share2, Target } from 'lucide-react';
 import Button from './Button';
 import QuizCard from './QuizCard';
 import InterstitialAd from './InterstitialAd';
@@ -493,7 +493,30 @@ const TryoutView: React.FC = () => {
                       <span className="font-bold text-gray-500 uppercase text-xs">Total Skor</span>
                       <span className="font-black text-4xl">{result.totalScore}</span>
                   </div>
-                  
+
+                  {/* TEAM_033: Near-miss trigger - strongest natural hook */}
+                  {!result.passed && result.totalScore >= 275 && result.totalScore < 300 && (
+                    <div className="mb-4 p-3 bg-brand-orange border border-black rounded">
+                      <div className="font-bold text-sm flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        🎯 Hampir lulus! {300 - result.totalScore} poin lagi.
+                      </div>
+                      <p className="text-xs mt-1">Coba lagi hari ini untuk mencapai passing grade.</p>
+                    </div>
+                  )}
+
+                  {/* TEAM_033: Delta feedback - show gap to passing */}
+                  {!result.passed && result.totalScore < 275 && (
+                    <div className="mb-4 p-3 bg-white border border-black rounded">
+                      <div className="text-sm font-bold text-brand-orange">
+                        Kurang {300 - result.totalScore} poin lagi untuk lulus
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        ≈ {Math.ceil((300 - result.totalScore) / 12)} sesi latihan lagi
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-3 mb-6">
                       <div className="flex justify-between p-3 bg-white border border-black rounded">
                           <span className="font-bold text-sm">TWK (Kebangsaan)</span>

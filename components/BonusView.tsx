@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BonusCard, { Pack } from './BonusCard';
+import DeltaBanner from './DeltaBanner';
 import { User } from '../types';
 import * as QuizService from '../services/quizService';
 import OnboardingTour from '../src/components/OnboardingTour';
@@ -75,6 +76,13 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
          <h1 className="text-5xl font-black uppercase tracking-tight mb-4">Drills</h1>
          <p className="text-lg max-w-xl">Latihan fokus per kategori. Untuk akun Gratis, hanya 1 drill terbuka per hari.</p>
       </div>
+
+      {/* TEAM_033: Delta Banner - Progress towards passing grade */}
+      <DeltaBanner
+        onContinueClick={() => onStartDrill(todayCategory || 'TIU')}
+        continueLabel={`Latihan ${todayCategory || 'Harian'} →`}
+        compact
+      />
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" data-tour="drills-cards">
