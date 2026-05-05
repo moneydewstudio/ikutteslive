@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import app from './index';
 import { resolveCorrectOptionKey } from './index';
+import * as schema from './schema';
 
 // TEAM_004: add minimal API smoke tests so `npm test` passes and we have baseline regression coverage
 
@@ -36,6 +37,10 @@ describe('api smoke', () => {
     expect(res.status).toBe(403);
     const json = (await res.json()) as any;
     expect(json?.code).toBe('PREMIUM_REQUIRED');
+  });
+
+  it('exports questionThemes table', () => {
+    expect(schema).toHaveProperty('questionThemes');
   });
 });
 

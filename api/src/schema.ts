@@ -33,6 +33,14 @@ export const questionSubcategories = pgTable('question_subcategories', {
   name: text('name').notNull(),
 });
 
+ // TEAM_035: normalized themes under subcategories (optional per question; internal metadata for now)
+ export const questionThemes = pgTable('question_themes', {
+   id: integer('id').primaryKey(),
+   subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id).notNull(),
+   code: text('code').notNull(),
+   name: text('name').notNull(),
+ });
+
 export const questionTopics = pgTable('question_topics', {
   id: integer('id').primaryKey(),
   code: text('code').notNull(),
@@ -56,6 +64,7 @@ export const questions = pgTable('questions', {
   code: text('code'),
   categoryId: integer('category_id').references(() => questionCategories.id),
   subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id),
+  themeId: integer('theme_id').references(() => questionThemes.id),
   stem: text('stem'),
   yearTag: integer('year_tag'),
 });
