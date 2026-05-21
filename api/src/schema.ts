@@ -26,17 +26,17 @@ export const questionCategories = pgTable('question_categories', {
   name: text('name').notNull(),
 });
 
-export const questionSubcategories = pgTable('question_subcategories', {
+export const questionSubtopics = pgTable('question_subtopics', {
   id: integer('id').primaryKey(),
-  categoryId: integer('category_id').references(() => questionCategories.id).notNull(),
+  categoryId: integer('category_id').references(() => questionCategories.id),
   code: text('code').notNull(),
   name: text('name').notNull(),
 });
 
- // TEAM_035: normalized themes under subcategories (optional per question; internal metadata for now)
+ // TEAM_035: normalized themes under subtopics (optional per question; internal metadata for now)
  export const questionThemes = pgTable('question_themes', {
    id: integer('id').primaryKey(),
-   subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id).notNull(),
+   subtopicId: integer('subtopic_id').references(() => questionSubtopics.id).notNull(),
    code: text('code').notNull(),
    name: text('name').notNull(),
  });
@@ -50,7 +50,7 @@ export const questionTopics = pgTable('question_topics', {
 export const questions = pgTable('questions', {
   id: integer('id').primaryKey(),
   topicId: integer('topic_id'),
-  subtopicId: integer('subtopic_id'),
+  subtopicId: integer('subtopic_id').references(() => questionSubtopics.id),
   questionText: text('question_text'),
   difficulty: integer('difficulty').notNull(),
   questionType: text('question_type'),
@@ -63,7 +63,7 @@ export const questions = pgTable('questions', {
   // legacy / future-proof columns present in DB
   code: text('code'),
   categoryId: integer('category_id').references(() => questionCategories.id),
-  subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id),
+  subcategoryId: integer('subcategory_id').references(() => questionSubtopics.id),
   themeId: integer('theme_id').references(() => questionThemes.id),
   stem: text('stem'),
   yearTag: integer('year_tag'),
@@ -105,7 +105,7 @@ export const tryoutAttemptItems = pgTable('tryout_attempt_items', {
   attemptId: text('attempt_id').references(() => tryoutAttempts.id).notNull(),
   questionId: integer('question_id').references(() => questions.id).notNull(),
   categoryCode: text('category_code'),
-  subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id),
+  subtopicId: integer('subtopic_id').references(() => questionSubtopics.id),
   isCorrect: boolean('is_correct'),
   selectedWeight: integer('selected_weight'),
   maxWeight: integer('max_weight'),
@@ -125,7 +125,7 @@ export const dailyQuizAttemptItems = pgTable('daily_quiz_attempt_items', {
   id: serial('id').primaryKey(),
   attemptId: text('attempt_id').references(() => dailyQuizAttempts.id).notNull(),
   questionId: integer('question_id').references(() => questions.id).notNull(),
-  subcategoryId: integer('subcategory_id').references(() => questionSubcategories.id),
+  subtopicId: integer('subtopic_id').references(() => questionSubtopics.id),
   isCorrect: boolean('is_correct'),
   selectedWeight: integer('selected_weight'),
   maxWeight: integer('max_weight'),

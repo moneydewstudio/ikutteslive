@@ -21,7 +21,7 @@ import {
   questions,
   questionOptions,
   questionCategories,
-  questionSubcategories,
+  questionSubtopics,
   questionTopics,
   questionExplanations,
   payments,
@@ -1249,17 +1249,17 @@ app.get('/analytics/subtopic-accuracy', requirePremium, async (c) => {
     const rows = await db
       .select({
         categoryCode: tryoutAttemptItems.categoryCode,
-        subcategoryId: tryoutAttemptItems.subcategoryId,
-        subcategoryName: questionSubcategories.name,
+        subtopicId: tryoutAttemptItems.subtopicId,
+        subtopicName: questionSubtopics.name,
         attempts: sql<number>`count(*)`,
         twkTiuCorrect: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} = true then 1 else 0 end)`,
         tkpRatioSum: sql<number>`sum(case when ${tryoutAttemptItems.maxWeight} > 0 then (${tryoutAttemptItems.selectedWeight}::float / ${tryoutAttemptItems.maxWeight}::float) else 0 end)`,
       })
       .from(tryoutAttemptItems)
-      .leftJoin(questionSubcategories, eq(tryoutAttemptItems.subcategoryId, questionSubcategories.id))
+      .leftJoin(questionSubtopics, eq(tryoutAttemptItems.subtopicId, questionSubtopics.id))
       .leftJoin(tryoutAttempts, eq(tryoutAttemptItems.attemptId, tryoutAttempts.id))
-      .where(and(eq(tryoutAttempts.userId, user.id), sql`${tryoutAttemptItems.subcategoryId} is not null`))
-      .groupBy(tryoutAttemptItems.categoryCode, tryoutAttemptItems.subcategoryId, questionSubcategories.name);
+      .where(and(eq(tryoutAttempts.userId, user.id), sql`${tryoutAttemptItems.subtopicId} is not null`))
+      .groupBy(tryoutAttemptItems.subtopicId, tryoutAttemptItems.categoryCode, questionSubtopics.name);
 
     const byCategory: Record<string, Array<{ subtopicId: number; subtopicName: string; value: number; attempts: number }>> = {
       TWK: [],
@@ -1271,8 +1271,8 @@ app.get('/analytics/subtopic-accuracy', requirePremium, async (c) => {
       const code = String(r.categoryCode || '').toUpperCase();
       if (code !== 'TWK' && code !== 'TIU' && code !== 'TKP') continue;
       const attempts = Number(r.attempts ?? 0);
-      const subtopicId = Number(r.subcategoryId);
-      const subtopicName = String(r.subcategoryName ?? '');
+      const subtopicId = Number(r.subtopicId);
+      const subtopicName = String(r.subtopicName ?? '');
       if (!Number.isFinite(subtopicId) || !attempts) continue;
 
       let ratio = 0;
@@ -1309,7 +1309,7 @@ app.get('/analytics/subtopic-readiness', async (c) => {
 
     const tryoutRows = await db
       .select({
-        subcategoryId: tryoutAttemptItems.subcategoryId,
+        subtopicId: tryoutAttemptItems.subtopicId,
         attempts: sql<number>`count(*)`,
         twkTiuCorrect: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} = true then 1 else 0 end)`,
         tkpRatioSum: sql<number>`sum(case when ${tryoutAttemptItems.maxWeight} > 0 then (${tryoutAttemptItems.selectedWeight}::float / ${tryoutAttemptItems.maxWeight}::float) else 0 end)`,
@@ -1317,12 +1317,12 @@ app.get('/analytics/subtopic-readiness', async (c) => {
       })
       .from(tryoutAttemptItems)
       .leftJoin(tryoutAttempts, eq(tryoutAttemptItems.attemptId, tryoutAttempts.id))
-      .where(and(eq(tryoutAttempts.userId, user.id), sql`${tryoutAttemptItems.subcategoryId} is not null`))
-      .groupBy(tryoutAttemptItems.subcategoryId);
+      .where(and(eq(tryoutAttempts.userId, user.id), sql`${tryoutAttemptItems.subtopicId} is not null`))
+      .groupBy(tryoutAttemptItems.subtopicId);
 
     const dailyRows = await db
       .select({
-        subcategoryId: dailyQuizAttemptItems.subcategoryId,
+        subtopicId: dailyQuizAttemptItems.subtopicId,
         attempts: sql<number>`count(*)`,
         twkTiuCorrect: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} = true then 1 else 0 end)`,
         tkpRatioSum: sql<number>`sum(case when ${dailyQuizAttemptItems.maxWeight} > 0 then (${dailyQuizAttemptItems.selectedWeight}::float / ${dailyQuizAttemptItems.maxWeight}::float) else 0 end)`,
@@ -1330,8 +1330,8 @@ app.get('/analytics/subtopic-readiness', async (c) => {
       })
       .from(dailyQuizAttemptItems)
       .leftJoin(dailyQuizAttempts, eq(dailyQuizAttemptItems.attemptId, dailyQuizAttempts.id))
-      .where(and(eq(dailyQuizAttempts.userId, user.id), sql`${dailyQuizAttemptItems.subcategoryId} is not null`))
-      .groupBy(dailyQuizAttemptItems.subcategoryId);
+      .where(and(eq(dailyQuizAttempts.userId, user.id), sql`${dailyQuizAttemptItems.subtopicId} is not null`))
+      .groupBy(dailyQuizAttemptItems.subtopicId);
 
     const merged = new Map<
       number,
@@ -1340,10 +1340,10 @@ app.get('/analytics/subtopic-readiness', async (c) => {
 
     const mergeInto = (rows: any[]) => {
       for (const r of rows) {
-        const subcategoryId = Number(r.subcategoryId);
-        if (!Number.isFinite(subcategoryId)) continue;
-        const prev = merged.get(subcategoryId) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
-        merged.set(subcategoryId, {
+        const subtopicId = Number(r.subtopicId);
+        if (!Number.isFinite(subtopicId)) continue;
+        const prev = merged.get(subtopicId) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
+        merged.set(subtopicId, {
           attempts: prev.attempts + Number(r.attempts ?? 0),
           correct: prev.correct + Number(r.twkTiuCorrect ?? 0),
           tkpRatioSum: prev.tkpRatioSum + Number(r.tkpRatioSum ?? 0),
@@ -1355,26 +1355,26 @@ app.get('/analytics/subtopic-readiness', async (c) => {
     mergeInto(tryoutRows as any[]);
     mergeInto(dailyRows as any[]);
 
-    const subcategoryIds = Array.from(merged.keys());
-    if (!subcategoryIds.length) return c.json({ data: [] });
+    const subtopicIds = Array.from(merged.keys());
+    if (!subtopicIds.length) return c.json({ data: [] });
 
     const subcats = await db
       .select({
-        id: questionSubcategories.id,
-        name: questionSubcategories.name,
+        id: questionSubtopics.id,
+        name: questionSubtopics.name,
         topicCode: sql<string | null>`upper(${questionTopics.code})`,
       })
-      .from(questionSubcategories)
-      .leftJoin(questionCategories, eq(questionSubcategories.categoryId, questionCategories.id))
+      .from(questionSubtopics)
+      .leftJoin(questionCategories, eq(questionSubtopics.categoryId, questionCategories.id))
       .leftJoin(questionTopics, eq(questionCategories.topicId, questionTopics.id))
-      .where(inArray(questionSubcategories.id, subcategoryIds));
+      .where(inArray(questionSubtopics.id, subtopicIds));
 
     const subcatMeta = new Map<number, { name: string; topicCode: string | null }>();
     for (const r of subcats as any[]) {
       subcatMeta.set(Number(r.id), { name: String(r.name ?? ''), topicCode: r.topicCode ? String(r.topicCode) : null });
     }
 
-    const data = subcategoryIds
+    const data = subtopicIds
       .map((id) => {
         const m = merged.get(id);
         const meta = subcatMeta.get(id);
@@ -1382,8 +1382,8 @@ app.get('/analytics/subtopic-readiness', async (c) => {
         const attempts = m.attempts;
         const ratio = m.hasBinary > 0 ? (attempts > 0 ? m.correct / attempts : 0) : attempts > 0 ? m.tkpRatioSum / attempts : 0;
         return {
-          subcategoryId: id,
-          subcategoryName: meta.name,
+          subtopicId: id,
+          subtopicName: meta.name,
           topicCode: meta.topicCode,
           attempts,
           value: Math.max(0, Math.min(100, ratio * 100)),

@@ -1,0 +1,175 @@
+{
+  "topics": [
+    {
+      "topicCode": "TWK",
+      "topicName": "Tes Wawasan Kebangsaan"
+    },
+    {
+      "topicCode": "TIU",
+      "topicName": "Tes Intelegensia Umum"
+    },
+    {
+      "topicCode": "TKP",
+      "topicName": "Tes Karakteristik Pribadi"
+    }
+  ],
+
+  "subtopics": [
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_PANCASILA",
+      "subtopicName": "Pancasila"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_BAHASA_NEGARA",
+      "subtopicName": "Bahasa Negara"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_NASIONALISME",
+      "subtopicName": "Nasionalisme"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_UUD1945",
+      "subtopicName": "UUD 1945"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_BHINNEKA",
+      "subtopicName": "Bhinneka Tunggal Ika"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_NKRI",
+      "subtopicName": "NKRI"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_PILAR_NEGARA",
+      "subtopicName": "Pilar Negara"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_BELA_NEGARA",
+      "subtopicName": "Bela Negara"
+    },
+    {
+      "topicCode": "TWK",
+      "subtopicCode": "TWK_ANTI_RADIKALISME",
+      "subtopicName": "Anti Radikalisme"
+    },
+
+    {
+      "topicCode": "TIU",
+      "subtopicCode": "TIU_VERBAL",
+      "subtopicName": "Verbal"
+    },
+    {
+      "topicCode": "TIU",
+      "subtopicCode": "TIU_NUMERIK",
+      "subtopicName": "Numerik"
+    },
+    {
+      "topicCode": "TIU",
+      "subtopicCode": "TIU_FIGURAL",
+      "subtopicName": "Figural"
+    },
+
+    {
+      "topicCode": "TKP",
+      "subtopicCode": "TKP_PELAYANAN_PUBLIK",
+      "subtopicName": "Pelayanan Publik"
+    },
+    {
+      "topicCode": "TKP",
+      "subtopicCode": "TKP_JEJARING_KERJA",
+      "subtopicName": "Jejaring Kerja"
+    },
+    {
+      "topicCode": "TKP",
+      "subtopicCode": "TKP_SOSIAL_BUDAYA",
+      "subtopicName": "Sosial Budaya"
+    },
+    {
+      "topicCode": "TKP",
+      "subtopicCode": "TKP_TIK",
+      "subtopicName": "Teknologi Informasi dan Komunikasi"
+    },
+    {
+      "topicCode": "TKP",
+      "subtopicCode": "TKP_PROFESIONALISME",
+      "subtopicName": "Profesionalisme"
+    },
+    {
+      "topicCode": "TKP",
+      "subtopicCode": "TKP_ANTI_RADIKALISME",
+      "subtopicName": "Anti Radikalisme"
+    }
+  ],
+
+  "themes": [
+    {
+      "subtopicCode": "TIU_VERBAL",
+      "themeCode": "VERBAL_ANALOGI",
+      "themeName": "Analogi"
+    },
+    {
+      "subtopicCode": "TIU_VERBAL",
+      "themeCode": "VERBAL_SINONIM",
+      "themeName": "Sinonim"
+    },
+    {
+      "subtopicCode": "TIU_VERBAL",
+      "themeCode": "VERBAL_ANTONIM",
+      "themeName": "Antonim"
+    },
+    {
+      "subtopicCode": "TIU_VERBAL",
+      "themeCode": "VERBAL_SILOGISME",
+      "themeName": "Silogisme"
+    },
+    {
+      "subtopicCode": "TIU_VERBAL",
+      "themeCode": "VERBAL_LOGIKA_ANALITIS",
+      "themeName": "Logika Analitis"
+    },
+    {
+      "subtopicCode": "TIU_NUMERIK",
+      "themeCode": "NUMERIK_ARITMATIKA_PECAHAN",
+      "themeName": "Aritmatika Pecahan"
+    },
+    {
+      "subtopicCode": "TIU_NUMERIK",
+      "themeCode": "NUMERIK_DERET_ANGKA",
+      "themeName": "Deret Angka"
+    },
+    {
+      "subtopicCode": "TIU_NUMERIK",
+      "themeCode": "NUMERIK_PERBANDINGAN",
+      "themeName": "Perbandingan"
+    },
+    {
+      "subtopicCode": "TIU_NUMERIK",
+      "themeCode": "NUMERIK_SOAL_CERITA",
+      "themeName": "Soal Cerita Matematika"
+    },
+    {
+      "subtopicCode": "TIU_NUMERIK",
+      "themeCode": "NUMERIK_ALJABAR",
+      "themeName": "Aljabar Sederhana"
+    },
+    {
+      "subtopicCode": "TIU_NUMERIK",
+      "themeCode": "NUMERIK_LOGIKA_MATEMATIKA",
+      "themeName": "Logika Matematika"
+    },
+    {
+      "subtopicCode": "TIU_NUMERIK",
+      "themeCode": "NUMERIK_GEOMETRI",
+      "themeName": "Geometri"
+    }
+  ]
+}
+

@@ -18,12 +18,25 @@ const main = () => {
     console.error('invalid json');
     process.exit(2);
   }
+  
+  const topics = Array.isArray(meta?.topics) ? meta.topics : [];
+  const subtopics = Array.isArray(meta?.subtopics) ? meta.subtopics : [];
   const themes = Array.isArray(meta?.themes) ? meta.themes : [];
   const assigns = Array.isArray(meta?.questionThemeAssignments) ? meta.questionThemeAssignments : [];
 
   if (!themes.length && !assigns.length) {
     console.error('no themes or questionThemeAssignments in metadata');
     process.exit(2);
+  }
+
+  // Validate topics exist
+  if (topics.length) {
+    console.log(`Found ${topics.length} topics`);
+  }
+  
+  // Validate subtopics exist
+  if (subtopics.length) {
+    console.log(`Found ${subtopics.length} subtopics`);
   }
 
   const out = [];
@@ -36,64 +49,74 @@ const main = () => {
   let skippedAssigns = 0;
 
   for (const t of themes) {
-    const subcategoryCode = String(t.subcategoryCode || '').trim();
+    const subtopicCode = String(t.subtopicCode || '').trim();
     const code = String(t.themeCode || '').trim();
     const name = String(t.themeName || '').trim();
-    if (!subcategoryCode || !code || !name) {
+    if (!subtopicCode || !code || !name) {
       skippedThemes += 1;
       continue;
     }
 
-    // Fail loud if subcategory missing.
+    // Extract subtopic name from code (e.g., "TIU_VERBAL" -> "Verbal")
+    const subtopicName = subtopicCode.includes('_') 
+      ? subtopicCode.split('_').slice(1).join('_') 
+      : subtopicCode;
+
+    // Fail loud if subtopic missing.
     out.push(`do $$ begin`);
     out.push(
-      `  if not exists (select 1 from question_subcategories where upper(code) = upper('${escapeSql(subcategoryCode)}')) then`
+      `  if not exists (select 1 from subtopics where upper(name) = upper('${escapeSql(subtopicName)}')) then`
     );
-    out.push(`    raise exception 'missing question_subcategories.code: ${escapeSql(subcategoryCode)}';`);
+    out.push(`    raise exception 'missing subtopics.name: ${escapeSql(subtopicName)}';`);
     out.push(`  end if;`);
     out.push(`end $$;`);
 
-    out.push(`insert into question_themes (subcategory_id, code, name)`);
-    out.push(`select qsc.id, '${escapeSql(code)}', '${escapeSql(name)}'`);
-    out.push(`from question_subcategories qsc`);
-    out.push(`where upper(qsc.code) = upper('${escapeSql(subcategoryCode)}')`);
-    out.push(`on conflict (subcategory_id, code) do update set name = excluded.name;`);
+    out.push(`insert into question_themes (subtopic_id, code, name)`);
+    out.push(`select qst.id, '${escapeSql(code)}', '${escapeSql(name)}'`);
+    out.push(`from subtopics qst`);
+    out.push(`where upper(qst.name) = upper('${escapeSql(subtopicName)}')`);
+    out.push(`on conflict (subtopic_id, code) do update set name = excluded.name;`);
     themeInsertCount += 1;
   }
 
   for (const a of assigns) {
     const questionId = Number(a.questionId);
-    const subcategoryCode = String(a.subcategoryCode || '').trim();
+    const subtopicCode = String(a.subtopicCode || '').trim();
     const themeCode = String(a.themeCode || '').trim();
     if (!Number.isFinite(questionId) || questionId <= 0) {
       skippedAssigns += 1;
       continue;
     }
-    if (!subcategoryCode || !themeCode) {
+    if (!subtopicCode || !themeCode) {
       skippedAssigns += 1;
       continue;
     }
+
+    // Extract subtopic name from code (e.g., "TIU_VERBAL" -> "Verbal")
+    const subtopicName = subtopicCode.includes('_') 
+      ? subtopicCode.split('_').slice(1).join('_') 
+      : subtopicCode;
 
     // Fail loud if theme missing (theme row should exist by now).
     out.push(`do $$ begin`);
     out.push(
       `  if not exists (` +
-        `select 1 from question_themes qth join question_subcategories qsc on qsc.id = qth.subcategory_id ` +
-        `where upper(qsc.code) = upper('${escapeSql(subcategoryCode)}') and upper(qth.code) = upper('${escapeSql(themeCode)}')` +
+        `select 1 from question_themes qth join subtopics qst on qst.id = qth.subtopic_id ` +
+        `where upper(qst.name) = upper('${escapeSql(subtopicName)}') and upper(qth.code) = upper('${escapeSql(themeCode)}')` +
       `) then`
     );
     out.push(
-      `    raise exception 'missing question_themes for subcategory=${escapeSql(subcategoryCode)} theme=${escapeSql(themeCode)}';`
+      `    raise exception 'missing question_themes for subtopic=${escapeSql(subtopicName)} theme=${escapeSql(themeCode)}';`
     );
     out.push(`  end if;`);
     out.push(`end $$;`);
 
     out.push(`update questions q set theme_id = qth.id`);
-    out.push(`from question_subcategories qsc`);
+    out.push(`from subtopics qst`);
     out.push(
-      `join question_themes qth on qth.subcategory_id = qsc.id and upper(qth.code) = upper('${escapeSql(themeCode)}')`
+      `join question_themes qth on qth.subtopic_id = qst.id and upper(qth.code) = upper('${escapeSql(themeCode)}')`
     );
-    out.push(`where q.id = ${questionId} and upper(qsc.code) = upper('${escapeSql(subcategoryCode)}');`);
+    out.push(`where q.id = ${questionId} and upper(qst.name) = upper('${escapeSql(subtopicName)}');`);
     assignCount += 1;
   }
 
