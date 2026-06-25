@@ -103,8 +103,8 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
     <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
       
       {/* Header - TEAM_032: Clearer explanation of what drills are */}
-      <div className="p-8 border-b border-black bg-brand-cream">
-         <h1 className="text-5xl font-black uppercase tracking-tight mb-4">Latihan Per Bagian</h1>
+      <div className="p-2xl border-b border-black bg-brand-cream">
+         <h1 className="text-5xl font-black uppercase tracking-tight mb-xl">Latihan Per Bagian</h1>
          <p className="text-lg max-w-xl">Fokus latihan TWK, TIU, atau TKP secara terpisah. Tiap drill = 20 soal. Gratis: 1 kategori terbuka per hari.</p>
       </div>
 

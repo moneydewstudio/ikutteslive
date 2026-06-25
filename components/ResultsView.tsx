@@ -276,7 +276,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
       <div className="flex flex-col md:flex-row border-b border-black">
 
         {/* Left: Score */}
-        <div className="md:w-1/2 p-12 bg-brand-lime border-b md:border-b-0 md:border-r border-black flex flex-col justify-center items-center text-center">
+        <div className="md:w-1/2 p-3xl bg-brand-lime border-b md:border-b-0 md:border-r border-black flex flex-col justify-center items-center text-center">
           <span className="font-bold text-xs uppercase tracking-[0.2em] mb-4">Hasil Sesi</span>
           <h1 className="text-9xl font-black mb-2 leading-none tracking-tighter">
             {Math.round((correctAnswers / totalQuestions) * 100)}%

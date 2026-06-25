@@ -78,7 +78,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 p-3">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 p-lg">
       <div className="w-full max-w-lg border border-black rounded-2xl bg-white overflow-hidden">
         <div className="p-5 border-b border-black bg-gray-50">
           <div className="flex items-start justify-between gap-3">

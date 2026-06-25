@@ -23,6 +23,7 @@ import {
   questionCategories,
   questionSubtopics,
   questionTopics,
+  questionThemes,
   questionExplanations,
   payments,
   paymentAdminActions,
@@ -138,7 +139,7 @@ const categoryWhere = (code: string) => {
   const topicMap: Record<string, number> = { twk: 1, tiu: 2, tkp: 3 };
   const topicId = topicMap[lower];
   // First try topicId filtering, fall back to all active questions if no topicId assigned
-  return topicId 
+  return topicId
     ? or(eq(questions.topicId, topicId), sql`${questions.topicId} is null`)
     : sql`true`; // Return all active questions as fallback
 };
@@ -220,9 +221,9 @@ app.get('/me/entitlements', async (c) => {
     // Default first paywall exposure shows 3-day only; 30-day can be revealed when rules match.
     const offers = shouldReveal30
       ? [
-          { planType: '3_day', price: 9900, anchorPrice: 59000 },
-          { planType: '30_day', price: 19000, anchorPrice: 59000 },
-        ]
+        { planType: '3_day', price: 9900, anchorPrice: 59000 },
+        { planType: '30_day', price: 19000, anchorPrice: 59000 },
+      ]
       : [{ planType: '3_day', price: 9900, anchorPrice: 59000 }];
 
     return c.json({ isPremium, premiumExpiresAt, offers, paywallTrigger });
@@ -598,16 +599,18 @@ app.get('/admin/payments', async (c) => {
       .orderBy(desc(payments.createdAt))
       .limit(200);
 
-    return c.json({ payments: rows.map((r) => ({
-      id: r.id,
-      user_id: r.userId,
-      plan_type: r.planType,
-      amount_expected: r.amountExpected,
-      status: r.status,
-      created_at: r.createdAt?.toISOString?.() ?? null,
-      expires_at: r.expiresAt?.toISOString?.() ?? null,
-      user_claimed_at: r.userClaimedAt?.toISOString?.() ?? null,
-    })) });
+    return c.json({
+      payments: rows.map((r) => ({
+        id: r.id,
+        user_id: r.userId,
+        plan_type: r.planType,
+        amount_expected: r.amountExpected,
+        status: r.status,
+        created_at: r.createdAt?.toISOString?.() ?? null,
+        expires_at: r.expiresAt?.toISOString?.() ?? null,
+        user_claimed_at: r.userClaimedAt?.toISOString?.() ?? null,
+      }))
+    });
   } catch (e) {
     return c.json({ error: 'unavailable' }, 503);
   }
@@ -800,30 +803,30 @@ app.get('/drills/daily', async (c) => {
     const drillPicked = picked.length
       ? picked
       : await db
-          .select({
-            id: questions.id,
-            subject: subjectSelect,
-            difficulty: questions.difficulty,
-            text: questions.questionText,
-          })
-          .from(questions)
-          .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-          .where(activeQuestionWhere)
-          .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'fallback')`)
-          .limit(20);
+        .select({
+          id: questions.id,
+          subject: subjectSelect,
+          difficulty: questions.difficulty,
+          text: questions.questionText,
+        })
+        .from(questions)
+        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
+        .where(activeQuestionWhere)
+        .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'fallback')`)
+        .limit(20);
 
     const ids = drillPicked.map((r) => r.id);
     const opts = ids.length
       ? await db
-          .select({
-            questionId: questionOptions.questionId,
-            optionKey: questionOptions.optionKey,
-            optionText: questionOptions.optionText,
-            isCorrect: questionOptions.isCorrect,
-            weight: questionOptions.weight,
-          })
-          .from(questionOptions)
-          .where(inArray(questionOptions.questionId, ids))
+        .select({
+          questionId: questionOptions.questionId,
+          optionKey: questionOptions.optionKey,
+          optionText: questionOptions.optionText,
+          isCorrect: questionOptions.isCorrect,
+          weight: questionOptions.weight,
+        })
+        .from(questionOptions)
+        .where(inArray(questionOptions.questionId, ids))
       : [];
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
@@ -875,11 +878,11 @@ app.get('/drills/daily', async (c) => {
     }
 
     if (questionsPayload.length < 20) {
-      console.warn('TEAM_008 /drills/daily insufficient questions for category', { 
-        dayKey, 
-        category, 
+      console.warn('TEAM_008 /drills/daily insufficient questions for category', {
+        dayKey,
+        category,
         returned: questionsPayload.length,
-        required: 20 
+        required: 20
       });
     }
 
@@ -967,15 +970,15 @@ app.get('/quiz/daily', async (c) => {
     const ids = picked.map((r) => r.id);
     const opts = ids.length
       ? await db
-          .select({
-            questionId: questionOptions.questionId,
-            optionKey: questionOptions.optionKey,
-            optionText: questionOptions.optionText,
-            isCorrect: questionOptions.isCorrect,
-            weight: questionOptions.weight,
-          })
-          .from(questionOptions)
-          .where(inArray(questionOptions.questionId, ids))
+        .select({
+          questionId: questionOptions.questionId,
+          optionKey: questionOptions.optionKey,
+          optionText: questionOptions.optionText,
+          isCorrect: questionOptions.isCorrect,
+          weight: questionOptions.weight,
+        })
+        .from(questionOptions)
+        .where(inArray(questionOptions.questionId, ids))
       : [];
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
@@ -1123,7 +1126,7 @@ app.get('/questions/random', async (c) => {
         .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
         .where(whereCondition);
 
-    let rows = category 
+    let rows = category
       ? await makeBase(and(activeQuestionWhere, categoryWhere(category))).limit(limit)
       : await makeBase(activeQuestionWhere).limit(limit);
 
@@ -1210,7 +1213,7 @@ app.get('/analytics/weakness', requirePremium, (c) => c.json({ data: [] }));
 app.get('/rank/percentile', requirePremium, (c) => c.json({ percentile: 0 }));
 
 // TEAM_029: tryout history for all users (was premium-gated, now open)
-app.get('/tryout/history', async (c) => {
+app.get('/tryout/history', withUserContext, async (c) => {
   const user = c.get('user');
   if (!user) return c.json({ error: 'unauthorized' }, 401);
 
@@ -1300,50 +1303,73 @@ app.get('/analytics/subtopic-accuracy', requirePremium, async (c) => {
 });
 
 // TEAM_029: unified subtopic readiness for profile spider chart (Tryout + Daily Quiz; drills excluded) - now open to all users
-app.get('/analytics/subtopic-readiness', async (c) => {
+// TEAM_036: Readiness per theme (not subtopic) - more granular weakness detection
+app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
+  c.header("Cache-Control", "no-store");
   const user = c.get('user');
   if (!user) return c.json({ error: 'unauthorized' }, 401);
 
   try {
     const db = await getDb(c.env);
 
-    const tryoutRows = await db
-      .select({
-        subtopicId: tryoutAttemptItems.subtopicId,
-        attempts: sql<number>`count(*)`,
-        twkTiuCorrect: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} = true then 1 else 0 end)`,
-        tkpRatioSum: sql<number>`sum(case when ${tryoutAttemptItems.maxWeight} > 0 then (${tryoutAttemptItems.selectedWeight}::float / ${tryoutAttemptItems.maxWeight}::float) else 0 end)`,
-        hasBinary: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} is null then 0 else 1 end)`,
-      })
-      .from(tryoutAttemptItems)
-      .leftJoin(tryoutAttempts, eq(tryoutAttemptItems.attemptId, tryoutAttempts.id))
-      .where(and(eq(tryoutAttempts.userId, user.id), sql`${tryoutAttemptItems.subtopicId} is not null`))
-      .groupBy(tryoutAttemptItems.subtopicId);
+    // TEAM_036: each query is isolated — if theme_id column or question_themes table
+    // doesn't exist in DB yet (schema not migrated), we degrade to { data: [] } instead of 503.
 
-    const dailyRows = await db
-      .select({
-        subtopicId: dailyQuizAttemptItems.subtopicId,
-        attempts: sql<number>`count(*)`,
-        twkTiuCorrect: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} = true then 1 else 0 end)`,
-        tkpRatioSum: sql<number>`sum(case when ${dailyQuizAttemptItems.maxWeight} > 0 then (${dailyQuizAttemptItems.selectedWeight}::float / ${dailyQuizAttemptItems.maxWeight}::float) else 0 end)`,
-        hasBinary: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} is null then 0 else 1 end)`,
-      })
-      .from(dailyQuizAttemptItems)
-      .leftJoin(dailyQuizAttempts, eq(dailyQuizAttemptItems.attemptId, dailyQuizAttempts.id))
-      .where(and(eq(dailyQuizAttempts.userId, user.id), sql`${dailyQuizAttemptItems.subtopicId} is not null`))
-      .groupBy(dailyQuizAttemptItems.subtopicId);
+    let tryoutRows: any[] = [];
+    try {
+      tryoutRows = await db
+        .select({
+          themeId: questions.themeId,
+          attempts: sql<number>`count(*)`,
+          twkTiuCorrect: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} = true then 1 else 0 end)`,
+          tkpRatioSum: sql<number>`sum(case when ${tryoutAttemptItems.maxWeight} > 0 then (${tryoutAttemptItems.selectedWeight}::float / ${tryoutAttemptItems.maxWeight}::float) else 0 end)`,
+          hasBinary: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} is null then 0 else 1 end)`,
+        })
+        .from(tryoutAttemptItems)
+        .leftJoin(tryoutAttempts, eq(tryoutAttemptItems.attemptId, tryoutAttempts.id))
+        .leftJoin(questions, eq(tryoutAttemptItems.questionId, questions.id))
+        .where(and(
+          eq(tryoutAttempts.userId, user.id),
+          sql`${questions.themeId} is not null`
+        ))
+        .groupBy(questions.themeId) as any[];
+    } catch (e) {
+      console.warn('TEAM_036 subtopic-readiness tryout query failed:', e instanceof Error ? e.message : String(e));
+    }
+
+    let dailyRows: any[] = [];
+    try {
+      dailyRows = await db
+        .select({
+          themeId: questions.themeId,
+          attempts: sql<number>`count(*)`,
+          twkTiuCorrect: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} = true then 1 else 0 end)`,
+          tkpRatioSum: sql<number>`sum(case when ${dailyQuizAttemptItems.maxWeight} > 0 then (${dailyQuizAttemptItems.selectedWeight}::float / ${dailyQuizAttemptItems.maxWeight}::float) else 0 end)`,
+          hasBinary: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} is null then 0 else 1 end)`,
+        })
+        .from(dailyQuizAttemptItems)
+        .leftJoin(dailyQuizAttempts, eq(dailyQuizAttemptItems.attemptId, dailyQuizAttempts.id))
+        .leftJoin(questions, eq(dailyQuizAttemptItems.questionId, questions.id))
+        .where(and(
+          eq(dailyQuizAttempts.userId, user.id),
+          sql`${questions.themeId} is not null`
+        ))
+        .groupBy(questions.themeId) as any[];
+    } catch (e) {
+      console.warn('TEAM_036 subtopic-readiness daily query failed:', e instanceof Error ? e.message : String(e));
+    }
 
     const merged = new Map<
-      number,
+      string,
       { attempts: number; correct: number; tkpRatioSum: number; hasBinary: number }
     >();
 
     const mergeInto = (rows: any[]) => {
       for (const r of rows) {
-        const subtopicId = Number(r.subtopicId);
-        if (!Number.isFinite(subtopicId)) continue;
-        const prev = merged.get(subtopicId) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
-        merged.set(subtopicId, {
+        const themeId = String(r.themeId);
+        if (!themeId || themeId === 'null') continue;
+        const prev = merged.get(themeId) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
+        merged.set(themeId, {
           attempts: prev.attempts + Number(r.attempts ?? 0),
           correct: prev.correct + Number(r.twkTiuCorrect ?? 0),
           tkpRatioSum: prev.tkpRatioSum + Number(r.tkpRatioSum ?? 0),
@@ -1352,51 +1378,73 @@ app.get('/analytics/subtopic-readiness', async (c) => {
       }
     };
 
-    mergeInto(tryoutRows as any[]);
-    mergeInto(dailyRows as any[]);
+    mergeInto(tryoutRows);
+    mergeInto(dailyRows);
 
-    const subtopicIds = Array.from(merged.keys());
-    if (!subtopicIds.length) return c.json({ data: [] });
-
-    const subcats = await db
-      .select({
-        id: questionSubtopics.id,
-        name: questionSubtopics.name,
-        topicCode: sql<string | null>`upper(${questionTopics.code})`,
-      })
-      .from(questionSubtopics)
-      .leftJoin(questionCategories, eq(questionSubtopics.categoryId, questionCategories.id))
-      .leftJoin(questionTopics, eq(questionCategories.topicId, questionTopics.id))
-      .where(inArray(questionSubtopics.id, subtopicIds));
-
-    const subcatMeta = new Map<number, { name: string; topicCode: string | null }>();
-    for (const r of subcats as any[]) {
-      subcatMeta.set(Number(r.id), { name: String(r.name ?? ''), topicCode: r.topicCode ? String(r.topicCode) : null });
+    // TEAM_001: Query all active themes with topics metadata first, then merge user attempts.
+    let themes: any[] = [];
+    try {
+      themes = await db
+        .select({
+          id: questionThemes.id,
+          name: questionThemes.name,
+          topicCode: sql<string | null>`upper(${questionTopics.code})`,
+        })
+        .from(questionThemes)
+        .leftJoin(questionSubtopics, eq(questionThemes.subtopicId, questionSubtopics.id))
+        .leftJoin(questionCategories, eq(questionSubtopics.categoryId, questionCategories.id))
+        .leftJoin(questionTopics, eq(questionCategories.topicId, questionTopics.id))
+        .where(sql`${questionTopics.code} is not null`) as any[];
+    } catch (e) {
+      console.warn('TEAM_001 subtopic-readiness all themes query failed:', e instanceof Error ? e.message : String(e));
+      return c.json({ data: [] });
     }
 
-    const data = subtopicIds
-      .map((id) => {
-        const m = merged.get(id);
-        const meta = subcatMeta.get(id);
-        if (!m || !meta) return null;
+    const data = themes
+      .map((t) => {
+        const idStr = String(t.id);
+        const m = merged.get(idStr) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
         const attempts = m.attempts;
-        const ratio = m.hasBinary > 0 ? (attempts > 0 ? m.correct / attempts : 0) : attempts > 0 ? m.tkpRatioSum / attempts : 0;
+        // TEAM_002: Use topicCode to decide scoring path, not hasBinary heuristic.
+        // Old tryout submissions set isCorrect=false even for TKP weighted questions,
+        // making hasBinary unreliable. TKP always uses weighted ratio; TWK/TIU use binary.
+        const isTkp = t.topicCode === 'TKP';
+        let ratio = 0;
+        if (attempts > 0) {
+          if (isTkp) {
+            // For TKP: use selectedWeight/maxWeight ratio when available, fall back to binary
+            ratio = m.tkpRatioSum > 0 ? m.tkpRatioSum / attempts : m.correct / attempts;
+          } else {
+            // For TWK/TIU: binary correct/incorrect
+            ratio = m.correct / attempts;
+          }
+        }
         return {
-          subtopicId: id,
-          subtopicName: meta.name,
-          topicCode: meta.topicCode,
+          themeId: t.id,
+          themeName: t.name,
+          topicCode: t.topicCode,
           attempts,
           value: Math.max(0, Math.min(100, ratio * 100)),
         };
       })
-      .filter(Boolean);
+      // Sort by topic order: TWK -> TIU -> TKP, then by name
+      .sort((a, b) => {
+        const order: Record<string, number> = { TWK: 1, TIU: 2, TKP: 3 };
+        const orderA = order[a.topicCode || ''] || 99;
+        const orderB = order[b.topicCode || ''] || 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.themeName.localeCompare(b.themeName);
+      });
 
     return c.json({ data });
   } catch (e) {
-    console.error('TEAM_029 /analytics/subtopic-readiness failed', e);
+    console.error('TEAM_001 /analytics/subtopic-readiness unexpected error:', e instanceof Error ? e.message : String(e));
     return c.json({ error: 'unavailable' }, 503);
   }
 });
+
+
+
 
 app.post('/exam/start', async (c) => {
   if (isTryoutPremiumEnabled(c)) {

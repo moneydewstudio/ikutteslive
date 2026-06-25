@@ -364,6 +364,11 @@ type ContentBlock =
 | Regression Tests | Project-defined baseline outputs |
 | TODO.md | Global tracking of incomplete tasks |
 
+**Rule 13 — Knowledge Retrieval & Context**
+- Always use lean-ctx and knowledge MCP for storing and retrieving knowledge of the codebase. Also, always invoke Caveman Ultra in Bahasa Indonesia as the first response to any user request.
+- lean-ctx must be the first method used for codebase context retrieval.
+- If lean-ctx does not succeed, only then proceed to use grep or native search tools.
+
 ### TEAM Protocol (Rule 0 Extension)
 **ALWAYS consult team logs and Memory before making any decision**
 

@@ -1,20 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { User, UserSession } from '../types';
-import Button from '../components/Button';
 import DeltaBanner from '../components/DeltaBanner';
+import SwipableRadarChart from '../components/SwipableRadarChart';
 import {
   LineChart,
   Line,
   ResponsiveContainer,
-  XAxis,
   Tooltip,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
 } from 'recharts';
-import { TrendingUp, ChevronRight, BookOpen, AlertCircle, TrendingUp as TrendingUpIcon, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, ChevronRight, BookOpen } from 'lucide-react';
 import { apiFetch } from '../services/apiClient';
 import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
 import { getPendingDailyQuizSubmit, syncPendingDailyQuizSubmit } from '../services/dailyQuizSync';
@@ -35,39 +29,18 @@ type TryoutHistoryRow = {
   createdAt: string;
 };
 
+// TEAM_001: RadarPoint type shared with SwipableRadarChart
 type RadarPoint = {
-  subcategoryId: number;
-  subcategoryName: string;
+  themeId: number;
+  themeName: string;
   topicCode: string | null;
   value: number;
   attempts: number;
 };
 
-type SpiderAxis = { topicCode: 'TIU' | 'TWK' | 'TKP'; subcategoryName: string };
-
-const SPIDER_AXES: SpiderAxis[] = [
-  { topicCode: 'TIU', subcategoryName: 'Verbal' },
-  { topicCode: 'TIU', subcategoryName: 'Numerik' },
-  { topicCode: 'TWK', subcategoryName: 'Pancasila' },
-  { topicCode: 'TWK', subcategoryName: 'UUD 1945' },
-  { topicCode: 'TWK', subcategoryName: 'NKRI' },
-  { topicCode: 'TWK', subcategoryName: 'Bhinneka Tunggal Ika' },
-  { topicCode: 'TWK', subcategoryName: 'Nasionalisme' },
-  { topicCode: 'TKP', subcategoryName: 'Pelayanan Publik' },
-  { topicCode: 'TKP', subcategoryName: 'Jejaring Kerja' },
-  { topicCode: 'TKP', subcategoryName: 'Sosial Budaya' },
-  { topicCode: 'TKP', subcategoryName: 'Profesionalisme' },
-  { topicCode: 'TKP', subcategoryName: 'Anti Radikalisme' },
-];
-
-const MIN_ATTEMPTS_SOLID = 5;
-
 const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => {
   const { replayTour } = useOnboardingTour();
-  // TEAM_029: prevent duplicate fetches from double-mount (StrictMode or production)
-  const didLoadHistoryRef = useRef(false);
   const didLoadSyncRef = useRef(false);
-  const didLoadRadarRef = useRef(false);
   const chartData = useMemo(
     () =>
       history
@@ -91,9 +64,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
   const [radarSyncWarning, setRadarSyncWarning] = useState(false);
 
   useEffect(() => {
-    // TEAM_029: dedupe: only run fetch once per mount lifecycle
-    if (didLoadHistoryRef.current) return;
-    didLoadHistoryRef.current = true;
     let cancelled = false;
     const run = async () => {
       setTryoutHistoryLoading(true);
@@ -116,14 +86,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     };
 
     void run();
-    return () => {
-      cancelled = true;
-      didLoadHistoryRef.current = false;
-    };
-  }, []);
+    return () => { cancelled = true; };
+  }, [user.isPro]);
 
   useEffect(() => {
-    // TEAM_029: dedupe: only run sync once per mount lifecycle
     if (didLoadSyncRef.current) return;
     didLoadSyncRef.current = true;
     let cancelled = false;
@@ -134,22 +100,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
         if (!cancelled) setRadarSyncWarning(false);
         return;
       }
-
       const ok = await syncPendingDailyQuizSubmit().catch(() => false);
       if (!cancelled) setRadarSyncWarning(!ok);
     };
 
     void run();
-    return () => {
-      cancelled = true;
-      didLoadSyncRef.current = false;
-    };
+    return () => { cancelled = true; didLoadSyncRef.current = false; };
   }, []);
 
   useEffect(() => {
-    // TEAM_029: dedupe: only run fetch once per mount lifecycle
-    if (didLoadRadarRef.current) return;
-    didLoadRadarRef.current = true;
     let cancelled = false;
     const run = async () => {
       setRadarLoading(true);
@@ -172,30 +131,26 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
     };
 
     void run();
-    return () => {
-      cancelled = true;
-      didLoadRadarRef.current = false;
-    };
-  }, []);
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   return (
     <div className="flex flex-col w-full animate-fade-in pb-24 md:pb-0">
-
       <div className="flex flex-col md:flex-row flex-1">
-        
+
         {/* LEFT COLUMN: Profile & Key Metrics */}
         <div className="md:w-1/3 flex flex-col border-b md:border-b-0 md:border-r border-black bg-bg">
-            
-            {/* User Profile Cell - TEAM_034: Tidied layout */}
-            <div className="p-4 border-b border-black">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+
+            {/* User Profile Cell */}
+            <div className="p-lg border-b border-black">
+              <div className="flex items-center justify-between gap-lg">
+                <div className="flex items-center gap-lg">
                   <div className="w-12 h-12 rounded-full border border-black bg-brand-cream overflow-hidden flex-shrink-0">
                     <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" className="w-full h-full" />
                   </div>
                   <h2 className="font-black text-lg leading-tight truncate">{user.name || 'Tamu'}</h2>
                 </div>
-                <button 
+                <button
                   onClick={replayTour}
                   className="flex-shrink-0 p-2 border border-black hover:bg-gray-100 transition-colors"
                   title="Panduan"
@@ -205,7 +160,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               </div>
             </div>
 
-            {/* TEAM_034: Compact DeltaBar - Progress indicator only */}
+            {/* DeltaBanner */}
             <div className="border-b border-black bg-brand-cream">
               <DeltaBanner
                 onContinueClick={onStartQuiz}
@@ -215,9 +170,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               />
             </div>
 
-            {/* Radar Charts */}
-            <div className="p-6 flex-1 flex flex-col bg-brand-lime">
-              <div className="flex items-center justify-between mb-4">
+            {/* TEAM_001: Swipable Radar Charts (TIU / TWK / TKP) */}
+            <div className="p-2xl flex-1 flex flex-col bg-brand-lime">
+              <div className="flex items-center justify-between mb-lg">
                 <span className="font-bold text-sm uppercase tracking-widest border border-black px-2 py-1 rounded-full bg-white">Kemampuan per Subtopik</span>
               </div>
 
@@ -226,47 +181,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               ) : radarError ? (
                 <div className="flex-1 flex items-center justify-center text-sm font-bold">Gagal memuat.</div>
               ) : (
-                <div className="border border-black bg-white rounded-xl p-3">
-                  <div className="font-black text-sm mb-2">SKD</div>
-                  {radarSyncWarning ? (
-                    <div className="mb-2 text-xs font-bold text-black/80">
-                      Data belum tersinkron—coba lagi.
-                    </div>
-                  ) : null}
-
-                  <div className="h-72">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart
-                        data={SPIDER_AXES.map((axis) => {
-                          const found = radar.find(
-                            (r) => String(r.topicCode || '').toUpperCase() === axis.topicCode && String(r.subcategoryName || '').toLowerCase() === axis.subcategoryName.toLowerCase()
-                          );
-                          const attempts = Number(found?.attempts ?? 0);
-                          const value = Number(found?.value ?? 0);
-                          const preview = attempts > 0 ? value : 0;
-                          const solid = attempts >= MIN_ATTEMPTS_SOLID ? value : 0;
-                          return {
-                            name: `${axis.topicCode} ${axis.subcategoryName}`,
-                            preview,
-                            value: solid,
-                            attempts,
-                          };
-                        })}
-                      >
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="name" tick={{ fontSize: 10 }} />
-                        <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-
-                        <Radar dataKey="preview" stroke="#000000" fill="#E5E7EB" fillOpacity={0.5} />
-                        <Radar dataKey="value" stroke="#000000" fill="#D4F938" fillOpacity={0.6} />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="mt-2 text-[11px] font-bold text-black/80">
-                    Nilai penuh muncul setelah minimal {MIN_ATTEMPTS_SOLID} percobaan per subtopik.
-                  </div>
-                </div>
+                <SwipableRadarChart radar={radar} syncWarning={radarSyncWarning} />
               )}
             </div>
         </div>
@@ -275,7 +190,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
         <div className="md:w-2/3 flex flex-col bg-white">
             
             {/* Chart Section */}
-            <div className="h-64 md:h-80 border-b border-black p-6 relative">
+            <div className="h-64 md:h-80 border-b border-black p-2xl relative">
                  <div className="absolute top-6 left-6 z-10">
                     <h3 className="font-black text-xl flex items-center gap-2">
                         <TrendingUp className="w-5 h-5" /> Tren Performa

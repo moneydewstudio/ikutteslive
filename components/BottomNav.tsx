@@ -21,8 +21,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black py-2 pb-safe z-50" data-tour="nav-bar">
-      <div className="flex justify-between items-end max-w-md mx-auto px-2">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black py-md pb-safe z-50" data-tour="nav-bar">
+      <div className="flex justify-between items-end max-w-md mx-auto px-md">
         {navItems.map((item) => {
           const isActive =
             currentView === item.id ||
@@ -41,7 +41,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
                 }
               }}
               className={`
-                flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all duration-200 min-w-[56px]
+                flex flex-col items-center justify-center py-sm px-md rounded-lg transition-all duration-200 min-w-[56px]
                 ${isActive ? 'text-black' : 'text-gray-400 hover:text-gray-600'}
               `}
               data-tour={item.id === 'QUIZ' ? 'nav-latihan' : undefined}

@@ -66,7 +66,7 @@ const GridItem = React.memo(({ index, isActive, isAnswered, onSelect }: GridItem
 const SubmitButton = React.memo(({ onClick }: { onClick: () => void }) => (
     <button 
         onClick={onClick}
-        className="w-full px-6 py-3 rounded border border-black bg-brand-orange text-black font-bold text-sm hover:bg-opacity-90 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2"
+        className="w-full px-6 py-3 rounded border border-black bg-brand-orange text-black font-bold text-sm hover:bg-opacity-90 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-md"
      >
         <CheckCircle className="w-4 h-4" />
         Cek Nilaimu Sekarang!
@@ -420,13 +420,13 @@ const TryoutView: React.FC = () => {
       <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
          <div className="grid grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-80px)]">
              {/* Left: Main Action */}
-             <div className="p-8 md:p-12 border-b md:border-b-0 md:border-r border-black bg-brand-purple flex flex-col justify-center relative overflow-hidden">
+             <div className="p-2xl md:p-3xl border-b md:border-b-0 md:border-r border-black bg-brand-purple flex flex-col justify-center relative overflow-hidden">
                  <div className="relative z-10">
-                     <div className="inline-flex items-center gap-2 border border-black bg-black text-white px-3 py-1 rounded-full text-xs font-bold uppercase mb-6">
+                     <div className="inline-flex items-center gap-md border border-black bg-black text-white px-3 py-1 rounded-full text-xs font-bold uppercase mb-xl">
                          <Clock className="w-3 h-3" />
                          Waktu Terbatas
                      </div>
-                     <h1 className="text-5xl md:text-7xl font-black leading-none mb-6">
+                     <h1 className="text-5xl md:text-7xl font-black leading-none mb-xl">
                          Simulasi<br/>Tryout
                      </h1>
                      <p className="font-bold text-lg mb-8 max-w-md">
@@ -481,7 +481,7 @@ const TryoutView: React.FC = () => {
       
       {/* RESULT MODAL */}
       {result && (
-        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-lg animate-fade-in">
            <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-black animate-scale-in">
               <div className={`p-6 text-center border-b border-black ${result.passed ? 'bg-brand-lime' : 'bg-brand-pink'}`}>
                   {result.passed ? <Award className="w-12 h-12 mx-auto mb-2" /> : <XCircle className="w-12 h-12 mx-auto mb-2" />}

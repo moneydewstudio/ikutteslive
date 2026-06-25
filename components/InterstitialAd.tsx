@@ -28,7 +28,7 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
   }, [timeLeft]);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-6 animate-fade-in">
+    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-2xl animate-fade-in">
        
        {/* Top Bar: Counter / Skip */}
        <div className="absolute top-0 left-0 right-0 p-6 flex justify-end">

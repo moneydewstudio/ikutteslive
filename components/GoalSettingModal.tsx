@@ -86,7 +86,7 @@ const GoalSettingModal: React.FC<GoalSettingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-lg">
       <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-black">
         {/* Header */}
         <div className="bg-brand-lime p-6 border-b border-black">

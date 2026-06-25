@@ -49,7 +49,7 @@ const ShareResultModal: React.FC<ShareResultModalProps> = ({
   const isActionsDisabled = imageState !== 'ready';
 
   return (
-    <div className="fixed inset-0 z-[130] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[130] bg-black/60 backdrop-blur-sm flex items-center justify-center p-lg animate-fade-in">
       <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-black animate-scale-in">
         <div className="p-4 border-b border-black flex justify-between items-center bg-gray-50">
           <h3 className="font-black text-lg">Bagikan Hasil</h3>

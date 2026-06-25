@@ -36,7 +36,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-2xl max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Admin Konten</h1>
         <div className="flex gap-2">

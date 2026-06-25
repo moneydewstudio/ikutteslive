@@ -16,7 +16,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, onStartQuiz, onNavigate }) =>
       {/* SECTION 1: HERO */}
       <div className="flex flex-col lg:flex-row border-b border-black">
         {/* Left: Text Content */}
-        <div className="lg:w-3/5 p-8 lg:p-16 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-black bg-bg">
+        <div className="lg:w-3/5 p-2xl lg:p-3xl flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-black bg-bg">
           <h1 className="text-5xl lg:text-7xl font-black text-black leading-tight mb-6">
             Master CPNS<br />
             <span className="relative inline-block">
@@ -45,7 +45,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, onStartQuiz, onNavigate }) =>
         </div>
 
         {/* Right: Visual Elements / "Marketplace" feel */}
-        <div className="lg:w-2/5 bg-bg relative overflow-hidden flex flex-col justify-center p-8">
+        <div className="lg:w-2/5 bg-bg relative overflow-hidden flex flex-col justify-center p-2xl">
            {/* Abstract grid pattern background */}
            <div className="absolute inset-0 opacity-5" 
                 style={{backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px'}}>

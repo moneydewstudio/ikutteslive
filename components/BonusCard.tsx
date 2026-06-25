@@ -30,7 +30,7 @@ const BonusCard: React.FC<BonusCardProps> = ({ pack, onClick }) => {
       }}
     >
       <div>
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-lg">
           <span className="text-xs font-black border border-black px-2 py-0.5 rounded-full bg-white">{pack.subject}</span>
           {pack.price === 'Terkunci' ? <Lock className="w-5 h-5 opacity-50" /> : <Star className="w-5 h-5 fill-black" />}
         </div>
@@ -42,7 +42,7 @@ const BonusCard: React.FC<BonusCardProps> = ({ pack, onClick }) => {
         {pack.price === 'Terkunci' ? (
           <div>
             {/* TEAM_032: Clear lock explanation - why not just value */}
-            <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex items-center gap-sm mb-md">
               <Lock className="w-3.5 h-3.5 text-gray-500" />
               <span className="text-xs font-bold text-gray-500 uppercase">Terkunci Hari Ini</span>
             </div>

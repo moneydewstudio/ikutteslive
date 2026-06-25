@@ -17,15 +17,15 @@ describe('api smoke', () => {
     expect(json).toEqual({ ok: true });
   });
 
-  it('GET /tryout/history is premium-gated', async () => {
+  it('GET /tryout/history is protected', async () => {
     const res = await app.request('http://localhost/tryout/history', {}, {
       FIREBASE_PROJECT_ID: '',
       NEON_DATABASE_URL: '',
     } as any);
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(401);
     const json = (await res.json()) as any;
-    expect(json?.code).toBe('PREMIUM_REQUIRED');
+    expect(json?.error).toBe('unauthorized');
   });
 
   it('GET /analytics/subtopic-accuracy is premium-gated', async () => {
@@ -41,6 +41,17 @@ describe('api smoke', () => {
 
   it('exports questionThemes table', () => {
     expect(schema).toHaveProperty('questionThemes');
+  });
+
+  it('GET /analytics/subtopic-readiness returns 401 without auth', async () => {
+    const res = await app.request('http://localhost/analytics/subtopic-readiness', {}, {
+      FIREBASE_PROJECT_ID: '',
+      NEON_DATABASE_URL: '',
+    } as any);
+
+    expect(res.status).toBe(401);
+    const json = (await res.json()) as any;
+    expect(json?.error).toBe('unauthorized');
   });
 });
 

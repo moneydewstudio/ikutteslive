@@ -65,15 +65,15 @@ const main = () => {
     // Fail loud if subtopic missing.
     out.push(`do $$ begin`);
     out.push(
-      `  if not exists (select 1 from subtopics where upper(name) = upper('${escapeSql(subtopicName)}')) then`
+      `  if not exists (select 1 from question_subtopics where upper(name) = upper('${escapeSql(subtopicName)}')) then`
     );
-    out.push(`    raise exception 'missing subtopics.name: ${escapeSql(subtopicName)}';`);
+    out.push(`    raise exception 'missing question_subtopics.name: ${escapeSql(subtopicName)}';`);
     out.push(`  end if;`);
     out.push(`end $$;`);
 
     out.push(`insert into question_themes (subtopic_id, code, name)`);
     out.push(`select qst.id, '${escapeSql(code)}', '${escapeSql(name)}'`);
-    out.push(`from subtopics qst`);
+    out.push(`from question_subtopics qst`);
     out.push(`where upper(qst.name) = upper('${escapeSql(subtopicName)}')`);
     out.push(`on conflict (subtopic_id, code) do update set name = excluded.name;`);
     themeInsertCount += 1;
@@ -101,7 +101,7 @@ const main = () => {
     out.push(`do $$ begin`);
     out.push(
       `  if not exists (` +
-        `select 1 from question_themes qth join subtopics qst on qst.id = qth.subtopic_id ` +
+        `select 1 from question_themes qth join question_subtopics qst on qst.id = qth.subtopic_id ` +
         `where upper(qst.name) = upper('${escapeSql(subtopicName)}') and upper(qth.code) = upper('${escapeSql(themeCode)}')` +
       `) then`
     );
@@ -112,7 +112,7 @@ const main = () => {
     out.push(`end $$;`);
 
     out.push(`update questions q set theme_id = qth.id`);
-    out.push(`from subtopics qst`);
+    out.push(`from question_subtopics qst`);
     out.push(
       `join question_themes qth on qth.subtopic_id = qst.id and upper(qth.code) = upper('${escapeSql(themeCode)}')`
     );

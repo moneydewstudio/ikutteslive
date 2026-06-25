@@ -311,3 +311,44 @@ if (!ctx.get('user')?.is_premium) {
 * Server-side JWT verification active.
 * Explanations are not sent to free users.
 * User progress is persisted in Neon DB.
+
+---
+
+## 9. Frontend UI/UX & Component Status (Reality Check - June 2026)
+
+### 9.1 Implemented & Live
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `QuizCard.tsx` | ✅ Implemented + Playful Feedback | Supports `correctOptionId` + `showFeedback`. Uses `motion/react` for bounce (correct) and shake (wrong). Still maintains brutalist base. |
+| `TryoutView.tsx` | ✅ Implemented | 719 LOC, handles 110-question SKD simulation. |
+| `ResultsView.tsx` | ✅ Implemented | 451 LOC, shows tryout results. |
+| `Dashboard.tsx` | ✅ Implemented | Includes spider chart, history, and DeltaBanner. |
+| `BottomNav.tsx` | ✅ Implemented | Mobile-first navigation with labels. |
+| Daily Quiz flow | ✅ Implemented | Includes sync queue and localStorage fallback. |
+| Tryout flow | ✅ Implemented | Full 110-question simulation with scoring. |
+
+### 9.2 Technical Debt (High Priority)
+
+| Item | File | LOC | Impact | Action |
+|------|------|-----|--------|--------|
+| Monolithic App | `App.tsx` | 721 | High | Should be split into feature-based routing or view components. |
+| Large TryoutView | `TryoutView.tsx` | 719 | Medium | Consider extracting question navigation, timer, and submission logic. |
+| Large ResultsView | `ResultsView.tsx` | 451 | Low | Acceptable for now, but monitor growth. |
+
+### 9.3 UI/UX Improvement Backlog (Non-Blocking)
+
+| Priority | Item | Description | Effort | Blocked By |
+|----------|------|-------------|--------|------------|
+| Low | Playful Answer Feedback | Already implemented in `QuizCard.tsx` (motion/react). Can be extended to Streak/XP later. | Done | - |
+| Low | Streak Animation | Visual celebration when streak increases. | Medium | Needs real streak data from `/user/me`. |
+| Low | Explanation Reveal | Playful unlock animation when premium user opens explanation. | Medium | Blocked by Section 3 (explanations endpoint not live). |
+
+---
+
+## 10. Phase I Definition of Done
+
+* Server-side JWT verification active.
+* Explanations are not sent to free users.
+* User progress is persisted in Neon DB.
+* Core flows (Daily Quiz, Drills, Tryout) are functional end-to-end.

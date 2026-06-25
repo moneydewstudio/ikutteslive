@@ -62,8 +62,8 @@ const WeaknessCallout: React.FC<WeaknessCalloutProps> = ({
   const isWeak = weakness.accuracy < 70;
 
   return (
-    <div className={`border-l-4 p-4 mb-4 ${isCritical ? 'bg-red-50 border-red-500' : 'bg-brand-pink/30 border-brand-orange'}`}>
-      <div className="flex items-start gap-3">
+    <div className={`border-l-4 p-lg mb-lg ${isCritical ? 'bg-red-50 border-red-500' : 'bg-brand-pink/30 border-brand-orange'}`}>
+      <div className="flex items-start gap-md">
         <div className={`mt-0.5 ${isCritical ? 'text-red-500' : 'text-brand-orange'}`}>
           <AlertTriangle className="w-5 h-5" />
         </div>

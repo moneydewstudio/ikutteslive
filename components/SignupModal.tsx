@@ -15,7 +15,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ onClose, onConfirm, isLoading
   const isPremiumGate = reason === 'premium_requires_account';
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-lg">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="bg-white rounded-2xl w-full max-w-sm relative overflow-hidden shadow-2xl animate-fade-in-up">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">

@@ -98,8 +98,8 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-brand-cream border border-black p-4 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-2"></div>
+      <div className="bg-brand-cream border border-black p-lg animate-pulse">
+        <div className="h-6 bg-gray-200 rounded w-1/3 mb-sm"></div>
         <div className="h-4 bg-gray-200 rounded w-1/2"></div>
       </div>
     );
@@ -117,15 +117,15 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
     const passingPercent = (300 / 500) * 100; // 60%
     
     return (
-      <div className="p-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="p-lg">
+        <div className="flex items-center justify-between gap-lg">
           <div className="flex-1 min-w-0">
             {/* Explanatory label */}
-            <div className="text-xs font-bold text-gray-500 mb-1.5">Estimasi Nilai SKD Kamu</div>
+            <div className="text-xs font-bold text-gray-500 mb-sm">Estimasi Nilai SKD Kamu</div>
             
             {/* Status Badge + Score */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-black ${config.bgColor} ${config.color} ${config.pulse ? 'animate-pulse' : ''}`}>
+            <div className="flex items-center gap-md mb-md">
+              <span className={`inline-flex items-center gap-sm px-2 py-0.5 rounded text-xs font-black ${config.bgColor} ${config.color} ${config.pulse ? 'animate-pulse' : ''}`}>
                 {config.icon}
                 {config.label}
               </span>
@@ -145,7 +145,7 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
               />
             </div>
             {/* Scale: 0 - 300 (Nilai Minimal Lolos SKD) - 500 */}
-            <div className="flex justify-between text-[10px] text-gray-500 mt-1 font-medium">
+            <div className="flex justify-between text-[10px] text-gray-500 mt-xs font-medium">
               <span>0</span>
               <span className="font-bold text-black">300</span>
               <span>500</span>
@@ -157,7 +157,7 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
           
           <button
             onClick={onContinueClick}
-            className="flex-shrink-0 flex items-center gap-1 text-sm font-bold bg-black text-white px-3 py-2 hover:bg-gray-800 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)] active:translate-y-[1px] active:shadow-none"
+            className="flex-shrink-0 flex items-center gap-sm text-sm font-bold bg-black text-white px-3 py-2 hover:bg-gray-800 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)] active:translate-y-[1px] active:shadow-none"
           >
             {continueLabel} <ArrowRight className="w-4 h-4" />
           </button>

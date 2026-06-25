@@ -195,7 +195,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto pb-24 md:pb-0">
+    <div className="p-2xl max-w-6xl mx-auto pb-24 md:pb-0">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Admin Payments</h1>
