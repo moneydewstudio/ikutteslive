@@ -13,6 +13,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { neon } from '@neondatabase/serverless';
 import type { AppEnv } from './types';
 import { withUserContext, requirePremium } from './middleware/auth';
 import { getDb } from './db';
@@ -1304,137 +1305,85 @@ app.get('/analytics/subtopic-accuracy', requirePremium, async (c) => {
 
 // TEAM_029: unified subtopic readiness for profile spider chart (Tryout + Daily Quiz; drills excluded) - now open to all users
 // TEAM_036: Readiness per theme (not subtopic) - more granular weakness detection
+// TEAM_037: Drizzle ORM builder silently returns 0 rows for subset of queries on edge runtime.
+// Using raw neon() tagged template instead — verified working.
 app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
   c.header("Cache-Control", "no-store");
   const user = c.get('user');
   if (!user) return c.json({ error: 'unauthorized' }, 401);
 
   try {
-    const db = await getDb(c.env);
+    const nsql = neon(c.env.NEON_DATABASE_URL);
 
-    // TEAM_036: each query is isolated — if theme_id column or question_themes table
-    // doesn't exist in DB yet (schema not migrated), we degrade to { data: [] } instead of 503.
+    // 1) Fetch user attempt data — raw SQL
+    const tryoutRaw = await nsql`
+      SELECT q.theme_id,
+             count(*) as attempts,
+             sum(case when tai.is_correct = true then 1 else 0 end) as correct,
+             sum(case when tai.max_weight > 0 then (tai.selected_weight::float / tai.max_weight::float) else 0 end) as ratio_sum
+      FROM tryout_attempt_items tai
+      JOIN tryout_attempts ta ON tai.attempt_id = ta.id
+      JOIN questions q ON tai.question_id = q.id
+      WHERE ta.user_id = ${user.id} AND q.theme_id IS NOT NULL
+      GROUP BY q.theme_id
+    `;
+    const dailyRaw = await nsql`
+      SELECT q.theme_id,
+             count(*) as attempts,
+             sum(case when dai.is_correct = true then 1 else 0 end) as correct,
+             sum(case when dai.max_weight > 0 then (dai.selected_weight::float / dai.max_weight::float) else 0 end) as ratio_sum
+      FROM daily_quiz_attempt_items dai
+      JOIN daily_quiz_attempts da ON dai.attempt_id = da.id
+      JOIN questions q ON dai.question_id = q.id
+      WHERE da.user_id = ${user.id} AND q.theme_id IS NOT NULL
+      GROUP BY q.theme_id
+    `;
 
-    let tryoutRows: any[] = [];
-    try {
-      tryoutRows = await db
-        .select({
-          themeId: questions.themeId,
-          attempts: sql<number>`count(*)`,
-          twkTiuCorrect: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} = true then 1 else 0 end)`,
-          tkpRatioSum: sql<number>`sum(case when ${tryoutAttemptItems.maxWeight} > 0 then (${tryoutAttemptItems.selectedWeight}::float / ${tryoutAttemptItems.maxWeight}::float) else 0 end)`,
-          hasBinary: sql<number>`sum(case when ${tryoutAttemptItems.isCorrect} is null then 0 else 1 end)`,
-        })
-        .from(tryoutAttemptItems)
-        .leftJoin(tryoutAttempts, eq(tryoutAttemptItems.attemptId, tryoutAttempts.id))
-        .leftJoin(questions, eq(tryoutAttemptItems.questionId, questions.id))
-        .where(and(
-          eq(tryoutAttempts.userId, user.id),
-          sql`${questions.themeId} is not null`
-        ))
-        .groupBy(questions.themeId) as any[];
-    } catch (e) {
-      console.warn('TEAM_036 subtopic-readiness tryout query failed:', e instanceof Error ? e.message : String(e));
-    }
-
-    let dailyRows: any[] = [];
-    try {
-      dailyRows = await db
-        .select({
-          themeId: questions.themeId,
-          attempts: sql<number>`count(*)`,
-          twkTiuCorrect: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} = true then 1 else 0 end)`,
-          tkpRatioSum: sql<number>`sum(case when ${dailyQuizAttemptItems.maxWeight} > 0 then (${dailyQuizAttemptItems.selectedWeight}::float / ${dailyQuizAttemptItems.maxWeight}::float) else 0 end)`,
-          hasBinary: sql<number>`sum(case when ${dailyQuizAttemptItems.isCorrect} is null then 0 else 1 end)`,
-        })
-        .from(dailyQuizAttemptItems)
-        .leftJoin(dailyQuizAttempts, eq(dailyQuizAttemptItems.attemptId, dailyQuizAttempts.id))
-        .leftJoin(questions, eq(dailyQuizAttemptItems.questionId, questions.id))
-        .where(and(
-          eq(dailyQuizAttempts.userId, user.id),
-          sql`${questions.themeId} is not null`
-        ))
-        .groupBy(questions.themeId) as any[];
-    } catch (e) {
-      console.warn('TEAM_036 subtopic-readiness daily query failed:', e instanceof Error ? e.message : String(e));
-    }
-
-    const merged = new Map<
-      string,
-      { attempts: number; correct: number; tkpRatioSum: number; hasBinary: number }
-    >();
-
-    const mergeInto = (rows: any[]) => {
+    // 2) Merge tryout + daily into a single map
+    const merged = new Map<number, { attempts: number; correct: number; ratioSum: number }>();
+    const merge = (rows: any[]) => {
       for (const r of rows) {
-        const themeId = String(r.themeId);
-        if (!themeId || themeId === 'null') continue;
-        const prev = merged.get(themeId) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
-        merged.set(themeId, {
+        const id = Number(r.theme_id);
+        if (!id) continue;
+        const prev = merged.get(id) ?? { attempts: 0, correct: 0, ratioSum: 0 };
+        merged.set(id, {
           attempts: prev.attempts + Number(r.attempts ?? 0),
-          correct: prev.correct + Number(r.twkTiuCorrect ?? 0),
-          tkpRatioSum: prev.tkpRatioSum + Number(r.tkpRatioSum ?? 0),
-          hasBinary: prev.hasBinary + Number(r.hasBinary ?? 0),
+          correct: prev.correct + Number(r.correct ?? 0),
+          ratioSum: prev.ratioSum + Number(r.ratio_sum ?? 0),
         });
       }
     };
+    merge(tryoutRaw);
+    merge(dailyRaw);
 
-    mergeInto(tryoutRows);
-    mergeInto(dailyRows);
+    // 3) Fetch all themes with topic codes
+    const themes = await nsql`
+      SELECT qt.id, qt.name, upper(qt2.code) as topic_code
+      FROM question_themes qt
+      LEFT JOIN question_subtopics qs ON qt.subtopic_id = qs.id
+      LEFT JOIN question_categories qc ON qs.category_id = qc.id
+      LEFT JOIN question_topics qt2 ON qc.topic_id = qt2.id
+      WHERE qt2.code IS NOT NULL
+      ORDER BY qt2.code, qt.name
+    `;
 
-    // TEAM_001: Query all active themes with topics metadata first, then merge user attempts.
-    let themes: any[] = [];
-    try {
-      themes = await db
-        .select({
-          id: questionThemes.id,
-          name: questionThemes.name,
-          topicCode: sql<string | null>`upper(${questionTopics.code})`,
-        })
-        .from(questionThemes)
-        .leftJoin(questionSubtopics, eq(questionThemes.subtopicId, questionSubtopics.id))
-        .leftJoin(questionCategories, eq(questionSubtopics.categoryId, questionCategories.id))
-        .leftJoin(questionTopics, eq(questionCategories.topicId, questionTopics.id))
-        .where(sql`${questionTopics.code} is not null`) as any[];
-    } catch (e) {
-      console.warn('TEAM_001 subtopic-readiness all themes query failed:', e instanceof Error ? e.message : String(e));
-      return c.json({ data: [] });
-    }
-
-    const data = themes
-      .map((t) => {
-        const idStr = String(t.id);
-        const m = merged.get(idStr) ?? { attempts: 0, correct: 0, tkpRatioSum: 0, hasBinary: 0 };
-        const attempts = m.attempts;
-        // TEAM_002: Use topicCode to decide scoring path, not hasBinary heuristic.
-        // Old tryout submissions set isCorrect=false even for TKP weighted questions,
-        // making hasBinary unreliable. TKP always uses weighted ratio; TWK/TIU use binary.
-        const isTkp = t.topicCode === 'TKP';
-        let ratio = 0;
-        if (attempts > 0) {
-          if (isTkp) {
-            // For TKP: use selectedWeight/maxWeight ratio when available, fall back to binary
-            ratio = m.tkpRatioSum > 0 ? m.tkpRatioSum / attempts : m.correct / attempts;
-          } else {
-            // For TWK/TIU: binary correct/incorrect
-            ratio = m.correct / attempts;
-          }
-        }
-        return {
-          themeId: t.id,
-          themeName: t.name,
-          topicCode: t.topicCode,
-          attempts,
-          value: Math.max(0, Math.min(100, ratio * 100)),
-        };
-      })
-      // Sort by topic order: TWK -> TIU -> TKP, then by name
-      .sort((a, b) => {
-        const order: Record<string, number> = { TWK: 1, TIU: 2, TKP: 3 };
-        const orderA = order[a.topicCode || ''] || 99;
-        const orderB = order[b.topicCode || ''] || 99;
-        if (orderA !== orderB) return orderA - orderB;
-        return a.themeName.localeCompare(b.themeName);
-      });
+    // 4) Build response
+    const data = themes.map((t: any) => {
+      const m = merged.get(Number(t.id)) ?? { attempts: 0, correct: 0, ratioSum: 0 };
+      const attempts = m.attempts;
+      const isTkp = t.topic_code === 'TKP';
+      let ratio = 0;
+      if (attempts > 0) {
+        ratio = isTkp && m.ratioSum > 0 ? m.ratioSum / attempts : m.correct / attempts;
+      }
+      return {
+        themeId: Number(t.id),
+        themeName: t.name,
+        topicCode: t.topic_code,
+        attempts,
+        value: Math.max(0, Math.min(100, ratio * 100)),
+      };
+    });
 
     return c.json({ data });
   } catch (e) {

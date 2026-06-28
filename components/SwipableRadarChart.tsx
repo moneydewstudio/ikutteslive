@@ -24,7 +24,7 @@ const SUBTOPIC_LABELS: Record<string, string> = {
   TKP: 'Tes Karakteristik Pribadi',
 };
 const SUBTOPIC_COLORS: Record<string, string> = {
-  TIU: '#D4F938',
+  TIU: '#A3E635', // lighter/lime-400 to contrast with bg-brand-lime
   TWK: '#38BDF8',
   TKP: '#FB923C',
 };

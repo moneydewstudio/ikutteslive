@@ -1,7 +1,7 @@
 # Ikuttes Project Handoff
 
-**Last Updated:** 2026-06-23  
-**Status:** Live production with spider chart visualization working
+**Last Updated:** 2026-06-28  
+**Status:** Live production — all systems operational, spider chart verified working
 
 ## Project Overview
 
@@ -202,7 +202,17 @@ topics (3) ─→ categories (3) ─→ subtopics (14) ─→ themes (29) ─→
 - Fixed dependency: `[user?.isPro]` → `[user?.id]`
 - Deployed Worker with Cache-Control headers
 
-**Current Status:** ✅ Chart displays TIU/TWK/TKP tabs, scores render
+**Current Status:** ✅ Live chart deployed and verified working (TEAM_041)
+
+### TEAM_041 — Chart Fix Deploy
+**Problem:** Drizzle ORM + `@neondatabase/serverless` HTTP driver silently returns 0 rows for aggregate queries (`sum(case when ... ::float)`) in Cloudflare Workers. TIU color `#D4F938` = `bg-brand-lime` → TIU polygon invisible.
+
+**Solution:**
+1. Rewrote `/analytics/subtopic-readiness` with raw `neon()` tagged template SQL (bypass Drizzle ORM)
+2. Changed TIU color `#D4F938` → `#A3E635` (lime-400)
+
+**Deploy:** Both API and frontend workers deployed. Version IDs: API `7ae74186`, Frontend `89d9d183`.
+**Verification:** User confirmed "WORKS!" — all three polygons (TIU/TWK/TKP) render correctly.
 
 
 ---
