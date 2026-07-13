@@ -21,6 +21,8 @@ import {
   users,
   questions,
   questionOptions,
+  questionsV2,
+  questionOptionsV2,
   questionCategories,
   questionSubtopics,
   questionTopics,
@@ -145,6 +147,14 @@ const categoryWhere = (code: string) => {
     : sql`true`; // Return all active questions as fallback
 };
 const subjectSelect = sql<string | null>`upper(coalesce(${questionTopics.code}, ${questions.questionType}))`;
+
+// V2 helpers â€” questions_v2 has NOT NULL topic_id and is_active, so simpler predicates
+const activeWhereV2 = eq(questionsV2.isActive, true);
+const categoryWhereV2 = (code: string) => {
+  const topicMap: Record<string, number> = { twk: 1, tiu: 2, tkp: 3 };
+  return eq(questionsV2.topicId, topicMap[code.toLowerCase()]);
+};
+const subjectSelectV2 = sql<string>`upper(${questionTopics.code})`;
 
 // Attach user context for all requests (non-blocking if token missing/invalid)
 app.use(cors());
@@ -286,35 +296,31 @@ app.post('/quiz/daily/submit', async (c) => {
 
     const questionMetaRows = await db
       .select({
-        id: questions.id,
-        code: sql<string | null>`upper(${questionTopics.code})`,
-        subcategoryId: questions.subcategoryId,
-        subtopicId: questions.subtopicId,
+        id: questionsV2.id,
+        code: sql<string>`upper(${questionTopics.code})`,
+        subtopicId: questionsV2.subtopicId,
       })
-      .from(questions)
-      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-      .where(inArray(questions.id, ids));
+      .from(questionsV2)
+      .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+      .where(inArray(questionsV2.id, ids));
 
-    const metaById = new Map<number, { code: string; subcategoryId: number | null; subtopicId: number | null }>();
+    const metaById = new Map<number, { code: string; subtopicId: number | null }>();
     for (const r of questionMetaRows as any[]) {
-      const rawSubcategoryId = r.subcategoryId == null ? null : Number(r.subcategoryId);
-      const rawSubtopicId = r.subtopicId == null ? null : Number(r.subtopicId);
       metaById.set(Number(r.id), {
         code: String(r.code || '').toUpperCase(),
-        subcategoryId: Number.isFinite(rawSubcategoryId) ? rawSubcategoryId : null,
-        subtopicId: Number.isFinite(rawSubtopicId) ? rawSubtopicId : null,
+        subtopicId: r.subtopicId == null ? null : Number(r.subtopicId),
       });
     }
 
     const optionRows = await db
       .select({
-        questionId: questionOptions.questionId,
-        optionKey: questionOptions.optionKey,
-        isCorrect: questionOptions.isCorrect,
-        weight: questionOptions.weight,
+        questionId: questionOptionsV2.questionId,
+        optionKey: questionOptionsV2.optionKey,
+        isCorrect: questionOptionsV2.isCorrect,
+        weight: questionOptionsV2.weight,
       })
-      .from(questionOptions)
-      .where(inArray(questionOptions.questionId, ids));
+      .from(questionOptionsV2)
+      .where(inArray(questionOptionsV2.questionId, ids));
 
     const optionsByQuestion: Record<string, Array<{ key: string; isCorrect: boolean | null; weight: number | null }>> = {};
     for (const o of optionRows as any[]) {
@@ -329,7 +335,7 @@ app.post('/quiz/daily/submit', async (c) => {
 
     const itemRows: Array<{
       questionId: number;
-      subcategoryId: number | null;
+      subtopicId: number | null;
       isCorrect: boolean | null;
       selectedWeight: number | null;
       maxWeight: number | null;
@@ -338,7 +344,7 @@ app.post('/quiz/daily/submit', async (c) => {
     for (const qid of ids) {
       const meta = metaById.get(qid);
       const rawCode = String(meta?.code || '').toUpperCase();
-      const subcategoryId = meta?.subcategoryId ?? meta?.subtopicId ?? null;
+      const subtopicId = meta?.subtopicId ?? null;
 
       const selected = String((answers as any)[String(qid)] ?? '').toLowerCase();
       if (!selected) continue;
@@ -363,7 +369,7 @@ app.post('/quiz/daily/submit', async (c) => {
 
         itemRows.push({
           questionId: qid,
-          subcategoryId,
+          subtopicId,
           isCorrect: null,
           selectedWeight: Number.isFinite(w) ? w : 0,
           maxWeight: Number.isFinite(max) ? max : 0,
@@ -375,7 +381,7 @@ app.post('/quiz/daily/submit', async (c) => {
       const isCorrect = !!correctKey && selected === correctKey;
       itemRows.push({
         questionId: qid,
-        subcategoryId,
+        subtopicId,
         isCorrect,
         selectedWeight: null,
         maxWeight: null,
@@ -387,7 +393,7 @@ app.post('/quiz/daily/submit', async (c) => {
         itemRows.map((r) => ({
           attemptId: effectiveAttemptId,
           questionId: r.questionId,
-          subcategoryId: r.subcategoryId,
+          subtopicId: r.subtopicId,
           isCorrect: r.isCorrect,
           selectedWeight: r.selectedWeight,
           maxWeight: r.maxWeight,
@@ -790,44 +796,44 @@ app.get('/drills/daily', async (c) => {
 
     const picked = await db
       .select({
-        id: questions.id,
-        subject: subjectSelect,
-        difficulty: questions.difficulty,
-        text: questions.questionText,
+        id: questionsV2.id,
+        subject: subjectSelectV2,
+        difficulty: questionsV2.difficulty,
+        text: questionsV2.questionText,
       })
-      .from(questions)
-      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-      .where(and(activeQuestionWhere, categoryWhere(category)))
-      .orderBy(sql`md5((${questions.id})::text || ${dayKey})`)
+      .from(questionsV2)
+      .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+      .where(and(activeWhereV2, categoryWhereV2(category)))
+      .orderBy(sql`md5((${questionsV2.id})::text || ${dayKey})`)
       .limit(20);
 
     const drillPicked = picked.length
       ? picked
       : await db
         .select({
-          id: questions.id,
-          subject: subjectSelect,
-          difficulty: questions.difficulty,
-          text: questions.questionText,
+          id: questionsV2.id,
+          subject: subjectSelectV2,
+          difficulty: questionsV2.difficulty,
+          text: questionsV2.questionText,
         })
-        .from(questions)
-        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-        .where(activeQuestionWhere)
-        .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'fallback')`)
+        .from(questionsV2)
+        .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+        .where(activeWhereV2)
+        .orderBy(sql`md5((${questionsV2.id})::text || ${dayKey} || 'fallback')`)
         .limit(20);
 
     const ids = drillPicked.map((r) => r.id);
     const opts = ids.length
       ? await db
         .select({
-          questionId: questionOptions.questionId,
-          optionKey: questionOptions.optionKey,
-          optionText: questionOptions.optionText,
-          isCorrect: questionOptions.isCorrect,
-          weight: questionOptions.weight,
+          questionId: questionOptionsV2.questionId,
+          optionKey: questionOptionsV2.optionKey,
+          optionText: questionOptionsV2.optionText,
+          isCorrect: questionOptionsV2.isCorrect,
+          weight: questionOptionsV2.weight,
         })
-        .from(questionOptions)
-        .where(inArray(questionOptions.questionId, ids))
+        .from(questionOptionsV2)
+        .where(inArray(questionOptionsV2.questionId, ids))
       : [];
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
@@ -920,15 +926,15 @@ app.get('/quiz/daily', async (c) => {
     for (const q of quotas) {
       const rows = await db
         .select({
-          id: questions.id,
-          subject: subjectSelect,
-          difficulty: questions.difficulty,
-          text: questions.questionText,
+          id: questionsV2.id,
+          subject: subjectSelectV2,
+          difficulty: questionsV2.difficulty,
+          text: questionsV2.questionText,
         })
-        .from(questions)
-        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-        .where(and(activeQuestionWhere, categoryWhere(q.code)))
-        .orderBy(sql`md5((${questions.id})::text || ${dayKey})`)
+        .from(questionsV2)
+        .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+        .where(and(activeWhereV2, categoryWhereV2(q.code)))
+        .orderBy(sql`md5((${questionsV2.id})::text || ${dayKey})`)
         .limit(q.limit);
 
       picked.push(...(rows as any[]));
@@ -939,15 +945,15 @@ app.get('/quiz/daily', async (c) => {
       const existingIds = picked.map((r) => r.id);
       const extra = await db
         .select({
-          id: questions.id,
-          subject: subjectSelect,
-          difficulty: questions.difficulty,
-          text: questions.questionText,
+          id: questionsV2.id,
+          subject: subjectSelectV2,
+          difficulty: questionsV2.difficulty,
+          text: questionsV2.questionText,
         })
-        .from(questions)
-        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-        .where(and(activeQuestionWhere, existingIds.length ? notInArray(questions.id, existingIds) : sql`true`))
-        .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'topup')`)
+        .from(questionsV2)
+        .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+        .where(and(activeWhereV2, existingIds.length ? notInArray(questionsV2.id, existingIds) : sql`true`))
+        .orderBy(sql`md5((${questionsV2.id})::text || ${dayKey} || 'topup')`)
         .limit(remaining);
       picked.push(...(extra as any[]));
     }
@@ -955,15 +961,15 @@ app.get('/quiz/daily', async (c) => {
     if (!picked.length) {
       const fallback = await db
         .select({
-          id: questions.id,
-          subject: subjectSelect,
-          difficulty: questions.difficulty,
-          text: questions.questionText,
+          id: questionsV2.id,
+          subject: subjectSelectV2,
+          difficulty: questionsV2.difficulty,
+          text: questionsV2.questionText,
         })
-        .from(questions)
-        .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-        .where(activeQuestionWhere)
-        .orderBy(sql`md5((${questions.id})::text || ${dayKey} || 'fallback')`)
+        .from(questionsV2)
+        .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+        .where(activeWhereV2)
+        .orderBy(sql`md5((${questionsV2.id})::text || ${dayKey} || 'fallback')`)
         .limit(desiredCount);
       picked.push(...(fallback as any[]));
     }
@@ -972,14 +978,14 @@ app.get('/quiz/daily', async (c) => {
     const opts = ids.length
       ? await db
         .select({
-          questionId: questionOptions.questionId,
-          optionKey: questionOptions.optionKey,
-          optionText: questionOptions.optionText,
-          isCorrect: questionOptions.isCorrect,
-          weight: questionOptions.weight,
+          questionId: questionOptionsV2.questionId,
+          optionKey: questionOptionsV2.optionKey,
+          optionText: questionOptionsV2.optionText,
+          isCorrect: questionOptionsV2.isCorrect,
+          weight: questionOptionsV2.weight,
         })
-        .from(questionOptions)
-        .where(inArray(questionOptions.questionId, ids))
+        .from(questionOptionsV2)
+        .where(inArray(questionOptionsV2.questionId, ids))
       : [];
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
@@ -1323,7 +1329,7 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
              sum(case when tai.max_weight > 0 then (tai.selected_weight::float / tai.max_weight::float) else 0 end) as ratio_sum
       FROM tryout_attempt_items tai
       JOIN tryout_attempts ta ON tai.attempt_id = ta.id
-      JOIN questions q ON tai.question_id = q.id
+      JOIN questions_v2 q ON tai.question_id = q.id
       WHERE ta.user_id = ${user.id} AND q.theme_id IS NOT NULL
       GROUP BY q.theme_id
     `;
@@ -1334,7 +1340,7 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
              sum(case when dai.max_weight > 0 then (dai.selected_weight::float / dai.max_weight::float) else 0 end) as ratio_sum
       FROM daily_quiz_attempt_items dai
       JOIN daily_quiz_attempts da ON dai.attempt_id = da.id
-      JOIN questions q ON dai.question_id = q.id
+      JOIN questions_v2 q ON dai.question_id = q.id
       WHERE da.user_id = ${user.id} AND q.theme_id IS NOT NULL
       GROUP BY q.theme_id
     `;
@@ -1356,15 +1362,16 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
     merge(tryoutRaw);
     merge(dailyRaw);
 
-    // 3) Fetch all themes with topic codes
+    // TEAM_043: v2 direct path — bypass question_categories, include subtopicId/Name for frontend grouping
     const themes = await nsql`
-      SELECT qt.id, qt.name, upper(qt2.code) as topic_code
+      SELECT qt.id, qt.name, qt.subtopic_id,
+             qs.name as subtopic_name,
+             upper(qt2.code) as topic_code
       FROM question_themes qt
       LEFT JOIN question_subtopics qs ON qt.subtopic_id = qs.id
-      LEFT JOIN question_categories qc ON qs.category_id = qc.id
-      LEFT JOIN question_topics qt2 ON qc.topic_id = qt2.id
+      LEFT JOIN question_topics qt2 ON qs.topic_id = qt2.id
       WHERE qt2.code IS NOT NULL
-      ORDER BY qt2.code, qt.name
+      ORDER BY qt2.code, qs.name, qt.name
     `;
 
     // 4) Build response
@@ -1376,9 +1383,12 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
       if (attempts > 0) {
         ratio = isTkp && m.ratioSum > 0 ? m.ratioSum / attempts : m.correct / attempts;
       }
+      // TEAM_043: include subtopic fields for frontend grouping
       return {
         themeId: Number(t.id),
         themeName: t.name,
+        subtopicId: Number(t.subtopic_id ?? 0),
+        subtopicName: String(t.subtopic_name ?? ''),
         topicCode: t.topic_code,
         attempts,
         value: Math.max(0, Math.min(100, ratio * 100)),
@@ -1425,14 +1435,13 @@ app.post('/exam/start', async (c) => {
     const topicIdByCode = new Map<string, number>();
     for (const r of topicRows as any[]) topicIdByCode.set(String(r.code), Number(r.id));
 
-    // TEAM_008: Fallback if topics don't exist yet
     if (topicRows.length === 0) {
-      console.warn('TEAM_008 No topics found, falling back to active questions');
+      console.warn('TEAM_008 No topics found, falling back to v2 active questions');
       const fallback = await db
-        .select({ id: questions.id })
-        .from(questions)
-        .where(activeQuestionWhere)
-        .orderBy(sql`md5((${questions.id})::text || ${seed} || 'tryout_fallback')`)
+        .select({ id: questionsV2.id })
+        .from(questionsV2)
+        .where(activeWhereV2)
+        .orderBy(sql`md5((${questionsV2.id})::text || ${seed} || 'tryout_fallback')`)
         .limit(110);
       pickedIds.push(...(fallback as any[]).map((q) => Number(q.id)).filter((n) => Number.isFinite(n)));
     }
@@ -1442,28 +1451,25 @@ app.post('/exam/start', async (c) => {
       if (!topicId) continue;
 
       const quota = quotas[code];
-
-      // Direct topic-based selection (no categories/subcategories)
       const rows = await db
-        .select({ id: questions.id })
-        .from(questions)
-        .where(and(eq(questions.topicId, topicId), eq(questions.isActive, true)))
-        .orderBy(sql`md5((${questions.id})::text || ${seed} || ${code})`)
+        .select({ id: questionsV2.id })
+        .from(questionsV2)
+        .where(and(eq(questionsV2.topicId, topicId), eq(questionsV2.isActive, true)))
+        .orderBy(sql`md5((${questionsV2.id})::text || ${seed} || ${code})`)
         .limit(quota);
 
       const ids = (rows as any[]).map((q) => Number(q.id)).filter((n) => Number.isFinite(n));
       pickedIds.push(...ids);
     }
 
-    // Final fallback: cross-topic (violates purity but ensures tryout can start)
     if (pickedIds.length < 110) {
       const remaining = 110 - pickedIds.length;
-      console.warn('TEAM_008 Using cross-topic fallback, purity violated');
+      console.warn('TEAM_008 Using cross-topic v2 fallback');
       const topup = await db
-        .select({ id: questions.id })
-        .from(questions)
-        .where(and(activeQuestionWhere, pickedIds.length ? notInArray(questions.id, pickedIds) : sql`true`))
-        .orderBy(sql`md5((${questions.id})::text || ${seed} || 'tryout_topup')`)
+        .select({ id: questionsV2.id })
+        .from(questionsV2)
+        .where(and(activeWhereV2, pickedIds.length ? notInArray(questionsV2.id, pickedIds) : sql`true`))
+        .orderBy(sql`md5((${questionsV2.id})::text || ${seed} || 'tryout_topup')`)
         .limit(remaining);
       pickedIds.push(...(topup as any[]).map((q) => Number(q.id)).filter((n) => Number.isFinite(n)));
     }
@@ -1523,14 +1529,14 @@ app.get('/exam/:examId/questions', async (c) => {
 
     const questionRows = await db
       .select({
-        id: questions.id,
+        id: questionsV2.id,
         subject: questionTopics.code,
-        difficulty: questions.difficulty,
-        text: questions.questionText,
+        difficulty: questionsV2.difficulty,
+        text: questionsV2.questionText,
       })
-      .from(questions)
-      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-      .where(inArray(questions.id, ids));
+      .from(questionsV2)
+      .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+      .where(inArray(questionsV2.id, ids));
 
     const byId = new Map<number, any>();
     for (const r of questionRows as any[]) byId.set(Number(r.id), r);
@@ -1538,12 +1544,12 @@ app.get('/exam/:examId/questions', async (c) => {
 
     const optionsRows = await db
       .select({
-        questionId: questionOptions.questionId,
-        optionKey: questionOptions.optionKey,
-        optionText: questionOptions.optionText,
+        questionId: questionOptionsV2.questionId,
+        optionKey: questionOptionsV2.optionKey,
+        optionText: questionOptionsV2.optionText,
       })
-      .from(questionOptions)
-      .where(inArray(questionOptions.questionId, ids));
+      .from(questionOptionsV2)
+      .where(inArray(questionOptionsV2.questionId, ids));
 
     const grouped: Record<string, { id: string; text: string }[]> = {};
     for (const o of optionsRows as any[]) {
@@ -1600,36 +1606,31 @@ app.post('/exam/:examId/submit', async (c) => {
     const db = await getDb(c.env);
     const questionMetaRows = await db
       .select({
-        id: questions.id,
-        code: sql<string | null>`upper(${questionTopics.code})`,
-        subcategoryId: questions.subcategoryId,
-        subtopicId: questions.subtopicId,
+        id: questionsV2.id,
+        code: sql<string>`upper(${questionTopics.code})`,
+        subtopicId: questionsV2.subtopicId,
       })
-      .from(questions)
-      .leftJoin(questionTopics, eq(questions.topicId, questionTopics.id))
-      .where(inArray(questions.id, ids));
+      .from(questionsV2)
+      .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+      .where(inArray(questionsV2.id, ids));
 
-    const metaById = new Map<number, { code: string; subcategoryId: number | null; subtopicId: number | null }>();
+    const metaById = new Map<number, { code: string; subtopicId: number | null }>();
     for (const r of questionMetaRows as any[]) {
-      const rawSubcategoryId = r.subcategoryId == null ? null : Number(r.subcategoryId);
-      const rawSubtopicId = r.subtopicId == null ? null : Number(r.subtopicId);
       metaById.set(Number(r.id), {
-        // TEAM_013: ensure downstream comparisons use `TWK|TIU|TKP`
         code: String(r.code || '').toUpperCase(),
-        subcategoryId: Number.isFinite(rawSubcategoryId) ? rawSubcategoryId : null,
-        subtopicId: Number.isFinite(rawSubtopicId) ? rawSubtopicId : null,
+        subtopicId: r.subtopicId == null ? null : Number(r.subtopicId),
       });
     }
 
     const optionRows = await db
       .select({
-        questionId: questionOptions.questionId,
-        optionKey: questionOptions.optionKey,
-        isCorrect: questionOptions.isCorrect,
-        weight: questionOptions.weight,
+        questionId: questionOptionsV2.questionId,
+        optionKey: questionOptionsV2.optionKey,
+        isCorrect: questionOptionsV2.isCorrect,
+        weight: questionOptionsV2.weight,
       })
-      .from(questionOptions)
-      .where(inArray(questionOptions.questionId, ids));
+      .from(questionOptionsV2)
+      .where(inArray(questionOptionsV2.questionId, ids));
 
     const optionsByQuestion: Record<string, Array<{ key: string; isCorrect: boolean | null; weight: number | null }>> = {};
     for (const o of optionRows as any[]) {
@@ -1651,7 +1652,7 @@ app.post('/exam/:examId/submit', async (c) => {
     const itemRows: Array<{
       questionId: number;
       categoryCode: string;
-      subcategoryId: number | null;
+      subtopicId: number | null;
       isCorrect: boolean | null;
       selectedWeight: number | null;
       maxWeight: number | null;
@@ -1659,11 +1660,8 @@ app.post('/exam/:examId/submit', async (c) => {
 
     for (const qid of ids) {
       const meta = metaById.get(qid);
-      // TEAM_013: avoid all-zero scoring when question category metadata is missing
       const rawCode = String(meta?.code || '').toUpperCase();
-      // TEAM_014: fall back to questions.subtopic_id so radar analytics uses question_subcategories consistently
-      const subcategoryId = meta?.subcategoryId ?? meta?.subtopicId ?? null;
-      // TODO(TEAM_014): manually verify tryout submission populates radar data after deploying
+      const subtopicId = meta?.subtopicId ?? null;
 
       const selected = (answers[String(qid)] ?? '').toLowerCase();
       if (!selected) continue;
@@ -1691,7 +1689,7 @@ app.post('/exam/:examId/submit', async (c) => {
         itemRows.push({
           questionId: qid,
           categoryCode: code,
-          subcategoryId,
+          subtopicId,
           isCorrect: null,
           selectedWeight: Number.isFinite(w) ? w : 0,
           maxWeight: Number.isFinite(max) ? max : 0,
@@ -1706,7 +1704,6 @@ app.post('/exam/:examId/submit', async (c) => {
           twk += 1;
           twkCorrect += 1;
         } else if (code === 'TIU') {
-          // TEAM_013: score as correct-count (1 point per correct) for TWK/TIU
           tiu += 1;
           tiuCorrect += 1;
         }
@@ -1715,7 +1712,7 @@ app.post('/exam/:examId/submit', async (c) => {
       itemRows.push({
         questionId: qid,
         categoryCode: code,
-        subcategoryId,
+        subtopicId,
         isCorrect,
         selectedWeight: null,
         maxWeight: null,
@@ -1747,7 +1744,7 @@ app.post('/exam/:examId/submit', async (c) => {
               attemptId,
               questionId: r.questionId,
               categoryCode: r.categoryCode,
-              subcategoryId: r.subcategoryId,
+              subtopicId: r.subtopicId,
               isCorrect: r.isCorrect,
               selectedWeight: r.selectedWeight,
               maxWeight: r.maxWeight,
