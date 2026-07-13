@@ -1410,13 +1410,19 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
       ORDER BY qs.name
     `;
 
+    const MIN_ATTEMPTS = 10; // TEAM_043: minimum attempts per theme for reliable readiness
+
     // 4) Build response
     const data: any[] = [];
     for (const t of themes) {
       const m = merged.get(`theme:${t.id}`) ?? { attempts: 0, correct: 0, ratioSum: 0 };
       const attempts = m.attempts;
-      let ratio = 0;
-      if (attempts > 0) ratio = m.ratioSum > 0 ? m.ratioSum / attempts : m.correct / attempts;
+      let value = null;
+      if (attempts >= MIN_ATTEMPTS) {
+        // TWK/TIU: binary correct ratio
+        const ratio = m.correct / attempts;
+        value = Math.max(0, Math.min(100, ratio * 100));
+      }
       data.push({
         themeId: Number(t.id),
         themeName: t.name,
@@ -1424,14 +1430,18 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
         subtopicName: String(t.subtopic_name ?? ''),
         topicCode: t.topic_code,
         attempts,
-        value: Math.max(0, Math.min(100, ratio * 100)),
+        value,
       });
     }
     for (const s of tkpSubtopics) {
       const m = merged.get(`sub:${s.id}`) ?? { attempts: 0, correct: 0, ratioSum: 0 };
       const attempts = m.attempts;
-      let ratio = 0;
-      if (attempts > 0) ratio = m.ratioSum > 0 ? m.ratioSum / attempts : m.correct / attempts;
+      let value = null;
+      if (attempts >= MIN_ATTEMPTS) {
+        // TKP: weighted gradasi ratio only
+        const ratio = m.ratioSum / attempts;
+        value = Math.max(0, Math.min(100, ratio * 100));
+      }
       data.push({
         themeId: Number(s.id),
         themeName: String(s.name),
@@ -1439,7 +1449,7 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
         subtopicName: String(s.name),
         topicCode: 'TKP',
         attempts,
-        value: Math.max(0, Math.min(100, ratio * 100)),
+        value,
       });
     }
 

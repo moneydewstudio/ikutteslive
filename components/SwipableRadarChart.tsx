@@ -10,7 +10,7 @@ type RadarPoint = {
   subtopicId: number;
   subtopicName: string;
   topicCode: string | null;
-  value: number;
+  value: number | null; // null = insufficient data (< MIN_ATTEMPTS)
   attempts: number;
 };
 
@@ -37,7 +37,7 @@ const FILLS = ['rgba(0,0,0,0.03)', 'rgba(0,0,0,0.06)'];
 
 // Inline SVG radar chart: no external deps, works w/ many axes
 const RadarSvg: React.FC<{
-  data: { name: string; value: number; attempts: number; subtopicName: string }[];
+  data: { name: string; value: number | null; attempts: number; subtopicName: string }[];
   color: string;
   minAttemptsSolid: number;
   groups: { start: number; end: number; name: string }[];
@@ -58,7 +58,7 @@ const RadarSvg: React.FC<{
       return `${p.x},${p.y}`;
     }).join(' ');
 
-  const dataPoints = data.map((d, i) => polar(i, (Math.min(Math.max(d.value, 0), 100) / 100) * r));
+  const dataPoints = data.map((d, i) => polar(i, ((d.value !== null ? Math.min(Math.max(d.value, 0), 100) : 0) / 100) * r));
 
   const showGrouping = !allSingle && groups.length > 1;
 
@@ -282,7 +282,7 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
                 <div className="flex flex-wrap gap-1">
                   {chartData.slice(g.start, g.end + 1).filter(d => d.attempts > 0).map(d => (
                     <span key={d.name} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black" style={{ backgroundColor: color + '40' }}>
-                      {d.name.substring(0, 8)}: {Math.round(d.value)}%
+                      {d.name.substring(0, 8)}: {d.value !== null ? Math.round(d.value) : '—'}%
                     </span>
                   ))}
                 </div>

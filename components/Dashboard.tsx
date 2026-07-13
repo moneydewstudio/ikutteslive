@@ -36,7 +36,7 @@ type RadarPoint = {
   subtopicId: number;
   subtopicName: string;
   topicCode: string | null;
-  value: number;
+  value: number | null; // null = insufficient data (< MIN_ATTEMPTS)
   attempts: number;
 };
 
