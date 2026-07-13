@@ -27,7 +27,7 @@ const SUBTOPIC_LABELS: Record<string, string> = {
   TKP: 'Tes Karakteristik Pribadi',
 };
 const SUBTOPIC_COLORS: Record<string, string> = {
-  TIU: '#A3E635', // lighter/lime-400 to contrast with bg-brand-lime
+  TIU: '#A3E635',
   TWK: '#38BDF8',
   TKP: '#FB923C',
 };
@@ -41,7 +41,8 @@ const RadarSvg: React.FC<{
   color: string;
   minAttemptsSolid: number;
   groups: { start: number; end: number; name: string }[];
-}> = ({ data, color, minAttemptsSolid, groups }) => {
+  allSingle: boolean;
+}> = ({ data, color, minAttemptsSolid, groups, allSingle }) => {
   const cx = 150, cy = 150, r = 120;
   const n = data.length;
   if (n === 0) return null;
@@ -59,10 +60,12 @@ const RadarSvg: React.FC<{
 
   const dataPoints = data.map((d, i) => polar(i, (Math.min(Math.max(d.value, 0), 100) / 100) * r));
 
+  const showGrouping = !allSingle && groups.length > 1;
+
   return (
     <svg viewBox="0 0 300 300" className="w-full h-full" style={{ maxHeight: '288px' }}>
-      {/* TEAM_043: Alternating fan fills per group */}
-      {groups.length > 1 && groups.map((g, gi) => {
+      {/* Alternating fan fills per subtopic group */}
+      {showGrouping && groups.map((g, gi) => {
         let pts = `${cx},${cy}`;
         for (let i = g.start; i <= g.end; i++) {
           const p = polar(i, r);
@@ -86,8 +89,8 @@ const RadarSvg: React.FC<{
         const p = polar(i, r);
         return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#ccc" strokeWidth={0.5} />;
       })}
-      {/* TEAM_043: Separator lines between groups */}
-      {groups.length > 1 && groups.slice(0, -1).map((g, gi) => {
+      {/* Separator lines between groups */}
+      {showGrouping && groups.slice(0, -1).map((g, gi) => {
         const midIdx = g.end + 0.5;
         const angle = (2 * Math.PI * midIdx) / n - Math.PI / 2;
         const p = {
@@ -102,8 +105,8 @@ const RadarSvg: React.FC<{
           />
         );
       })}
-      {/* TEAM_043: Group name labels */}
-      {groups.length > 1 && groups.map((g, gi) => {
+      {/* Group name labels */}
+      {showGrouping && groups.map((g, gi) => {
         const labelR = r + 30;
         const p = polar(g.start, labelR);
         const deg = (360 * g.start) / n;
@@ -137,7 +140,6 @@ const RadarSvg: React.FC<{
       {data.map((d, i) => {
         const labelR = r + 18;
         const p = polar(i, labelR);
-        // Angle in degrees for text anchor logic
         const deg = (360 * i) / n;
         const isLeft = deg > 90 && deg < 270;
         return (
@@ -226,6 +228,9 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
     return result;
   }, [chartData]);
 
+  // Skip visual grouping when every group is size 1 (e.g. TKP — each subtopic is its own axis)
+  const allSingle = groups.length > 0 && groups.every(g => g.end === g.start);
+
   return (
     <div
       className="flex flex-col"
@@ -263,7 +268,7 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
               </p>
             </div>
           ) : (
-            <RadarSvg data={chartData} color={color} minAttemptsSolid={minAttemptsSolid} groups={groups} />
+            <RadarSvg data={chartData} color={color} minAttemptsSolid={minAttemptsSolid} groups={groups} allSingle={allSingle} />
           )}
         </div>
         {/* TEAM_043: Score chips grouped by subtopic */}

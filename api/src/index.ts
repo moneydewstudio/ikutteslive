@@ -1321,8 +1321,8 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
   try {
     const nsql = neon(c.env.NEON_DATABASE_URL);
 
-    // 1) Fetch user attempt data — raw SQL
-    const tryoutRaw = await nsql`
+    // 1a) Fetch TWK/TIU attempt data — grouped by theme_id
+    const tryoutThemeRaw = await nsql`
       SELECT q.theme_id,
              count(*) as attempts,
              sum(case when tai.is_correct = true then 1 else 0 end) as correct,
@@ -1333,7 +1333,7 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
       WHERE ta.user_id = ${user.id} AND q.theme_id IS NOT NULL
       GROUP BY q.theme_id
     `;
-    const dailyRaw = await nsql`
+    const dailyThemeRaw = await nsql`
       SELECT q.theme_id,
              count(*) as attempts,
              sum(case when dai.is_correct = true then 1 else 0 end) as correct,
@@ -1344,25 +1344,52 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
       WHERE da.user_id = ${user.id} AND q.theme_id IS NOT NULL
       GROUP BY q.theme_id
     `;
+    // 1b) Fetch TKP attempt data — grouped by subtopic_id (no theme for TKP)
+    const tryoutSubRaw = await nsql`
+      SELECT q.subtopic_id as group_id,
+             count(*) as attempts,
+             sum(case when tai.is_correct = true then 1 else 0 end) as correct,
+             sum(case when tai.max_weight > 0 then (tai.selected_weight::float / tai.max_weight::float) else 0 end) as ratio_sum
+      FROM tryout_attempt_items tai
+      JOIN tryout_attempts ta ON tai.attempt_id = ta.id
+      JOIN questions_v2 q ON tai.question_id = q.id
+      WHERE ta.user_id = ${user.id} AND q.topic_id = 3 AND q.theme_id IS NULL AND q.subtopic_id IS NOT NULL
+      GROUP BY q.subtopic_id
+    `;
+    const dailySubRaw = await nsql`
+      SELECT q.subtopic_id as group_id,
+             count(*) as attempts,
+             sum(case when dai.is_correct = true then 1 else 0 end) as correct,
+             sum(case when dai.max_weight > 0 then (dai.selected_weight::float / dai.max_weight::float) else 0 end) as ratio_sum
+      FROM daily_quiz_attempt_items dai
+      JOIN daily_quiz_attempts da ON dai.attempt_id = da.id
+      JOIN questions_v2 q ON dai.question_id = q.id
+      WHERE da.user_id = ${user.id} AND q.topic_id = 3 AND q.theme_id IS NULL AND q.subtopic_id IS NOT NULL
+      GROUP BY q.subtopic_id
+    `;
 
-    // 2) Merge tryout + daily into a single map
-    const merged = new Map<number, { attempts: number; correct: number; ratioSum: number }>();
-    const merge = (rows: any[]) => {
+    // 2) Merge into a single map — keyed by (type_id, group_id) to avoid collisions
+    // type = 'theme' | 'subtopic'
+    const merged = new Map<string, { attempts: number; correct: number; ratioSum: number }>();
+    const merge = (rows: any[], prefix: string) => {
       for (const r of rows) {
-        const id = Number(r.theme_id);
+        const id = Number(r.theme_id ?? r.group_id);
         if (!id) continue;
-        const prev = merged.get(id) ?? { attempts: 0, correct: 0, ratioSum: 0 };
-        merged.set(id, {
+        const key = `${prefix}:${id}`;
+        const prev = merged.get(key) ?? { attempts: 0, correct: 0, ratioSum: 0 };
+        merged.set(key, {
           attempts: prev.attempts + Number(r.attempts ?? 0),
           correct: prev.correct + Number(r.correct ?? 0),
           ratioSum: prev.ratioSum + Number(r.ratio_sum ?? 0),
         });
       }
     };
-    merge(tryoutRaw);
-    merge(dailyRaw);
+    merge(tryoutThemeRaw, 'theme');
+    merge(dailyThemeRaw, 'theme');
+    merge(tryoutSubRaw, 'sub');
+    merge(dailySubRaw, 'sub');
 
-    // TEAM_043: v2 direct path � bypass question_categories, include subtopicId/Name for frontend grouping
+    // 3a) Fetch TWK/TIU themes
     const themes = await nsql`
       SELECT qt.id, qt.name, qt.subtopic_id,
              qs.name as subtopic_name,
@@ -1373,18 +1400,24 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
       WHERE qt2.code IS NOT NULL
       ORDER BY qt2.code, qs.name, qt.name
     `;
+    // 3b) Fetch TKP subtopics (no themes available)
+    const tkpSubtopics = await nsql`
+      SELECT qs.id, qs.name,
+             'TKP' as topic_code
+      FROM question_subtopics qs
+      LEFT JOIN question_topics qt ON qs.topic_id = qt.id
+      WHERE qt.code IS NOT NULL AND upper(qt.code) = 'TKP'
+      ORDER BY qs.name
+    `;
 
     // 4) Build response
-    const data = themes.map((t: any) => {
-      const m = merged.get(Number(t.id)) ?? { attempts: 0, correct: 0, ratioSum: 0 };
+    const data: any[] = [];
+    for (const t of themes) {
+      const m = merged.get(`theme:${t.id}`) ?? { attempts: 0, correct: 0, ratioSum: 0 };
       const attempts = m.attempts;
-      const isTkp = t.topic_code === 'TKP';
       let ratio = 0;
-      if (attempts > 0) {
-        ratio = isTkp && m.ratioSum > 0 ? m.ratioSum / attempts : m.correct / attempts;
-      }
-      // TEAM_043: include subtopic fields for frontend grouping
-      return {
+      if (attempts > 0) ratio = m.ratioSum > 0 ? m.ratioSum / attempts : m.correct / attempts;
+      data.push({
         themeId: Number(t.id),
         themeName: t.name,
         subtopicId: Number(t.subtopic_id ?? 0),
@@ -1392,8 +1425,23 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
         topicCode: t.topic_code,
         attempts,
         value: Math.max(0, Math.min(100, ratio * 100)),
-      };
-    });
+      });
+    }
+    for (const s of tkpSubtopics) {
+      const m = merged.get(`sub:${s.id}`) ?? { attempts: 0, correct: 0, ratioSum: 0 };
+      const attempts = m.attempts;
+      let ratio = 0;
+      if (attempts > 0) ratio = m.ratioSum > 0 ? m.ratioSum / attempts : m.correct / attempts;
+      data.push({
+        themeId: Number(s.id),
+        themeName: String(s.name),
+        subtopicId: Number(s.id),
+        subtopicName: String(s.name),
+        topicCode: 'TKP',
+        attempts,
+        value: Math.max(0, Math.min(100, ratio * 100)),
+      });
+    }
 
     return c.json({ data });
   } catch (e) {
