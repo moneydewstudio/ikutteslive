@@ -1,11 +1,14 @@
 // TEAM_001: Swipable radar chart component for TIU/TWK/TKP subtopic readiness
 // Uses inline SVG — Recharts RadarChart had rendering issues with this dataset
-import React, { useState, useRef, useCallback } from 'react';
+// TEAM_043: subtopicId/Name fields, group detection, section separator SVG, grouped chips
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type RadarPoint = {
   themeId: number;
   themeName: string;
+  subtopicId: number;
+  subtopicName: string;
   topicCode: string | null;
   value: number;
   attempts: number;
@@ -30,13 +33,15 @@ const SUBTOPIC_COLORS: Record<string, string> = {
 };
 
 const MIN_SWIPE_DIST = 40;
+const FILLS = ['rgba(0,0,0,0.03)', 'rgba(0,0,0,0.06)'];
 
 // Inline SVG radar chart: no external deps, works w/ many axes
 const RadarSvg: React.FC<{
-  data: { name: string; value: number; attempts: number }[];
+  data: { name: string; value: number; attempts: number; subtopicName: string }[];
   color: string;
   minAttemptsSolid: number;
-}> = ({ data, color, minAttemptsSolid }) => {
+  groups: { start: number; end: number; name: string }[];
+}> = ({ data, color, minAttemptsSolid, groups }) => {
   const cx = 150, cy = 150, r = 120;
   const n = data.length;
   if (n === 0) return null;
@@ -56,6 +61,16 @@ const RadarSvg: React.FC<{
 
   return (
     <svg viewBox="0 0 300 300" className="w-full h-full" style={{ maxHeight: '288px' }}>
+      {/* TEAM_043: Alternating fan fills per group */}
+      {groups.length > 1 && groups.map((g, gi) => {
+        let pts = `${cx},${cy}`;
+        for (let i = g.start; i <= g.end; i++) {
+          const p = polar(i, r);
+          pts += ` ${p.x},${p.y}`;
+        }
+        pts += ` ${cx},${cy}`;
+        return <polygon key={gi} points={pts} fill={FILLS[gi % 2]} />;
+      })}
       {/* Grid rings */}
       {[0.25, 0.5, 0.75, 1].map((frac) => (
         <polygon
@@ -70,6 +85,41 @@ const RadarSvg: React.FC<{
       {Array.from({ length: n }).map((_, i) => {
         const p = polar(i, r);
         return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#ccc" strokeWidth={0.5} />;
+      })}
+      {/* TEAM_043: Separator lines between groups */}
+      {groups.length > 1 && groups.slice(0, -1).map((g, gi) => {
+        const midIdx = g.end + 0.5;
+        const angle = (2 * Math.PI * midIdx) / n - Math.PI / 2;
+        const p = {
+          x: cx + r * 0.9 * Math.cos(angle),
+          y: cy + r * 0.9 * Math.sin(angle),
+        };
+        return (
+          <line
+            key={gi}
+            x1={cx} y1={cy} x2={p.x} y2={p.y}
+            stroke="#aaa" strokeWidth={1} strokeDasharray="4,2"
+          />
+        );
+      })}
+      {/* TEAM_043: Group name labels */}
+      {groups.length > 1 && groups.map((g, gi) => {
+        const labelR = r + 30;
+        const p = polar(g.start, labelR);
+        const deg = (360 * g.start) / n;
+        const isLeft = deg > 90 && deg < 270;
+        return (
+          <text
+            key={gi}
+            x={p.x} y={p.y}
+            textAnchor={isLeft ? 'end' : 'start'}
+            fontSize={10} fontWeight={800}
+            fill="#666"
+            transform={isLeft ? 'translate(-4, 3)' : 'translate(4, 3)'}
+          >
+            {g.name}
+          </text>
+        );
       })}
       {/* Data polygon */}
       <polygon
@@ -154,11 +204,27 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
     [goPrev, goNext]
   );
 
+  // TEAM_043: include subtopicName in chart data
   const chartData = filteredRadar.map((r) => ({
     name: r.themeName,
     value: r.value,
     attempts: r.attempts,
+    subtopicName: r.subtopicName,
   }));
+
+  // TEAM_043: derive contiguous groups by subtopicName
+  const groups = useMemo(() => {
+    if (!chartData.length) return [];
+    const result: { start: number; end: number; name: string }[] = [];
+    let start = 0;
+    for (let i = 1; i <= chartData.length; i++) {
+      if (i === chartData.length || chartData[i].subtopicName !== chartData[start].subtopicName) {
+        result.push({ start, end: i - 1, name: chartData[start].subtopicName });
+        start = i;
+      }
+    }
+    return result;
+  }, [chartData]);
 
   return (
     <div
@@ -197,16 +263,25 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
               </p>
             </div>
           ) : (
-            <RadarSvg data={chartData} color={color} minAttemptsSolid={minAttemptsSolid} />
+            <RadarSvg data={chartData} color={color} minAttemptsSolid={minAttemptsSolid} groups={groups} />
           )}
         </div>
-        {/* Score chips */}
+        {/* TEAM_043: Score chips grouped by subtopic */}
         {chartData.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {chartData.filter(d => d.attempts > 0).map(d => (
-              <span key={d.name} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black" style={{ backgroundColor: color + '40' }}>
-                {d.name.substring(0, 8)}: {Math.round(d.value)}%
-              </span>
+          <div className="mt-2 flex flex-col gap-2">
+            {groups.map((g, gi) => (
+              <div key={gi}>
+                {groups.length > 1 && (
+                  <span className="text-[9px] font-black uppercase tracking-wider text-black/50 block mb-0.5">{g.name}</span>
+                )}
+                <div className="flex flex-wrap gap-1">
+                  {chartData.slice(g.start, g.end + 1).filter(d => d.attempts > 0).map(d => (
+                    <span key={d.name} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black" style={{ backgroundColor: color + '40' }}>
+                      {d.name.substring(0, 8)}: {Math.round(d.value)}%
+                    </span>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
