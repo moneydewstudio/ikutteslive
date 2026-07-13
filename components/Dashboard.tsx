@@ -29,10 +29,12 @@ type TryoutHistoryRow = {
   createdAt: string;
 };
 
-// TEAM_001: RadarPoint type shared with SwipableRadarChart
+// TEAM_043: synced with SwipableRadarChart RadarPoint (subtopicId/Name added)
 type RadarPoint = {
   themeId: number;
   themeName: string;
+  subtopicId: number;
+  subtopicName: string;
   topicCode: string | null;
   value: number;
   attempts: number;
