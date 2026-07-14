@@ -271,22 +271,14 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
             <RadarSvg data={chartData} color={color} minAttemptsSolid={minAttemptsSolid} groups={groups} allSingle={allSingle} />
           )}
         </div>
-        {/* TEAM_043: Score chips grouped by subtopic */}
+        {/* Score chips — flat 2-col grid without subtopic grouping */}
         {chartData.length > 0 && (
-          <div className="mt-2 flex flex-col gap-2">
-            {groups.map((g, gi) => (
-              <div key={gi}>
-                {groups.length > 1 && (
-                  <span className="text-[9px] font-black uppercase tracking-wider text-black/50 block mb-0.5">{g.name}</span>
-                )}
-                <div className="flex flex-wrap gap-1">
-                  {chartData.slice(g.start, g.end + 1).filter(d => d.attempts > 0).map(d => (
-                    <span key={d.name + '-' + (d as any).themeId} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black" style={{ backgroundColor: color + '40' }}>
-                      {d.name.substring(0, 8)}: {d.value !== null ? Math.round(d.value) : '—'}%
-                    </span>
-                  ))}
-                </div>
-              </div>
+          <div className="mt-2 grid grid-cols-2 gap-1">
+            {chartData.filter(d => d.attempts > 0).map(d => (
+              <span key={d.name + '-' + (d as any).themeId} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black flex items-center justify-between" style={{ backgroundColor: color + '40' }}>
+                <span className="uppercase">{d.name.substring(0, 3)}</span>
+                <span>{d.value !== null ? Math.round(d.value) : '—'}%</span>
+              </span>
             ))}
           </div>
         )}

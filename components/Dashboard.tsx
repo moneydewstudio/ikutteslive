@@ -141,7 +141,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
 
         {/* LEFT COLUMN: Profile & Key Metrics — scrollable within viewport */}
-        <div className="md:w-1/3 flex flex-col border-b md:border-b-0 md:border-r border-black bg-bg overflow-y-auto">
+        <div className="md:w-1/3 flex flex-col border-b md:border-b-0 md:border-r border-black bg-bg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
             {/* User Profile Cell */}
             <div className="p-lg border-b border-black">
@@ -232,7 +232,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               ) : tryoutHistory.length === 0 ? (
                 <div className="p-8 text-center text-gray-400 font-medium">Belum ada tryout.</div>
               ) : (
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {tryoutHistory.slice(0, 20).map((row) => (
                     <button
                       key={row.id}
