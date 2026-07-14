@@ -137,11 +137,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
   }, [user?.id]);
 
   return (
-    <div className="flex flex-col w-full animate-fade-in pb-24 md:pb-0">
-      <div className="flex flex-col md:flex-row flex-1">
+    <div className="flex flex-col w-full h-screen animate-fade-in">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
 
-        {/* LEFT COLUMN: Profile & Key Metrics */}
-        <div className="md:w-1/3 flex flex-col border-b md:border-b-0 md:border-r border-black bg-bg">
+        {/* LEFT COLUMN: Profile & Key Metrics — scrollable within viewport */}
+        <div className="md:w-1/3 flex flex-col border-b md:border-b-0 md:border-r border-black bg-bg overflow-y-auto">
 
             {/* User Profile Cell */}
             <div className="p-lg border-b border-black">
@@ -188,8 +188,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
             </div>
         </div>
 
-        {/* RIGHT COLUMN: Charts & History */}
-        <div className="md:w-2/3 flex flex-col bg-white">
+        {/* RIGHT COLUMN: Charts & History — only history scrolls */}
+        <div className="md:w-2/3 flex flex-col bg-white min-h-0">
             
             {/* Chart Section */}
             <div className="h-64 md:h-80 border-b border-black p-2xl relative">
@@ -217,8 +217,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
                  </ResponsiveContainer>
             </div>
 
-            {/* Riwayat Tryout */}
-            <div className="flex flex-col flex-1">
+            {/* Riwayat Tryout — scrollable within remaining viewport space */}
+            <div className="flex flex-col flex-1 min-h-0">
               <div className="p-4 border-b border-black bg-gray-50 flex justify-between items-center">
                 <h3 className="font-black text-lg flex items-center gap-2">
                   Riwayat Tryout
