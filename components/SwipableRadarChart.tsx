@@ -281,7 +281,7 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
                 )}
                 <div className="flex flex-wrap gap-1">
                   {chartData.slice(g.start, g.end + 1).filter(d => d.attempts > 0).map(d => (
-                    <span key={d.name} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black" style={{ backgroundColor: color + '40' }}>
+                    <span key={d.name + '-' + (d as any).themeId} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black" style={{ backgroundColor: color + '40' }}>
                       {d.name.substring(0, 8)}: {d.value !== null ? Math.round(d.value) : '—'}%
                     </span>
                   ))}
