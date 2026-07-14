@@ -1344,7 +1344,7 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
       WHERE da.user_id = ${user.id} AND q.theme_id IS NOT NULL
       GROUP BY q.theme_id
     `;
-    // 1b) Fetch TKP attempt data — grouped by subtopic_id (no theme for TKP)
+    // 1b) Fetch TKP attempt data — grouped by subtopic_id (questions v1 has theme_id populated, ignore it)
     const tryoutSubRaw = await nsql`
       SELECT q.subtopic_id as group_id,
              count(*) as attempts,
@@ -1352,8 +1352,8 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
              sum(case when tai.max_weight > 0 then (tai.selected_weight::float / tai.max_weight::float) else 0 end) as ratio_sum
       FROM tryout_attempt_items tai
       JOIN tryout_attempts ta ON tai.attempt_id = ta.id
-      JOIN questions_v2 q ON tai.question_id = q.id
-      WHERE ta.user_id = ${user.id} AND q.topic_id = 3 AND q.theme_id IS NULL AND q.subtopic_id IS NOT NULL
+      JOIN questions q ON tai.question_id = q.id
+      WHERE ta.user_id = ${user.id} AND q.topic_id = 3 AND q.subtopic_id IS NOT NULL
       GROUP BY q.subtopic_id
     `;
     const dailySubRaw = await nsql`
@@ -1363,8 +1363,8 @@ app.get('/analytics/subtopic-readiness', withUserContext, async (c) => {
              sum(case when dai.max_weight > 0 then (dai.selected_weight::float / dai.max_weight::float) else 0 end) as ratio_sum
       FROM daily_quiz_attempt_items dai
       JOIN daily_quiz_attempts da ON dai.attempt_id = da.id
-      JOIN questions_v2 q ON dai.question_id = q.id
-      WHERE da.user_id = ${user.id} AND q.topic_id = 3 AND q.theme_id IS NULL AND q.subtopic_id IS NOT NULL
+      JOIN questions q ON dai.question_id = q.id
+      WHERE da.user_id = ${user.id} AND q.topic_id = 3 AND q.subtopic_id IS NOT NULL
       GROUP BY q.subtopic_id
     `;
 
