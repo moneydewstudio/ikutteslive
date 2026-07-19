@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { User, UserSession } from '../types';
 import DeltaBanner from '../components/DeltaBanner';
 import SwipableRadarChart from '../components/SwipableRadarChart';
@@ -66,6 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
   const [radarSyncWarning, setRadarSyncWarning] = useState(false);
 
   useEffect(() => {
+    if (!user || user.id === 'local_guest') return; // wait for a real Firebase token
     let cancelled = false;
     const run = async () => {
       setTryoutHistoryLoading(true);
@@ -89,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
 
     void run();
     return () => { cancelled = true; };
-  }, [user.isPro]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (didLoadSyncRef.current) return;

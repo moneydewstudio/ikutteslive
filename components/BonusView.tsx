@@ -67,6 +67,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
 
   // TEAM_034: Fetch tryoutHistory for consistent DeltaBanner score
   useEffect(() => {
+    if (!user || user.id === 'local_guest') return; // wait for a real Firebase token
     let cancelled = false;
     const run = async () => {
       try {
@@ -82,7 +83,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
     };
     void run();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.id]);
 
   // TEAM_037: load drill themes for the per-theme picker
   useEffect(() => {
@@ -196,3 +197,4 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
 };
 
 export default BonusView;
+

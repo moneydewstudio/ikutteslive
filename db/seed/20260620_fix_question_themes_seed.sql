@@ -19,32 +19,28 @@ BEGIN;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NASIONALISME_PANCASILA', 'Pancasila'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%NASIONALISME%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NASIONALISME_UUD1945', 'UUD 1945'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%NASIONALISME%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NASIONALISME_NKRI', 'NKRI'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%NASIONALISME%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NASIONALISME_BHINNEKA', 'Bhinneka Tunggal Ika'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%NASIONALISME%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -52,16 +48,14 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'INTEGRITAS_KEJUJURAN', 'Kejujuran'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%INTEGRITAS%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'INTEGRITAS_ANTIKORUPSI', 'Anti Korupsi'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%INTEGRITAS%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -69,8 +63,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'BELA_NEGARA_PERTAHANAN', 'Pertahanan & Keamanan'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%BELA%NEGARA%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -78,8 +71,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'PILAR_NEGARA_KONSTITUSI', 'Konstitusi & Hukum'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%PILAR%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -87,16 +79,14 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'BAHASA_PEMAHAMAN_BACAAN', 'Pemahaman Bacaan'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%BAHASA%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'BAHASA_TATA_BAHASA', 'Tata Bahasa'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK' AND upper(qs.name) LIKE '%BAHASA%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -104,8 +94,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TWK_' || upper(replace(qs.name, ' ', '_')), qs.name
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TWK'
   AND NOT EXISTS (SELECT 1 FROM question_themes qt2 WHERE qt2.subtopic_id = qs.id)
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
@@ -118,40 +107,35 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'VERBAL_ANALOGI', 'Analogi'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%VERBAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'VERBAL_SINONIM', 'Sinonim'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%VERBAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'VERBAL_ANTONIM', 'Antonim'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%VERBAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'VERBAL_SILOGISME', 'Silogisme'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%VERBAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'VERBAL_LOGIKA_ANALITIS', 'Logika Analitis'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%VERBAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -159,40 +143,35 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NUMERIK_ARITMATIKA', 'Aritmatika'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%NUMERIK%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NUMERIK_DERET', 'Deret Angka'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%NUMERIK%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NUMERIK_PERBANDINGAN', 'Perbandingan'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%NUMERIK%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NUMERIK_SOAL_CERITA', 'Soal Cerita'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%NUMERIK%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'NUMERIK_GEOMETRI', 'Geometri'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%NUMERIK%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -200,16 +179,14 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'FIGURAL_POLA', 'Pola Gambar'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%FIGURAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'FIGURAL_KERUANGAN', 'Keruangan'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU' AND upper(qs.name) LIKE '%FIGURAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -217,8 +194,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TIU_' || upper(replace(qs.name, ' ', '_')), qs.name
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TIU'
   AND NOT EXISTS (SELECT 1 FROM question_themes qt2 WHERE qt2.subtopic_id = qs.id)
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
@@ -231,8 +207,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_PELAYANAN_PUBLIK', 'Pelayanan Publik'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP' AND upper(qs.name) LIKE '%PELAYANAN%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -240,8 +215,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_JEJARING_KERJA', 'Jejaring Kerja'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP' AND upper(qs.name) LIKE '%JEJARING%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -249,8 +223,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_SOSIAL_BUDAYA', 'Sosial Budaya'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP' AND upper(qs.name) LIKE '%SOSIAL%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -258,8 +231,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_PROFESIONALISME', 'Profesionalisme'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP' AND upper(qs.name) LIKE '%PROFESIONALISME%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -267,8 +239,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_ANTI_RADIKALISME', 'Anti Radikalisme'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP' AND (upper(qs.name) LIKE '%RADIKALISME%' OR upper(qs.name) LIKE '%ANTI RADIK%')
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -276,8 +247,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_TIK', 'Teknologi Informasi'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP' AND (upper(qs.name) LIKE '%TIK%' OR upper(qs.name) LIKE '%TEKNOLOGI%')
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -285,8 +255,7 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_MANAJEMEN_PERUBAHAN', 'Manajemen Perubahan'
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP' AND upper(qs.name) LIKE '%MANAJEMEN%PERUBAHAN%'
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
@@ -294,12 +263,37 @@ ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO question_themes (subtopic_id, code, name)
 SELECT qs.id, 'TKP_' || upper(replace(qs.name, ' ', '_')), qs.name
 FROM question_subtopics qs
-JOIN question_categories qc ON qs.category_id = qc.id
-JOIN question_topics qt ON qc.topic_id = qt.id
+JOIN question_topics qt ON qs.topic_id = qt.id
 WHERE upper(qt.code) = 'TKP'
   AND NOT EXISTS (SELECT 1 FROM question_themes qt2 WHERE qt2.subtopic_id = qs.id)
 ON CONFLICT (subtopic_id, code) DO UPDATE SET name = EXCLUDED.name;
 
+
+-- ============================================================
+-- Step 2: Backfill theme_id on BOTH question tables
+-- The live drill routes (/drills/by-theme, /themes) read questions_v2.theme_id,
+-- while the legacy spider-chart path reads questions.theme_id. Tag both.
+-- ============================================================
+
+-- 2a: questions_v2 (live drills) — via subtopic_id
+UPDATE questions_v2 q
+SET theme_id = sub.first_theme_id
+FROM (
+  SELECT DISTINCT ON (qs_id)
+    qs_id,
+    qt.id AS first_theme_id
+  FROM (
+    SELECT id AS q_id, subtopic_id AS qs_id
+    FROM questions_v2
+    WHERE theme_id IS NULL AND subtopic_id IS NOT NULL
+  ) unassigned
+  CROSS JOIN LATERAL (
+    SELECT id FROM question_themes WHERE subtopic_id = unassigned.qs_id ORDER BY id LIMIT 1
+  ) qt
+) sub
+WHERE q.subtopic_id = sub.qs_id AND q.theme_id IS NULL;
+
+-- 2b: questions (legacy spider chart) — via subtopic_id
 
 -- ============================================================
 -- Step 2: Backfill questions.theme_id
@@ -344,19 +338,16 @@ FROM (
 WHERE q.subcategory_id = sub.qs_id AND q.theme_id IS NULL;
 
 -- ============================================================
--- Step 3: Diagnostic output
+-- Step 3: Diagnostic output (plain SQL — no PL/pgSQL needed)
 -- ============================================================
-DO $$
-DECLARE
-  theme_count integer;
-  tagged_count integer;
-  untagged_count integer;
-BEGIN
-  SELECT count(*) INTO theme_count FROM question_themes;
-  SELECT count(*) INTO tagged_count FROM questions WHERE theme_id IS NOT NULL;
-  SELECT count(*) INTO untagged_count FROM questions WHERE theme_id IS NULL;
-  RAISE NOTICE 'question_themes: % rows', theme_count;
-  RAISE NOTICE 'questions with theme_id: % tagged, % untagged', tagged_count, untagged_count;
-END $$;
+SELECT 'question_themes' AS tbl, count(*) AS rows FROM question_themes;
+
+SELECT
+  (SELECT count(*) FROM questions_v2 WHERE theme_id IS NOT NULL) AS v2_tagged,
+  (SELECT count(*) FROM questions_v2 WHERE theme_id IS NULL)     AS v2_untagged;
+
+SELECT
+  (SELECT count(*) FROM questions WHERE theme_id IS NOT NULL) AS legacy_tagged,
+  (SELECT count(*) FROM questions WHERE theme_id IS NULL)     AS legacy_untagged;
 
 COMMIT;
