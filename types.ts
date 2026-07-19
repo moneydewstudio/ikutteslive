@@ -1,4 +1,4 @@
-export type QuestionDifficulty = 1 | 2 | 3 | 4 | 5;
+﻿export type QuestionDifficulty = 1 | 2 | 3 | 4 | 5;
 
 export interface Option {
   id: string;
@@ -28,6 +28,8 @@ export interface UserSession {
   refreshAt?: number;
   // TEAM_005: store daily drill category for single-category rotation sessions
   drillCategory?: 'TIU' | 'TWK' | 'TKP';
+  // TEAM_037: store drill theme id for per-theme drills
+  drillThemeId?: number;
   score: number;
   readiness: number;
   completedAt?: number;

@@ -1,0 +1,241 @@
+// TEAM_037: per-theme drill — fetch from GET /drills/by-theme and build a session keyed by theme
+export const fetchDrillsByThemeFromApi = async (
+  categoryParam: 'TIU' | 'TWK' | 'TKP',
+  themeId: number
+): Promise<{
+  dayKey: string;
+  refreshAt: number;
+  category: 'TIU' | 'TWK' | 'TKP';
+  themeId: number;
+  questions: Question[];
+}> => {
+  const params = new URLSearchParams();
+  params.set('category', categoryParam);
+  params.set('themeId', String(themeId));
+  const res = await apiFetch(/drills/by-theme?);
+  if (!res.ok) {
+    throw new Error('Failed to fetch theme drills');
+  }
+  const data = (await res.json()) as any;
+  const dayKey = String(data?.dayKey ?? '');
+  const refreshAt = Number(data?.refreshAt ?? 0);
+  const categoryRaw = String(data?.category ?? '');
+  const questionsRaw = Array.isArray(data?.questions) ? data.questions : [];
+  const category = categoryRaw === 'TWK' || categoryRaw === 'TIU' || categoryRaw === 'TKP' ? categoryRaw : 'TIU';
+  if (!dayKey || !Number.isFinite(refreshAt) || refreshAt <= 0) {
+    throw new Error('Invalid theme drills payload');
+  }
+  return {
+    dayKey,
+    refreshAt,
+    category,
+    themeId: Number(data?.themeId ?? themeId),
+    questions: questionsRaw.map(mapQuestionFromApi),
+  };
+};
+
+export const createDailyDrillSessionFromApiByTheme = async (
+  category: 'TIU' | 'TWK' | 'TKP',
+  themeId: number
+): Promise<UserSession> => {
+  const { dayKey, refreshAt, category: actualCategory, themeId: actualThemeId, questions } =
+    await fetchDrillsByThemeFromApi(category, themeId);
+  if (!questions.length) {
+    throw new Error('Empty theme drills set');
+  }
+  const session: UserSession = {
+    id: crypto.randomUUID(),
+    dayKey,
+    refreshAt,
+    drillCategory: actualCategory,
+    drillThemeId: actualThemeId,
+    questionIds: questions.map((q) => q.id),
+    questions,
+    answers: {},
+    score: 0,
+    readiness: 0,
+  };
+  saveDrillSession(session);
+  return session;
+};
+export const createDailySessionFromApi = async (): Promise<UserSession> => {
+  const { dayKey, refreshAt, questions } = await fetchDailyQuizFromApi();
+  if (!questions.length) {
+    throw new Error('Empty question set');
+  }
+
+  const session: UserSession = {
+    id: crypto.randomUUID(),
+    dayKey,
+    refreshAt,
+    questionIds: questions.map((q) => q.id),
+    questions,
+    answers: {},
+    score: 0,
+    readiness: 0
+  };
+  saveSession(session);
+  return session;
+};
+
+export const createSessionFromApi = async (
+  count: number = 5,
+  category?: 'TIU' | 'TWK' | 'TKP'
+): Promise<UserSession> => {
+  const questions = await fetchRandomQuestionsFromApi(count, category);
+  if (!questions.length) {
+    throw new Error('Empty question set');
+  }
+
+  const session: UserSession = {
+    id: crypto.randomUUID(),
+    questionIds: questions.map((q) => q.id),
+    questions,
+    answers: {},
+    score: 0,
+    readiness: 0
+  };
+  saveSession(session);
+  return session;
+};
+
+export const saveSession = (session: UserSession) => {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+};
+
+export const saveDrillSession = (session: UserSession) => {
+  if (!session.drillCategory) {
+    throw new Error('Drill session must have a drillCategory');
+  }
+  const key = getDrillSessionKey(session.drillCategory);
+  localStorage.setItem(key, JSON.stringify(session));
+};
+
+export const loadSession = (): UserSession | null => {
+  const data = localStorage.getItem(SESSION_KEY);
+  if (!data) return null;
+  try {
+    const parsed = JSON.parse(data) as UserSession;
+    if (parsed.refreshAt && Number.isFinite(parsed.refreshAt) && Date.now() >= parsed.refreshAt) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    if (!parsed || !Array.isArray((parsed as any).questions) || !(parsed as any).questions.length) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const loadDrillSession = (category: 'TIU' | 'TWK' | 'TKP'): UserSession | null => {
+  const key = getDrillSessionKey(category);
+  const data = localStorage.getItem(key);
+  if (!data) return null;
+  try {
+    const parsed = JSON.parse(data) as UserSession;
+    // TEAM_019: legacy drills sessions were 10 questions; discard so we refetch the 20-question daily set
+    if (Array.isArray(parsed?.questionIds) && parsed.questionIds.length === 10) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    if (parsed.refreshAt && Number.isFinite(parsed.refreshAt) && Date.now() >= parsed.refreshAt) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    if (!parsed || !Array.isArray((parsed as any).questions) || !(parsed as any).questions.length) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const clearSession = () => {
+  localStorage.removeItem(SESSION_KEY);
+};
+
+export const clearDrillSession = (category: 'TIU' | 'TWK' | 'TKP') => {
+  const key = getDrillSessionKey(category);
+  localStorage.removeItem(key);
+};
+
+export const clearAllDrillSessions = () => {
+  const categories: Array<'TIU' | 'TWK' | 'TKP'> = ['TIU', 'TWK', 'TKP'];
+  categories.forEach(category => {
+    const key = getDrillSessionKey(category);
+    localStorage.removeItem(key);
+  });
+};
+
+export const calculateResults = (
+  session: UserSession,
+  options?: { persistHistory?: boolean }
+): UserSession => {
+  const questions = getQuestionsForSession(session);
+  let correctCount = 0;
+  let weightedScore = 0;
+
+  questions.forEach(q => {
+    if (session.answers[q.id] === q.correct_option_id) {
+      correctCount++;
+      // Difficulty weighting: 1 + (difficulty - 3) * 0.15
+      const weight = 1 + (q.difficulty - 3) * 0.15;
+      weightedScore += (100 / questions.length) * weight;
+    }
+  });
+
+  // Cap at 100
+  const readiness = Math.min(Math.round(weightedScore), 100);
+
+  const completedSession = {
+    ...session,
+    score: correctCount,
+    readiness,
+    completedAt: Date.now()
+  };
+
+  const shouldPersistHistory = options?.persistHistory !== false;
+  if (shouldPersistHistory) {
+    // Save to history
+    const history = getHistory();
+    history.unshift(completedSession);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 10))); // Keep last 10
+  }
+
+  return completedSession;
+};
+
+export const getHistory = (): UserSession[] => {
+  const data = localStorage.getItem(HISTORY_KEY);
+  if (!data) return [];
+  try {
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+};
+
+// TEAM_018: migrate old drill session key to per-category keys (one-time migration)
+export const migrateOldDrillSession = () => {
+  const OLD_KEY = 'ikuttes_drills_session_v1';
+  const data = localStorage.getItem(OLD_KEY);
+  if (!data) return;
+  
+  try {
+    const session = JSON.parse(data) as UserSession;
+    if (session.drillCategory && ['TIU', 'TWK', 'TKP'].includes(session.drillCategory)) {
+      const newKey = getDrillSessionKey(session.drillCategory);
+      localStorage.setItem(newKey, data);
+    }
+  } catch (e) {
+    console.warn('Failed to migrate old drill session', e);
+  } finally {
+    localStorage.removeItem(OLD_KEY);
+  }
+};
+

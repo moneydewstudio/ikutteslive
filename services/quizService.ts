@@ -1,4 +1,4 @@
-import { Question, UserSession } from '../types';
+﻿import { Question, UserSession } from '../types';
 import { QUESTIONS_POOL } from '../constants';
 import { apiFetch } from './apiClient';
 
@@ -235,6 +235,87 @@ export const createDailyDrillSessionFromApiByCategory = async (
   return session;
 };
 
+
+// TEAM_037: per-theme drill — fetch from GET /drills/by-theme and build a session keyed by theme
+
+// TEAM_037: list drill themes for a category to render the per-theme drill picker
+export const fetchThemesFromApi = async (
+  categoryParam: 'TIU' | 'TWK' | 'TKP'
+): Promise<Array<{ themeId: number; themeName: string; themeCode: string; subtopicName: string }>> => {
+  const params = new URLSearchParams();
+  params.set('category', categoryParam);
+  const res = await apiFetch(`/themes?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch themes');
+  }
+  const data = (await res.json()) as any;
+  const themes = Array.isArray(data?.themes) ? data.themes : [];
+  return themes.map((t: any) => ({
+    themeId: Number(t.themeId),
+    themeName: String(t.themeName ?? ''),
+    themeCode: String(t.themeCode ?? ''),
+    subtopicName: String(t.subtopicName ?? ''),
+  }));
+};
+export const fetchDrillsByThemeFromApi = async (
+  categoryParam: 'TIU' | 'TWK' | 'TKP',
+  themeId: number
+): Promise<{
+  dayKey: string;
+  refreshAt: number;
+  category: 'TIU' | 'TWK' | 'TKP';
+  themeId: number;
+  questions: Question[];
+}> => {
+  const params = new URLSearchParams();
+  params.set('category', categoryParam);
+  params.set('themeId', String(themeId));
+  const res = await apiFetch(`/drills/by-theme?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch theme drills');
+  }
+  const data = (await res.json()) as any;
+  const dayKey = String(data?.dayKey ?? '');
+  const refreshAt = Number(data?.refreshAt ?? 0);
+  const categoryRaw = String(data?.category ?? '');
+  const questionsRaw = Array.isArray(data?.questions) ? data.questions : [];
+  const category = categoryRaw === 'TWK' || categoryRaw === 'TIU' || categoryRaw === 'TKP' ? categoryRaw : 'TIU';
+  if (!dayKey || !Number.isFinite(refreshAt) || refreshAt <= 0) {
+    throw new Error('Invalid theme drills payload');
+  }
+  return {
+    dayKey,
+    refreshAt,
+    category,
+    themeId: Number(data?.themeId ?? themeId),
+    questions: questionsRaw.map(mapQuestionFromApi),
+  };
+};
+
+export const createDailyDrillSessionFromApiByTheme = async (
+  category: 'TIU' | 'TWK' | 'TKP',
+  themeId: number
+): Promise<UserSession> => {
+  const { dayKey, refreshAt, category: actualCategory, themeId: actualThemeId, questions } =
+    await fetchDrillsByThemeFromApi(category, themeId);
+  if (!questions.length) {
+    throw new Error('Empty theme drills set');
+  }
+  const session: UserSession = {
+    id: crypto.randomUUID(),
+    dayKey,
+    refreshAt,
+    drillCategory: actualCategory,
+    drillThemeId: actualThemeId,
+    questionIds: questions.map((q) => q.id),
+    questions,
+    answers: {},
+    score: 0,
+    readiness: 0,
+  };
+  saveDrillSession(session);
+  return session;
+};
 export const createDailySessionFromApi = async (): Promise<UserSession> => {
   const { dayKey, refreshAt, questions } = await fetchDailyQuizFromApi();
   if (!questions.length) {
@@ -415,3 +496,4 @@ export const migrateOldDrillSession = () => {
     localStorage.removeItem(OLD_KEY);
   }
 };
+

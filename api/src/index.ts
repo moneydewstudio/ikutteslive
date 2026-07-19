@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Welcome to Cloudflare Workers! This is your first worker.
  *
  * - Run `npm run dev` in your terminal to start a development server
@@ -771,6 +771,34 @@ app.get('/db/stats', async (c) => {
   }
 });
 
+// TEAM_037: list drill themes for a category (TIU/TWK/TKP) for the per-theme drill picker
+app.get('/themes', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const requestedRaw = String(c.req.query('category') ?? '').toUpperCase();
+  const category = requestedRaw === 'TIU' || requestedRaw === 'TWK' || requestedRaw === 'TKP' ? requestedRaw : null;
+  if (!category) {
+    return c.json({ error: 'category_required' }, 400);
+  }
+  try {
+    const db = await getDb(c.env);
+    const rows = await db
+      .select({
+        themeId: questionThemes.id,
+        themeName: questionThemes.name,
+        themeCode: questionThemes.code,
+        subtopicName: questionSubtopics.name,
+      })
+      .from(questionThemes)
+      .innerJoin(questionSubtopics, eq(questionThemes.subtopicId, questionSubtopics.id))
+      .innerJoin(questionTopics, eq(questionSubtopics.topicId, questionTopics.id))
+      .where(eq(questionTopics.code, category.toLowerCase()))
+      .orderBy(questionThemes.id);
+    return c.json({ category, themes: rows });
+  } catch (e) {
+    console.error('TEAM_037 /themes failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
 app.get('/drills/daily', async (c) => {
   c.header('Cache-Control', 'no-store');
   const nowMs = Date.now();
@@ -896,6 +924,107 @@ app.get('/drills/daily', async (c) => {
     return c.json({ dayKey, refreshAt, category, questions: questionsPayload });
   } catch (e) {
     console.error('TEAM_005 /drills/daily failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_037: per-theme drill — same shape as /drills/daily but filtered to a single themeId
+app.get('/drills/by-theme', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const nowMs = Date.now();
+  const dayKey = getJakartaDayKey(nowMs);
+  const refreshAt = getJakartaNextMidnightMs(nowMs);
+
+  const requestedRaw = String(c.req.query('category') ?? '').toUpperCase();
+  const category = requestedRaw === 'TIU' || requestedRaw === 'TWK' || requestedRaw === 'TKP' ? requestedRaw : null;
+  const themeIdRaw = Number(c.req.query('themeId'));
+  const themeId = Number.isInteger(themeIdRaw) && themeIdRaw > 0 ? themeIdRaw : null;
+
+  if (!category || !themeId) {
+    return c.json({ error: 'category_and_theme_required' }, 400);
+  }
+
+  try {
+    const db = await getDb(c.env);
+    const user = c.get('user');
+    if (user?.id) {
+      void bumpSessionsCountSafe(db, user.id);
+    }
+
+    const whereTheme = and(activeWhereV2, categoryWhereV2(category), eq(questionsV2.themeId, themeId));
+
+    const picked = await db
+      .select({
+        id: questionsV2.id,
+        subject: subjectSelectV2,
+        difficulty: questionsV2.difficulty,
+        text: questionsV2.questionText,
+      })
+      .from(questionsV2)
+      .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+      .where(whereTheme)
+      .orderBy(sql`md5((${questionsV2.id})::text || ${dayKey})`)
+      .limit(20);
+
+    if (!picked.length) {
+      return c.json({ error: 'insufficient_question_pool' }, 503);
+    }
+
+    const ids = picked.map((r) => r.id);
+    const opts = await db
+      .select({
+        questionId: questionOptionsV2.questionId,
+        optionKey: questionOptionsV2.optionKey,
+        optionText: questionOptionsV2.optionText,
+        isCorrect: questionOptionsV2.isCorrect,
+        weight: questionOptionsV2.weight,
+      })
+      .from(questionOptionsV2)
+      .where(inArray(questionOptionsV2.questionId, ids));
+
+    const grouped: Record<string, { id: string; text: string }[]> = {};
+    const correctByQuestion: Record<string, string | null> = {};
+    const maxWeightByQuestion: Record<string, { id: string; weight: number }> = {};
+    for (const o of opts as any[]) {
+      const questionKey = String(o.questionId);
+      const optionId = String(o.optionKey).toLowerCase();
+      if (!grouped[questionKey]) grouped[questionKey] = [];
+      grouped[questionKey].push({ id: optionId, text: o.optionText });
+
+      if (o.isCorrect && !correctByQuestion[questionKey]) {
+        correctByQuestion[questionKey] = optionId;
+      }
+
+      const w = Number(o.weight);
+      if (Number.isFinite(w)) {
+        const cur = maxWeightByQuestion[questionKey];
+        if (!cur || w > cur.weight) maxWeightByQuestion[questionKey] = { id: optionId, weight: w };
+      }
+    }
+
+    const questionsPayload = picked.map((r) => {
+      const questionKey = String(r.id);
+      const options = grouped[questionKey] ?? [];
+      const correctId =
+        correctByQuestion[questionKey] ??
+        maxWeightByQuestion[questionKey]?.id ??
+        (options[0]?.id ?? null);
+      const safeSubject = (r.subject as any) ?? category;
+      return {
+        id: r.id,
+        subject: safeSubject,
+        difficulty: r.difficulty,
+        text: r.text,
+        image_url: null,
+        options,
+        correct_option_id: correctId,
+        explanation: '',
+      };
+    });
+
+    return c.json({ dayKey, refreshAt, category, themeId, questions: questionsPayload });
+  } catch (e) {
+    console.error('TEAM_037 /drills/by-theme failed', e);
     return c.json({ error: 'unavailable' }, 503);
   }
 });
@@ -1917,3 +2046,4 @@ app.post('/user/preferences', async (c) => {
 });
 
 export default app;
+

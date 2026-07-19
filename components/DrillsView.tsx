@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import QuizCard from './QuizCard';
 import ResultsView from './ResultsView';
 import { UserSession } from '../types';
@@ -10,11 +10,13 @@ type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 interface DrillsViewProps {
   onSignupClick: () => void;
   category?: DrillCategory;
+  themeId?: number;
   onPremiumActivated?: () => Promise<void> | void;
 }
 
 // TEAM_005: daily drills view (20 questions, per-category sessions, global per Jakarta day)
-const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, onPremiumActivated }) => {
+// TEAM_037: optional themeId for per-theme drills
+const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, themeId, onPremiumActivated }) => {
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,10 +24,12 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, onPrem
   const startDrills = useCallback(async () => {
     setIsLoading(true);
     try {
-      // TEAM_018: when a category is selected (premium picker), request that category for today's daily drill set
-      const newSession = category
-        ? await QuizService.createDailyDrillSessionFromApiByCategory(category)
-        : await QuizService.createDailyDrillSessionFromApi();
+      // TEAM_037: when a themeId is provided, fetch by-theme session; otherwise use category selection
+      const newSession = themeId && category
+        ? await QuizService.createDailyDrillSessionFromApiByTheme(category, themeId)
+        : category
+          ? await QuizService.createDailyDrillSessionFromApiByCategory(category)
+          : await QuizService.createDailyDrillSessionFromApi();
       setSession(newSession);
       setCurrentQuestionIdx(0);
     } catch (e) {
@@ -34,7 +38,7 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, onPrem
     } finally {
       setIsLoading(false);
     }
-  }, [category]);
+  }, [category, themeId]);
 
   const refreshSession = useCallback(() => {
     if (!category) return;
@@ -47,9 +51,8 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, onPrem
   useEffect(() => {
     // TEAM_018: migrate old drill session key to per-category keys
     QuizService.migrateOldDrillSession();
-    
     if (!category) return;
-    
+
     const saved = QuizService.loadDrillSession(category);
     if (!saved) {
       void startDrills();

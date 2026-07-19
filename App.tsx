@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { ViewState, UserSession, User } from './types';
 import * as QuizService from './services/quizService';
 import { authService } from './services/authService';
@@ -33,6 +33,8 @@ const AppContent: React.FC = () => {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [selectedDrillCategory, setSelectedDrillCategory] = useState<DrillCategory | null>(null);
+  // TEAM_037: optional drill theme id when launching a per-theme drill from the picker
+  const [selectedDrillThemeId, setSelectedDrillThemeId] = useState<number | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [signupReason, setSignupReason] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -416,9 +418,10 @@ const renderContent = () => {
         return (
           <BonusView
             user={user}
-            onStartDrill={(category) => {
-              // TEAM_018: store selected category and navigate into the drill runner
+            onStartDrill={(category, themeId) => {
+              // TEAM_037: store selected category + optional theme id and navigate into the drill runner
               setSelectedDrillCategory(category);
+              setSelectedDrillThemeId(themeId ?? null);
               setView('DRILLS');
             }}
           />
@@ -428,6 +431,7 @@ const renderContent = () => {
           <DrillsView
             onSignupClick={() => openSignup('manual')}
             category={selectedDrillCategory ?? undefined}
+            themeId={selectedDrillThemeId ?? undefined}
             onPremiumActivated={refreshPremium}
           />
         );
@@ -501,6 +505,7 @@ const renderContent = () => {
           isAuthLoading={isAuthLoading}
           isQuizLoading={isQuizLoading}
           selectedDrillCategory={selectedDrillCategory}
+          selectedDrillThemeId={selectedDrillThemeId}
           isSignupLoading={isSignupLoading}
           showSignupModal={showSignupModal}
           signupReason={signupReason}
@@ -529,6 +534,7 @@ type AppWithPaywallProps = {
   isAuthLoading: boolean;
   isQuizLoading: boolean;
   selectedDrillCategory: DrillCategory | null;
+  selectedDrillThemeId: number | null;
   isSignupLoading: boolean;
   showSignupModal: boolean;
   signupReason: string | null;
