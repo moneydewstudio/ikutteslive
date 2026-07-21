@@ -75,14 +75,18 @@ Diagnostic output to check:
 
 ## Status
 
-- [ ] Seed file **not yet committed** (only `db/seed/20260620_fix_question_themes_seed.sql`
-  is modified, unstaged). Commit after confirming seed runs clean in prod.
-- [ ] `/tryout/history` returns `401` in browser console — **separate Firebase auth
-  issue**, not investigated, out of scope for this session.
+- [x] Seed file committed and pushed (`8c0a6cc`). Prod Neon already had the seed
+  applied (43 themes, 3632 v2 questions fully tagged).
+- [x] `/tryout/history` 401 resolved — auth race in `Dashboard`/`BonusView` fixed
+  by re-keying the fetch effect on `user?.id` and guarding against `local_guest`
+  fallback.
 
-## Remaining open items
+## Resolved items
 
-1. Run the (fixed) seed against prod Neon and confirm themes + drills populate.
-2. Commit the seed fix.
-3. Investigate `/tryout/history` 401 (expired/missing Firebase token — likely
-   `withUserContext`/`authService.getIdToken()` on that request path).
+1. Seed was already applied to prod Neon before commit — confirmed read-only:
+   `question_themes` = 43 rows, `v2_untagged` = 0, `GET /themes?category=TIU` → 200.
+2. Seed schema fixes committed in `8c0a6cc`: drop `question_categories` join,
+   drop v2 `subcategory_id` backfill, drop `DO $$` PL/pgSQL.
+3. `/tryout/history` 401 root cause found + fixed: the fetch raced anonymous
+   sign-in (no token → 401). Both call sites now guard on `user?.id` and skip
+   when `!user || user.id === 'local_guest'`. Re-runs once Firebase auth settles.
