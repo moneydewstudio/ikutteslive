@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ViewState, UserSession, User } from './types';
 import * as QuizService from './services/quizService';
 import { authService } from './services/authService';
@@ -35,6 +35,7 @@ const AppContent: React.FC = () => {
   const [selectedDrillCategory, setSelectedDrillCategory] = useState<DrillCategory | null>(null);
   // TEAM_037: optional drill theme id when launching a per-theme drill from the picker
   const [selectedDrillThemeId, setSelectedDrillThemeId] = useState<number | null>(null);
+  const [drillKey, setDrillKey] = useState(0);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [signupReason, setSignupReason] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -420,8 +421,10 @@ const renderContent = () => {
             user={user}
             onStartDrill={(category, themeId) => {
               // TEAM_037: store selected category + optional theme id and navigate into the drill runner
+              QuizService.clearDrillSession(category);
               setSelectedDrillCategory(category);
               setSelectedDrillThemeId(themeId ?? null);
+              setDrillKey((k) => k + 1);
               setView('DRILLS');
             }}
           />
@@ -429,10 +432,12 @@ const renderContent = () => {
       case 'DRILLS':
         return (
           <DrillsView
+            key={drillKey}
             onSignupClick={() => openSignup('manual')}
             category={selectedDrillCategory ?? undefined}
             themeId={selectedDrillThemeId ?? undefined}
             onPremiumActivated={refreshPremium}
+            onBackToBonus={() => setView('BONUS')}
           />
         );
       case 'TRYOUT':
