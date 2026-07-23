@@ -27,7 +27,7 @@ import {
   questionSubtopics,
   questionTopics,
   questionThemes,
-  questionExplanations,
+  questionExplanationsV2,
   payments,
   paymentAdminActions,
   dailyQuizAttempts,
@@ -787,11 +787,15 @@ app.get('/themes', async (c) => {
         themeName: questionThemes.name,
         themeCode: questionThemes.code,
         subtopicName: questionSubtopics.name,
+        questionCount: sql<number>`(
+          SELECT COUNT(*) FROM ${questionsV2}
+          WHERE ${questionsV2.themeId} = ${questionThemes.id}
+        )`,
       })
       .from(questionThemes)
       .innerJoin(questionSubtopics, eq(questionThemes.subtopicId, questionSubtopics.id))
       .innerJoin(questionTopics, eq(questionSubtopics.topicId, questionTopics.id))
-      .where(eq(questionTopics.code, category.toLowerCase()))
+      .where(eq(questionTopics.code, category))
       .orderBy(questionThemes.id);
     return c.json({ category, themes: rows });
   } catch (e) {
@@ -864,6 +868,15 @@ app.get('/drills/daily', async (c) => {
         .where(inArray(questionOptionsV2.questionId, ids))
       : [];
 
+    const explRows = ids.length
+      ? await db
+        .select({ questionId: questionExplanationsV2.questionId, explanationText: questionExplanationsV2.explanationText })
+        .from(questionExplanationsV2)
+        .where(inArray(questionExplanationsV2.questionId, ids))
+      : [];
+    const explMap: Record<string, string> = {};
+    for (const e of explRows) explMap[String(e.questionId)] = e.explanationText;
+
     const grouped: Record<string, { id: string; text: string }[]> = {};
     const correctByQuestion: Record<string, string | null> = {};
     const maxWeightByQuestion: Record<string, { id: string; weight: number }> = {};
@@ -903,7 +916,7 @@ app.get('/drills/daily', async (c) => {
         image_url: null,
         options,
         correct_option_id: correctId,
-        explanation: '',
+        explanation: explMap[questionKey] ?? '',
       };
     });
 
@@ -982,6 +995,15 @@ app.get('/drills/by-theme', async (c) => {
       .from(questionOptionsV2)
       .where(inArray(questionOptionsV2.questionId, ids));
 
+    const explRows = ids.length
+      ? await db
+        .select({ questionId: questionExplanationsV2.questionId, explanationText: questionExplanationsV2.explanationText })
+        .from(questionExplanationsV2)
+        .where(inArray(questionExplanationsV2.questionId, ids))
+      : [];
+    const explMap: Record<string, string> = {};
+    for (const e of explRows) explMap[String(e.questionId)] = e.explanationText;
+
     const grouped: Record<string, { id: string; text: string }[]> = {};
     const correctByQuestion: Record<string, string | null> = {};
     const maxWeightByQuestion: Record<string, { id: string; weight: number }> = {};
@@ -1018,7 +1040,7 @@ app.get('/drills/by-theme', async (c) => {
         image_url: null,
         options,
         correct_option_id: correctId,
-        explanation: '',
+        explanation: explMap[questionKey] ?? '',
       };
     });
 
@@ -1117,6 +1139,15 @@ app.get('/quiz/daily', async (c) => {
         .where(inArray(questionOptionsV2.questionId, ids))
       : [];
 
+    const explRows = ids.length
+      ? await db
+        .select({ questionId: questionExplanationsV2.questionId, explanationText: questionExplanationsV2.explanationText })
+        .from(questionExplanationsV2)
+        .where(inArray(questionExplanationsV2.questionId, ids))
+      : [];
+    const explMap: Record<string, string> = {};
+    for (const e of explRows) explMap[String(e.questionId)] = e.explanationText;
+
     const grouped: Record<string, { id: string; text: string }[]> = {};
     const correctByQuestion: Record<string, string | null> = {};
     const maxWeightByQuestion: Record<string, { id: string; weight: number }> = {};
@@ -1153,7 +1184,7 @@ app.get('/quiz/daily', async (c) => {
         image_url: null,
         options,
         correct_option_id: correctId,
-        explanation: '',
+        explanation: explMap[questionKey] ?? '',
       };
     });
 
@@ -1332,14 +1363,14 @@ app.get('/explanations/:id', requirePremium, async (c) => {
   }
   try {
     const db = await getDb(c.env);
-    const res = await db
-      .select({ explanationText: questionExplanations.explanationText, level: questionExplanations.level })
-      .from(questionExplanations)
-      .where(eq(questionExplanations.questionId, questionId))
-      .orderBy(desc(questionExplanations.id))
+    const v2 = await db
+      .select({ explanationText: questionExplanationsV2.explanationText, level: questionExplanationsV2.level })
+      .from(questionExplanationsV2)
+      .where(eq(questionExplanationsV2.questionId, questionId))
+      .orderBy(desc(questionExplanationsV2.id))
       .limit(1);
-    if (!res.length) return c.json({ error: 'not_found' }, 404);
-    return c.json({ explanation: res[0].explanationText, tier: res[0].level });
+    if (!v2.length) return c.json({ error: 'not_found' }, 404);
+    return c.json({ explanation: v2[0].explanationText, tier: v2[0].level });
   } catch {
     return c.json({ error: 'unavailable' }, 503);
   }
