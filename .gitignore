@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 nul
+
+# OMC worktrees (auto-created by Claude)
+.claude/worktrees/
