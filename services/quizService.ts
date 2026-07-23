@@ -1,4 +1,4 @@
-﻿import { Question, UserSession } from '../types';
+import { Question, UserSession } from '../types';
 import { QUESTIONS_POOL } from '../constants';
 import { apiFetch } from './apiClient';
 
@@ -236,12 +236,12 @@ export const createDailyDrillSessionFromApiByCategory = async (
 };
 
 
-// TEAM_037: per-theme drill — fetch from GET /drills/by-theme and build a session keyed by theme
+// TEAM_037: per-theme drill � fetch from GET /drills/by-theme and build a session keyed by theme
 
 // TEAM_037: list drill themes for a category to render the per-theme drill picker
 export const fetchThemesFromApi = async (
   categoryParam: 'TIU' | 'TWK' | 'TKP'
-): Promise<Array<{ themeId: number; themeName: string; themeCode: string; subtopicName: string }>> => {
+): Promise<Array<{ themeId: number; themeName: string; themeCode: string; subtopicName: string; questionCount: number }>> => {
   const params = new URLSearchParams();
   params.set('category', categoryParam);
   const res = await apiFetch(`/themes?${params.toString()}`);
@@ -255,6 +255,7 @@ export const fetchThemesFromApi = async (
     themeName: String(t.themeName ?? ''),
     themeCode: String(t.themeCode ?? ''),
     subtopicName: String(t.subtopicName ?? ''),
+    questionCount: Number(t.questionCount ?? 0),
   }));
 };
 export const fetchDrillsByThemeFromApi = async (

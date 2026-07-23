@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BonusCard, { Pack } from './BonusCard';
 import DeltaBanner from './DeltaBanner';
 import { User } from '../types';
@@ -29,20 +29,16 @@ type ThemeRow = {
   themeName: string;
   themeCode: string;
   subtopicName: string;
+  questionCount: number;
 };
 
-// TEAM_018: repurpose Bonus page into Drills entry (3 cards with free/premium gating)
-// TEAM_037: add per-theme drill cards under each category (premium-only)
 const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
   const { openPaywall } = usePaywall();
   const [todayCategory, setTodayCategory] = useState<DrillCategory | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [tryoutHistory, setTryoutHistory] = useState<TryoutHistoryRow[]>([]);
-  // TEAM_037: themes grouped by category for the per-theme drill picker
   const [themesByCategory, setThemesByCategory] = useState<Record<DrillCategory, ThemeRow[]>>({
-    TIU: [],
-    TWK: [],
-    TKP: [],
+    TIU: [], TWK: [], TKP: [],
   });
 
   useEffect(() => {
@@ -60,14 +56,11 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
       }
     };
     void run();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // TEAM_034: Fetch tryoutHistory for consistent DeltaBanner score
   useEffect(() => {
-    if (!user || user.id === 'local_guest') return; // wait for a real Firebase token
+    if (!user || user.id === 'local_guest') return;
     let cancelled = false;
     const run = async () => {
       try {
@@ -77,15 +70,12 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
         const json = (await res.json()) as any;
         const rows = Array.isArray(json?.history) ? (json.history as TryoutHistoryRow[]) : [];
         if (!cancelled) setTryoutHistory(rows);
-      } catch {
-        // Silently fail - DeltaBanner will use local data
-      }
+      } catch {}
     };
     void run();
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  // TEAM_037: load drill themes for the per-theme picker
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -96,9 +86,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
           try {
             const themes = await QuizService.fetchThemesFromApi(cat);
             if (!cancelled) next[cat] = themes;
-          } catch {
-            // theme list is optional; cards simply won't appear
-          }
+          } catch {}
         })
       );
       if (!cancelled) setThemesByCategory(next);
@@ -121,7 +109,7 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
   const packs: Pack[] = useMemo(() => {
     const categoryCards: Pack[] = (['TIU', 'TWK', 'TKP'] as DrillCategory[]).map((cat, i) => ({
       id: 1000 + i,
-      title: `Drill ${cat}`,
+      title: 'Drill ' + cat,
       subject: cat,
       questions: 20,
       difficulty: 'Harian',
@@ -132,9 +120,9 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
     const themeCards: Pack[] = (['TIU', 'TWK', 'TKP'] as DrillCategory[]).flatMap((cat) =>
       themesByCategory[cat].map((t) => ({
         id: t.themeId,
-        title: `Drill ${t.themeName}`,
+        title: t.themeName,
         subject: cat,
-        questions: 20,
+        questions: t.questionCount,
         difficulty: 'Tema',
         price: isPremium ? 'Premium' : 'Terkunci',
         color: isPremium ? (cat === 'TIU' ? 'bg-brand-pink' : cat === 'TWK' ? 'bg-brand-cream' : 'bg-brand-lime') : 'bg-white',
@@ -146,24 +134,19 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
 
   return (
     <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
-
-      {/* Header - TEAM_032: Clearer explanation of what drills are */}
       <div className="p-2xl border-b border-black bg-brand-cream">
          <h1 className="text-5xl font-black uppercase tracking-tight mb-xl">Latihan Per Bagian</h1>
          <p className="text-lg max-w-xl">Fokus latihan TWK, TIU, atau TKP secara terpisah. Tiap drill = 20 soal. Gratis: 1 kategori terbuka per hari. Premium: drill per tema (Sinonim, Antonim, …).</p>
       </div>
 
-      {/* TEAM_033: Delta Banner - Progress towards passing grade */}
       <DeltaBanner
         onContinueClick={() => onStartDrill(todayCategory || 'TIU')}
-        continueLabel={`Latihan ${todayCategory || 'Harian'} →`}
+        continueLabel={'Latihan ' + (todayCategory || 'Harian') + ' →'}
         tryoutHistory={tryoutHistory}
         compact
       />
 
-      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" data-tour="drills-cards">
-
           {packs.map((pack) => (
               <BonusCard
                 key={pack.id}
@@ -172,7 +155,6 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
                   const category = pack.subject as DrillCategory;
                   const isTheme = pack.difficulty === 'Tema';
                   if (isTheme) {
-                    // TEAM_037: theme cards are premium-only
                     if (!isPremium) {
                       openPaywall('drills_locked_theme');
                       return;
@@ -190,11 +172,9 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
           ))}
       </div>
 
-      {/* Onboarding Tour - only renders on first visit */}
       <OnboardingTour />
     </div>
   );
 };
 
 export default BonusView;
-
