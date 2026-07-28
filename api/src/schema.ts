@@ -1,4 +1,4 @@
-﻿import { pgTable, text, timestamp, boolean, integer, char, serial, primaryKey } from 'drizzle-orm/pg-core';
+﻿import { pgTable, text, timestamp, boolean, integer, char, serial, primaryKey, jsonb } from 'drizzle-orm/pg-core';
 
 // TEAM_001: align Drizzle schema with the actual Neon DB tables/columns to prevent 503 query failures
 
