@@ -35,6 +35,8 @@ import {
   tryoutAttempts,
   tryoutAttemptItems,
   userPreferences,
+  roadmapProgress,
+  roadmapMaterials,
 } from './schema';
 import { and, desc, eq, inArray, notInArray, or, sql } from 'drizzle-orm';
 import { SignJWT, jwtVerify } from 'jose';
@@ -2072,6 +2074,235 @@ app.post('/user/preferences', async (c) => {
     return c.json({ ok: true });
   } catch (e) {
     console.error('TEAM_033 /user/preferences POST failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_045: return all subtopics grouped as a flat curriculum list per category (roadmap definition)
+app.get('/roadmap/subtopics', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const requestedRaw = String(c.req.query('category') ?? '').toUpperCase();
+  const category = requestedRaw === 'TIU' || requestedRaw === 'TWK' || requestedRaw === 'TKP' ? requestedRaw : null;
+  if (!category) return c.json({ error: 'category_required' }, 400);
+  try {
+    const db = await getDb(c.env);
+    const rows = await db
+      .select({
+        id: questionSubtopics.id,
+        name: questionSubtopics.name,
+        code: questionSubtopics.code,
+        topicId: questionSubtopics.topicId,
+      })
+      .from(questionSubtopics)
+      .innerJoin(questionTopics, eq(questionSubtopics.topicId, questionTopics.id))
+      .where(eq(questionTopics.code, category))
+      .orderBy(questionSubtopics.id);
+    return c.json({ category, subtopics: rows });
+  } catch (e) {
+    console.error('TEAM_045 /roadmap/subtopics failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_045: get user's roadmap progress across all subtopics
+app.get('/roadmap/progress', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ error: 'unauthorized' }, 401);
+  try {
+    const db = await getDb(c.env);
+    const rows = await db
+      .select()
+      .from(roadmapProgress)
+      .where(eq(roadmapProgress.userId, user.id));
+    return c.json({ progress: rows });
+  } catch (e) {
+    console.error('TEAM_045 /roadmap/progress GET failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_045: upsert roadmap progress for a single subtopic
+app.put('/roadmap/progress', async (c) => {
+  const user = c.get('user');
+  if (!user?.id) return c.json({ error: 'unauthorized' }, 401);
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'bad_request' }, 400); }
+  const subtopicId = Number(body?.subtopicId);
+  if (!Number.isInteger(subtopicId) || subtopicId < 1) return c.json({ error: 'invalid_subtopic' }, 400);
+  const status = String(body?.status ?? 'in_progress');
+  const bestScore = body?.bestScore != null ? Number(body.bestScore) : null;
+  try {
+    const db = await getDb(c.env);
+    const existing = await db
+      .select()
+      .from(roadmapProgress)
+      .where(and(eq(roadmapProgress.userId, user.id), eq(roadmapProgress.subtopicId, subtopicId)))
+      .limit(1);
+    const now = new Date();
+    if (existing.length) {
+      const updateData: any = { status, updatedAt: now };
+      if (bestScore != null && Number.isFinite(bestScore)) updateData.bestScore = bestScore;
+      if (body?.incrementAttempts) {
+        updateData.attempts = sql`${roadmapProgress.attempts} + 1`;
+      }
+      await db
+        .update(roadmapProgress)
+        .set(updateData)
+        .where(and(eq(roadmapProgress.userId, user.id), eq(roadmapProgress.subtopicId, subtopicId)));
+    } else {
+      await db.insert(roadmapProgress).values({
+        userId: user.id,
+        subtopicId,
+        status,
+        bestScore: bestScore != null && Number.isFinite(bestScore) ? bestScore : null,
+        attempts: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    return c.json({ ok: true });
+  } catch (e) {
+    console.error('TEAM_045 /roadmap/progress PUT failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_045: serve learning materials for a roadmap subtopic
+app.get('/roadmap/materials', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const subtopicIdRaw = Number(c.req.query('subtopicId'));
+  const subtopicId = Number.isInteger(subtopicIdRaw) && subtopicIdRaw > 0 ? subtopicIdRaw : null;
+  if (!subtopicId) return c.json({ error: 'invalid_subtopic' }, 400);
+
+  try {
+    const db = await getDb(c.env);
+
+    const rows = await db
+      .select({
+        subtopicId: roadmapMaterials.subtopicId,
+        subtopicName: questionSubtopics.name,
+        content: roadmapMaterials.content,
+        exampleQuestions: roadmapMaterials.exampleQuestions,
+      })
+      .from(roadmapMaterials)
+      .innerJoin(questionSubtopics, eq(roadmapMaterials.subtopicId, questionSubtopics.id))
+      .where(eq(roadmapMaterials.subtopicId, subtopicId))
+      .limit(1);
+
+    if (!rows.length) {
+      return c.json({
+        subtopicId,
+        subtopicName: '',
+        content: `## 📖 Materi\n\nMateri ini sedang disusun. Akan segera hadir.\n\n---\n\n*Tim Ikuttes sedang menyiapkan materi belajar terstruktur untuk subtopik ini. Pantau terus pembaruannya!*`,
+        exampleQuestions: [],
+      });
+    }
+
+    return c.json({
+      subtopicId: rows[0].subtopicId,
+      subtopicName: rows[0].subtopicName,
+      content: rows[0].content,
+      exampleQuestions: rows[0].exampleQuestions ?? [],
+    });
+  } catch (e) {
+    console.error('TEAM_045 /roadmap/materials failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_045: serve 10 questions per subtopic for roadmap test
+app.get('/roadmap/test', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const subtopicIdRaw = Number(c.req.query('subtopicId'));
+  const subtopicId = Number.isInteger(subtopicIdRaw) && subtopicIdRaw > 0 ? subtopicIdRaw : null;
+  if (!subtopicId) return c.json({ error: 'invalid_subtopic' }, 400);
+
+  const nowMs = Date.now();
+  const dayKey = getJakartaDayKey(nowMs);
+
+  try {
+    const db = await getDb(c.env);
+
+    const picked = await db
+      .select({
+        id: questionsV2.id,
+        subject: subjectSelectV2,
+        difficulty: questionsV2.difficulty,
+        text: questionsV2.questionText,
+      })
+      .from(questionsV2)
+      .leftJoin(questionTopics, eq(questionsV2.topicId, questionTopics.id))
+      .where(and(activeWhereV2, eq(questionsV2.subtopicId, subtopicId)))
+      .orderBy(sql`md5((${questionsV2.id})::text || ${dayKey} || 'roadmap')`)
+      .limit(10);
+
+    if (!picked.length) {
+      return c.json({ error: 'insufficient_question_pool' }, 503);
+    }
+
+    const ids = picked.map((r) => r.id);
+    const opts = ids.length
+      ? await db
+        .select({
+          questionId: questionOptionsV2.questionId,
+          optionKey: questionOptionsV2.optionKey,
+          optionText: questionOptionsV2.optionText,
+          isCorrect: questionOptionsV2.isCorrect,
+          weight: questionOptionsV2.weight,
+        })
+        .from(questionOptionsV2)
+        .where(inArray(questionOptionsV2.questionId, ids))
+      : [];
+
+    const explRows = ids.length
+      ? await db
+        .select({ questionId: questionExplanationsV2.questionId, explanationText: questionExplanationsV2.explanationText })
+        .from(questionExplanationsV2)
+        .where(inArray(questionExplanationsV2.questionId, ids))
+      : [];
+    const explMap: Record<string, string> = {};
+    for (const e of explRows) explMap[String(e.questionId)] = e.explanationText;
+
+    const grouped: Record<string, { id: string; text: string }[]> = {};
+    const correctByQuestion: Record<string, string | null> = {};
+    const maxWeightByQuestion: Record<string, { id: string; weight: number }> = {};
+    for (const o of opts as any[]) {
+      const questionKey = String(o.questionId);
+      const optionId = String(o.optionKey).toLowerCase();
+      if (!grouped[questionKey]) grouped[questionKey] = [];
+      grouped[questionKey].push({ id: optionId, text: o.optionText });
+      if (o.isCorrect && !correctByQuestion[questionKey]) {
+        correctByQuestion[questionKey] = optionId;
+      }
+      const w = Number(o.weight);
+      if (Number.isFinite(w)) {
+        const cur = maxWeightByQuestion[questionKey];
+        if (!cur || w > cur.weight) maxWeightByQuestion[questionKey] = { id: optionId, weight: w };
+      }
+    }
+
+    const questionsPayload = picked.map((r) => {
+      const questionKey = String(r.id);
+      const options = grouped[questionKey] ?? [];
+      const correctId =
+        correctByQuestion[questionKey] ??
+        maxWeightByQuestion[questionKey]?.id ??
+        (options[0]?.id ?? null);
+      return {
+        id: r.id,
+        subject: (r.subject as any) ?? null,
+        difficulty: r.difficulty,
+        text: r.text,
+        image_url: null,
+        options,
+        correct_option_id: correctId,
+        explanation: explMap[questionKey] ?? '',
+      };
+    });
+
+    return c.json({ subtopicId, questionCount: questionsPayload.length, questions: questionsPayload });
+  } catch (e) {
+    console.error('TEAM_045 /roadmap/test failed', e);
     return c.json({ error: 'unavailable' }, 503);
   }
 });
