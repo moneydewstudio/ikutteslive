@@ -2078,7 +2078,7 @@ app.post('/user/preferences', async (c) => {
   }
 });
 
-// TEAM_045: return all subtopics grouped as a flat curriculum list per category (roadmap definition)
+// TEAM_045: return all subtopics with their themes per category (roadmap definition)
 app.get('/roadmap/subtopics', async (c) => {
   c.header('Cache-Control', 'no-store');
   const requestedRaw = String(c.req.query('category') ?? '').toUpperCase();
@@ -2086,7 +2086,7 @@ app.get('/roadmap/subtopics', async (c) => {
   if (!category) return c.json({ error: 'category_required' }, 400);
   try {
     const db = await getDb(c.env);
-    const rows = await db
+    const subtopics = await db
       .select({
         id: questionSubtopics.id,
         name: questionSubtopics.name,
@@ -2097,7 +2097,32 @@ app.get('/roadmap/subtopics', async (c) => {
       .innerJoin(questionTopics, eq(questionSubtopics.topicId, questionTopics.id))
       .where(eq(questionTopics.code, category))
       .orderBy(questionSubtopics.id);
-    return c.json({ category, subtopics: rows });
+
+    const themes = await db
+      .select({
+        id: questionThemes.id,
+        name: questionThemes.name,
+        subtopicId: questionThemes.subtopicId,
+      })
+      .from(questionThemes)
+      .innerJoin(questionSubtopics, eq(questionThemes.subtopicId, questionSubtopics.id))
+      .innerJoin(questionTopics, eq(questionSubtopics.topicId, questionTopics.id))
+      .where(eq(questionTopics.code, category))
+      .orderBy(questionThemes.id);
+
+    const themeMap: Record<number, { id: number; name: string }[]> = {};
+    for (const t of themes as any[]) {
+      const sid = Number(t.subtopicId);
+      if (!themeMap[sid]) themeMap[sid] = [];
+      themeMap[sid].push({ id: Number(t.id), name: String(t.name) });
+    }
+
+    const subtopicsWithThemes = (subtopics as any[]).map((s) => ({
+      ...s,
+      themes: themeMap[Number(s.id)] ?? [],
+    }));
+
+    return c.json({ category, subtopics: subtopicsWithThemes });
   } catch (e) {
     console.error('TEAM_045 /roadmap/subtopics failed', e);
     return c.json({ error: 'unavailable' }, 503);

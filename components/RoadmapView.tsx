@@ -4,11 +4,17 @@ import { Compass, CheckCircle, ArrowRight } from 'lucide-react';
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
+type Theme = {
+  id: number;
+  name: string;
+};
+
 type SubtopicRow = {
   id: number;
   name: string;
   code: string;
   topicId: number | null;
+  themes: Theme[];
 };
 
 type ProgressRow = {
@@ -26,6 +32,7 @@ const CATEGORY_META: Record<DrillCategory, { label: string; color: string; bgLig
 
 const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number) => void }> = ({ onStartMaterial }) => {
   const [activeCategory, setActiveCategory] = useState<DrillCategory | null>(null);
+  const [expandedSubtopic, setExpandedSubtopic] = useState<number | null>(null);
   const [subtopics, setSubtopics] = useState<Record<DrillCategory, SubtopicRow[]>>({ TIU: [], TWK: [], TKP: [] });
   const [progress, setProgress] = useState<Record<number, ProgressRow>>({});
   const [loading, setLoading] = useState(true);
@@ -140,44 +147,71 @@ const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number) => void }> 
                   ) : (
                     list.map((sub, idx) => {
                       const isCompleted = progress[sub.id]?.status === 'completed';
-                      if (isCompleted) {
-                        return (
+                      const isExpanded = expandedSubtopic === sub.id;
+                      const hasThemes = (sub.themes ?? []).length > 0;
+                      const completedThemes = (sub.themes ?? []).filter((t) => progress[t.id]?.status === 'completed').length;
+                      return (
+                        <div key={sub.id}>
                           <div
-                            key={sub.id}
-                            className="px-2xl py-md flex items-center justify-between opacity-70"
+                            className={`px-2xl py-md flex items-center justify-between transition-colors ${isCompleted ? 'opacity-70' : 'cursor-pointer hover:bg-gray-50'}`}
+                            onClick={() => {
+                              if (!isCompleted) {
+                                if (hasThemes) {
+                                  setExpandedSubtopic(isExpanded ? null : sub.id)
+                                } else {
+                                  onStartMaterial?.(sub.id)
+                                }
+                              }
+                            }}
                           >
                             <div className="flex items-center gap-lg min-w-0">
                               <span className="text-xs font-bold text-gray-400 w-6 shrink-0">{`${idx + 1}.`}</span>
                               <div className="min-w-0">
                                 <span className="font-bold text-sm truncate block">{sub.name}</span>
-                                <span className="text-xs text-gray-500">{getStatusText(sub.id)}</span>
+                                <span className="text-xs text-gray-500">
+                                  {hasThemes
+                                    ? `${completedThemes}/${sub.themes.length} tema`
+                                    : getStatusText(sub.id)}
+                                </span>
                               </div>
                             </div>
                             <div className="flex items-center gap-md shrink-0">
                               {getStatusIcon(sub.id)}
+                              {!isCompleted && hasThemes && (
+                                <ArrowRight className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                              )}
+                              {!isCompleted && !hasThemes && (
+                                <span className="text-xs font-bold text-gray-400 uppercase border border-gray-300 px-2 py-0.5 rounded">
+                                  Mulai
+                                </span>
+                              )}
                             </div>
                           </div>
-                        );
-                      }
-                      return (
-                        <div
-                          key={sub.id}
-                          onClick={() => onStartMaterial?.(sub.id)}
-                          className="px-2xl py-md flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center gap-lg min-w-0">
-                            <span className="text-xs font-bold text-gray-400 w-6 shrink-0">{`${idx + 1}.`}</span>
-                            <div className="min-w-0">
-                              <span className="font-bold text-sm truncate block">{sub.name}</span>
-                              <span className="text-xs text-gray-500">{getStatusText(sub.id)}</span>
+
+                          {/* Nested themes */}
+                          {isExpanded && hasThemes && (
+                            <div className="bg-gray-50 border-t border-b border-gray-200">
+                              {sub.themes.map((theme) => {
+                                return (
+                                  <div
+                                    key={theme.id}
+                                    onClick={() => onStartMaterial?.(sub.id)}
+                                    className="px-2xl py-sm pl-3xl flex items-center justify-between text-sm cursor-pointer hover:bg-gray-100 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-lg min-w-0">
+                                      <span className="text-xs text-gray-300 w-4 shrink-0">•</span>
+                                      <span className="text-gray-700 truncate">{theme.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-md shrink-0">
+                                      <span className="text-[10px] font-bold text-gray-400 uppercase border border-gray-300 px-1.5 py-0.5 rounded">
+                                        Tes
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          </div>
-                          <div className="flex items-center gap-md shrink-0">
-                            {getStatusIcon(sub.id)}
-                            <span className="text-xs font-bold text-gray-400 uppercase border border-gray-300 px-2 py-0.5 rounded">
-                              Mulai
-                            </span>
-                          </div>
+                          )}
                         </div>
                       );
                     })
