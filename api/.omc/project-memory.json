@@ -32,7 +32,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd \"C:\\Users\\Digitalisasi\\Documents\\ikuttesarena\\06202026\\ikutteslive\\api\" && npx tsc --noEmit 2>&1 | head -20",
+    "buildCommand": "C:/Users/Digitalisasi/AppData/Roaming/npm/node_modules/lean-ctx-bin/bin/lean-ctx.exe -c \"cd \\\"C:/Users/Digitalisasi/Documents/ikuttesarena/06202026/ikutteslive\\\" && npm run build 2>&1 | tail -10\"",
     "testCommand": "npm test",
     "lintCommand": null,
     "devCommand": "npm run dev",
@@ -91,6 +91,12 @@
       "path": "src/index.ts",
       "accessCount": 7,
       "lastAccessed": 1784816444531,
+      "type": "file"
+    },
+    {
+      "path": "src/schema.ts",
+      "accessCount": 1,
+      "lastAccessed": 1785201119816,
       "type": "file"
     }
   ],

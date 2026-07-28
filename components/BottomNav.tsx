@@ -1,5 +1,5 @@
 import React from 'react';
-import { PenTool, Zap, Trophy, User, BookOpen } from 'lucide-react';
+import { PenTool, Zap, Trophy, User, BookOpen, Compass } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface BottomNavProps {
@@ -14,6 +14,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
     { id: 'TRYOUT', icon: Trophy, label: 'Tryout', shortLabel: 'Tryout' },
     // Secondary: Drill (per-category practice)
     { id: 'BONUS', icon: Zap, label: 'Drill', shortLabel: 'Drill' },
+    // Secondary: Roadmap (curriculum)
+    { id: 'ROADMAP', icon: Compass, label: 'Roadmap', shortLabel: 'Roadmap' },
     // Secondary: Kuis Harian
     { id: 'QUIZ', icon: PenTool, label: 'Kuis Harian', shortLabel: 'Kuis' },
     { id: 'BLOG', icon: BookOpen, label: 'Blog', shortLabel: 'Blog' },
