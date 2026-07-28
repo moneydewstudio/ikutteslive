@@ -201,3 +201,27 @@ export const userPreferences = pgTable('user_preferences', {
   examDate: timestamp('exam_date', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+// TEAM_045: track user progress through the learning roadmap (curriculum per subtopic)
+export const roadmapProgress = pgTable('roadmap_progress', {
+  userId: text('user_id').notNull(),
+  subtopicId: integer('subtopic_id').notNull().references(() => questionSubtopics.id),
+  status: text('status').notNull().default('not_started'), // not_started | in_progress | completed
+  bestScore: integer('best_score'), // 0-100
+  attempts: integer('attempts').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.subtopicId] }),
+}));
+
+// TEAM_045: learning materials for roadmap subtopics
+export const roadmapMaterials = pgTable('roadmap_materials', {
+  id: serial('id').primaryKey(),
+  subtopicId: integer('subtopic_id').notNull().references(() => questionSubtopics.id),
+  content: text('content').notNull().default(''),
+  exampleQuestions: jsonb('example_questions').default('[]'),
+  order: integer('order').default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
