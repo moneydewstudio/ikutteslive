@@ -12,6 +12,9 @@ import BottomNav from './components/BottomNav';
 import BonusView from './components/BonusView';
 import TryoutView from './components/TryoutView';
 import DrillsView from './components/DrillsView';
+import RoadmapView from './components/RoadmapView';
+import RoadmapMaterialView from './components/RoadmapMaterialView';
+import RoadmapQuizView from './components/RoadmapQuizView';
 import InterstitialAd from './components/InterstitialAd';
 import Button from './components/Button';
 import { syncAuth } from './services/backend';
@@ -36,6 +39,8 @@ const AppContent: React.FC = () => {
   // TEAM_037: optional drill theme id when launching a per-theme drill from the picker
   const [selectedDrillThemeId, setSelectedDrillThemeId] = useState<number | null>(null);
   const [drillKey, setDrillKey] = useState(0);
+  const [roadmapSubtopicId, setRoadmapSubtopicId] = useState<number | null>(null);
+  const [roadmapSubtopicName, setRoadmapSubtopicName] = useState<string>('');
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [signupReason, setSignupReason] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -85,7 +90,7 @@ const AppContent: React.FC = () => {
 
       const next = raw.toUpperCase() as ViewState;
       // TEAM_020: allow DRILLS deep link but route to BONUS when category is unknown
-      const allowed: ViewState[] = ['QUIZ', 'BONUS', 'DRILLS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL', 'ADMIN_PAYMENTS'];
+      const allowed: ViewState[] = ['QUIZ', 'BONUS', 'DRILLS', 'TRYOUT', 'PROFILE', 'RESULTS', 'AD_INTERSTITIAL', 'ADMIN_PAYMENTS', 'ROADMAP', 'ROADMAP_MATERIAL', 'ROADMAP_QUIZ'];
       if (!allowed.includes(next)) return;
 
       // TEAM_024: admin payments panel is a hidden UI entry; deep link must also be blocked unless the email matches.
@@ -368,16 +373,24 @@ const Header = () => (
       </button>
       
       {/* Secondary: Drill (per-category practice) */}
-      <button 
-        onClick={() => setView('BONUS')} 
+      <button
+        onClick={() => setView('BONUS')}
         className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}
       >
         Drill
       </button>
-      
+
+      {/* Secondary: Roadmap (curriculum) */}
+      <button
+        onClick={() => setView('ROADMAP')}
+        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'ROADMAP' ? 'text-black' : 'text-gray-400'}`}
+      >
+        Roadmap
+      </button>
+
       {/* Secondary: Kuis Harian */}
-      <button 
-        onClick={handleLatihanClick} 
+      <button
+        onClick={handleLatihanClick}
         className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}
       >
         Kuis Harian
@@ -440,6 +453,36 @@ const renderContent = () => {
             onBackToBonus={() => setView('BONUS')}
           />
         );
+      case 'ROADMAP':
+        return (
+          <RoadmapView
+            onStartMaterial={(subtopicId) => {
+              setRoadmapSubtopicId(subtopicId);
+              setRoadmapSubtopicName('');
+              setView('ROADMAP_MATERIAL');
+            }}
+          />
+        );
+      case 'ROADMAP_MATERIAL':
+        return roadmapSubtopicId ? (
+          <RoadmapMaterialView
+            subtopicId={roadmapSubtopicId}
+            onBack={() => setView('ROADMAP')}
+            onStartTest={(id) => {
+              setRoadmapSubtopicId(id);
+              setView('ROADMAP_QUIZ');
+            }}
+          />
+        ) : null;
+      case 'ROADMAP_QUIZ':
+        return roadmapSubtopicId ? (
+          <RoadmapQuizView
+            subtopicId={roadmapSubtopicId}
+            subtopicName={roadmapSubtopicName}
+            onBack={() => setView('ROADMAP_MATERIAL')}
+            onComplete={() => setView('ROADMAP')}
+          />
+        ) : null;
       case 'TRYOUT':
         return <TryoutView />;
       case 'PROFILE':
@@ -632,7 +675,15 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
         >
           Drill
         </button>
-        
+
+        {/* Secondary: Roadmap */}
+        <button
+          onClick={() => setView('ROADMAP')}
+          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'ROADMAP' ? 'text-black' : 'text-gray-400'}`}
+        >
+          Roadmap
+        </button>
+
         {/* Secondary: Kuis Harian */}
         <button
           onClick={handleLatihanClick}
@@ -681,7 +732,7 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
       <main className="flex-1 flex flex-col w-full min-h-0">
         {view === 'AD_INTERSTITIAL' ? <InterstitialAd onClose={handleAdComplete} onGoPro={handleGoPro} /> : renderContent()}
       </main>
-      {view !== 'AD_INTERSTITIAL' && (
+      {view !== 'AD_INTERSTITIAL' && view !== 'ROADMAP_MATERIAL' && view !== 'ROADMAP_QUIZ' && (
         <div className="md:hidden">
           <BottomNav
             currentView={view}
