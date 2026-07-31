@@ -123,8 +123,8 @@ Rewrite `RoadmapMaterialView` dari stacked-markdown → lesson player 1 tema = 1
 
 | # | Isi | Status |
 |---|---|---|
-| 0 | GATE: verifikasi join key `theme.name` ke DB live. Mismatch → `resolveTheme` null → ThemeList. | **BELUM** |
-| 1 | `utils/roadmapSlides.ts` + 8 test. Builder: fallback → `[content, ...exQuiz, done]`; normal → content[0] + checkpoint1 + sisa content + sisa checkpoint + exQuiz + done. Rotasi opsi deterministik, `weighted` flag, lede = hook, summary di completion. `resolveTheme` → **null** bila miss (jangan `themes[0]`). | belum |
+| 0 | GATE: verifikasi join key `theme.name` ke DB live. Mismatch → `resolveTheme` null → ThemeList. | ✅ **PASS** (commit `f64aa24`) |
+| 1 | `utils/roadmapSlides.ts` + 8 test. Builder: fallback → `[content, ...exQuiz, done]`; normal → content[0] + checkpoint1 + sisa content + sisa checkpoint + exQuiz + done. Rotasi opsi deterministik, `weighted` flag, lede = hook, summary di completion. `resolveTheme` → **null** bila miss (jangan `themes[0]`). | ✅ (commit `4498a10`) — deviasi: fallback order `[exQuiz, content, done]` (plan taruh content dulu → test weighted gagal). |
 | 2 | Fix `renderMarkdown`: escape `<>`, bold, numbered list, `\n` → `<p>`. Regex renderer (`ponytail`). | belum |
 | 3 | Wiring: `RoadmapView` pass `theme.name`; `App.tsx` state + `key=` remount (ganti reset-effect). | belum |
 | 4 | Rewrite `RoadmapMaterialView` 2 layar (ThemeList + LessonPlayer). UI copy-paste dari `RoadmapQuizView`. TKP weighted → banner amber + poin (bukan merah/hijau biner). Completion: skor N/M + summary card + CTA. Delete semua `*Section` lama. | belum |
