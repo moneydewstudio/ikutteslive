@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../services/apiClient';
-import { ArrowLeft, BookOpen, FileText, Play } from 'lucide-react';
+import { ArrowLeft, BookOpen, FileText, Play, CheckCircle2, Lightbulb, Target, BrainCircuit } from 'lucide-react';
 
 type ExampleQuestion = {
   question: string;
@@ -10,11 +10,35 @@ type ExampleQuestion = {
   explanation: string;
 };
 
+type StructuredSection = {
+  type: 'hook' | 'learning_objectives' | 'content' | 'checkpoint' | 'summary';
+  title: string;
+  body?: string;
+  scenario?: string;
+  objectives?: string[];
+  question?: string;
+  options?: Array<{ key: string; text: string; correct?: boolean }>;
+  feedback?: string;
+};
+
+type MaterialJson = {
+  themes: Array<{
+    name: string;
+    code: string;
+    structuredContent: {
+      estimatedMinutes: number;
+      sections: StructuredSection[];
+    } | null;
+    exampleQuestions: ExampleQuestion[];
+  }>;
+};
+
 type MaterialData = {
   subtopicId: number;
   subtopicName: string;
   content: string;
   exampleQuestions: ExampleQuestion[];
+  materialJson: MaterialJson | null;
 };
 
 type Props = {
@@ -22,6 +46,122 @@ type Props = {
   onBack: () => void;
   onStartTest: (subtopicId: number) => void;
 };
+
+// ── Section renderers ──────────────────────────────────────────
+
+const P = 'text-base text-gray-700 leading-relaxed';
+
+const renderMarkdown = (text: string) =>
+  (text || '')
+    .replace(/[<>]/g, c => (c === '<' ? '&lt;' : '&gt;'))
+    .replace(/^(\d+)\. (.+)$/gm, '<span class="font-bold text-black">$1.</span> $2')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-black">$1</strong>')
+    .split('\n\n')
+    .map((block, bi) =>
+      block.split('\n').map((line, li) => {
+        const gap = bi === 0 && li === 0 ? '' : li === 0 ? ' mt-lg' : ' mt-sm';
+        return `<p class="${P}${gap}">${line}</p>`;
+      }).join('')
+    ).join('');
+
+const HookSection: React.FC<{ section: StructuredSection }> = ({ section }) => (
+  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-xl mb-xl">
+    <div className="flex items-start gap-md">
+      <BrainCircuit className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
+      <div>
+        <h3 className="font-black text-base mb-sm">{section.title}</h3>
+        <p className="text-gray-700 text-sm italic leading-relaxed">{section.scenario || section.body}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const ObjectivesSection: React.FC<{ section: StructuredSection }> = ({ section }) => (
+  <div className="border border-gray-200 rounded-2xl p-xl mb-xl">
+    <div className="flex items-center gap-2 mb-md">
+      <Target className="w-5 h-5 text-gray-700" />
+      <h3 className="font-black text-sm">{section.title}</h3>
+    </div>
+    <ul className="space-y-sm">
+      {(section.objectives || []).map((obj, i) => (
+        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+          <span>{obj}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+const ContentSection: React.FC<{ section: StructuredSection }> = ({ section }) => (
+  <div className="mb-xl">
+    <h3 className="text-base font-black mb-md">{section.title}</h3>
+    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(section.body || '') }} />
+  </div>
+);
+
+const CheckpointSection: React.FC<{ section: StructuredSection }> = ({ section }) => {
+  const [selected, setSelected] = useState<string | null>(null);
+  const correctOpt = section.options?.find(o => o.correct)?.key || null;
+
+  const handleSelect = (key: string) => {
+    if (selected) return;
+    setSelected(key);
+  };
+
+  return (
+    <div className="border-2 border-amber-300 rounded-2xl overflow-hidden mb-xl">
+      <div className="bg-amber-50 px-xl py-md flex items-center gap-2">
+        <Lightbulb className="w-5 h-5 text-amber-600" />
+        <h3 className="font-black text-sm text-amber-800">{section.title}</h3>
+      </div>
+      <div className="p-xl">
+        <p className="font-bold text-sm mb-md">{section.question}</p>
+        <div className="space-y-sm">
+          {section.options?.map(opt => {
+            const isSelected = selected === opt.key;
+            const isCorrect = opt.key === correctOpt;
+            let cls = 'border rounded-xl px-md py-sm text-sm transition-colors cursor-pointer ';
+            if (!selected) {
+              cls += 'border-gray-200 hover:border-gray-400';
+            } else if (isCorrect) {
+              cls += 'border-green-500 bg-green-50 text-green-800 font-bold';
+            } else if (isSelected) {
+              cls += 'border-red-500 bg-red-50 text-red-800';
+            } else {
+              cls += 'border-gray-200 text-gray-400';
+            }
+            return (
+              <div key={opt.key} onClick={() => handleSelect(opt.key)} className={cls}>
+                <span className="font-bold mr-sm uppercase">{opt.key}.</span>
+                {opt.text}
+                {selected && isCorrect && ' ✅'}
+                {isSelected && !isCorrect && ' ❌'}
+              </div>
+            );
+          })}
+        </div>
+        {selected && section.feedback && (
+          <div className="mt-md p-md bg-amber-50 rounded-xl border border-amber-200">
+            <p className="text-sm text-amber-800">{section.feedback}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SummarySection: React.FC<{ section: StructuredSection }> = ({ section }) => (
+  <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 rounded-2xl p-xl mb-xl">
+    <div className="flex items-start gap-md">
+      <BookOpen className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
+      <div>
+        <h3 className="font-black text-sm mb-sm">{section.title}</h3>
+        <div dangerouslySetInnerHTML={{ __html: renderMarkdown(section.body || '') }} />
+      </div>
+    </div>
+  </div>
+);
 
 const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, onBack, onStartTest }) => {
   const [data, setData] = useState<MaterialData | null>(null);
@@ -63,6 +203,13 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, onBack, onStartTest 
       </div>
     );
   }
+
+  const allSections: Array<{ themeName: string; sections: StructuredSection[] }> =
+    data.materialJson?.themes
+      ?.filter(t => t.structuredContent?.sections?.length)
+      ?.map(t => ({ themeName: t.name, sections: t.structuredContent!.sections })) ?? [];
+
+  const hasStructured = allSections.length > 0;
 
   const TABS = [
     { key: 'materi' as const, label: 'Materi', icon: BookOpen },
@@ -117,19 +264,27 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, onBack, onStartTest 
               transition={{ duration: 0.2 }}
               className="px-2xl py-xl"
             >
-              <div
-                className="prose prose-sm max-w-none prose-headings:font-black prose-headings:text-lg prose-p:text-gray-700 prose-p:leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: data.content
-                    .replace(/^### (.+)$/gm, '<h3 class="text-base font-black mt-xl mb-sm">$1</h3>')
-                    .replace(/^## (.+)$/gm, '<h2 class="text-lg font-black mt-2xl mb-md">$1</h2>')
-                    .replace(/^# (.+)$/gm, '<h1 class="text-xl font-black mt-2xl mb-md">$1</h1>')
-                    .replace(/^- (.+)$/gm, '<li class="ml-lg list-disc text-gray-700">$1</li>')
-                    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-lg list-decimal text-gray-700">$2</li>')
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\n/g, '</p><p class="text-gray-700 mt-md">')
-                }}
-              />
+              {hasStructured ? (
+                allSections.map((theme, ti) => (
+                  <div key={ti} className="mb-2xl">
+                    {allSections.length > 1 && (
+                      <h2 className="text-lg font-black mb-lg border-b border-gray-200 pb-sm">{theme.themeName}</h2>
+                    )}
+                    {theme.sections.map((sec, si) => {
+                      switch (sec.type) {
+                        case 'hook': return <HookSection key={si} section={sec} />;
+                        case 'learning_objectives': return <ObjectivesSection key={si} section={sec} />;
+                        case 'content': return <ContentSection key={si} section={sec} />;
+                        case 'checkpoint': return <CheckpointSection key={si} section={sec} />;
+                        case 'summary': return <SummarySection key={si} section={sec} />;
+                        default: return null;
+                      }
+                    })}
+                  </div>
+                ))
+              ) : (
+                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(data.content) }} />
+              )}
 
               {/* CTA */}
               <div className="mt-2xl mb-xl">
