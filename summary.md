@@ -130,6 +130,11 @@ Rewrite `RoadmapMaterialView` dari stacked-markdown → lesson player 1 tema = 1
 | 4 | Rewrite `RoadmapMaterialView` 2 layar (ThemeList + LessonPlayer). UI copy-paste dari `RoadmapQuizView`. TKP weighted → banner amber + poin (bukan merah/hijau biner). Completion: skor N/M + summary card + CTA. Delete semua `*Section` lama. | ✅ (commit `60ff571`) |
 | 5 | `npm run build` + `npm test` + smoke checklist manual + commit. | build ✅ test ✅ (16/16, 1 worktree pre-existing) · smoke: BELUM |
 
+### Post-launch fixes (2026-08-01, feedback user)
+
+- **Format markdown mentah** → `renderMarkdown` di-rewrite jadi block-aware: `1.` → `<ol>`, `-`/`–` → `<ul>`, bold inline → `<strong>`, `\n\n` → `<p>`. Diverifikasi pada 3 pola body asli DB. Commit `f19cd27`.
+- **"Materi belum ada"** → Bukan kode, tapi **data**: 3 subtopik duplikat (Bhinneka TWK id18, Anti-Radikalisme TWK id19, Integritas TKP id20) tidak punya materi asli di silabus; seed mengisi `material_json` placeholder "sedang disusun". TKP cuma 6 subtopik materi asli. Ini **data task** (buat materi untuk 3 duplikat atau hapus baris roadmap-nya).
+
 ## Temuan audit (dasar revisi v2)
 
 - 26 tema / 289 string: rata-rata 7.9 slide/tema, 2.73 content, 72% tap pasif → v2: 5.9 slide, tap pasif 37%.
