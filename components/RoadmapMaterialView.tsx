@@ -29,20 +29,34 @@ type Screen = { mode: 'list' } | { mode: 'player'; themeName: string; slideIndex
 const FOCUS = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2';
 
 const P = 'text-base text-gray-700 leading-relaxed';
+const LB = 'text-base text-gray-700';
 
-// `\n\n` = jeda paragraf (mt-lg), `\n` tunggal = baris baru rapat (mt-sm).
-const renderMarkdown = (text: string) =>
-  (text || '')
+const inline = (s: string) =>
+  s
     .replace(/[<>]/g, c => (c === '<' ? '&lt;' : '&gt;'))
-    .replace(/^(\d+)\. (.+)$/gm, '<span class="font-bold text-black">$1.</span> $2')
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-black">$1</strong>')
-    .split('\n\n')
-    .map((block, bi) =>
-      block.split('\n').map((line, li) => {
-        const gap = bi === 0 && li === 0 ? '' : li === 0 ? ' mt-lg' : ' mt-sm';
-        return `<p class="${P}${gap}">${line}</p>`;
-      }).join('')
-    ).join('');
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-black">$1</strong>');
+
+const renderMarkdown = (text: string) => {
+  if (!text) return '';
+  return text.split('\n\n').map(block => {
+    const lines = block.split('\n').filter(Boolean);
+    // Bullet list (every line starts with - or – )
+    if (lines.every(l => /^\s*[-–]\s/.test(l))) {
+      const items = lines.map(l => `<li class="ml-lg list-disc ${LB}">${inline(l.replace(/^[-–]\s+/, ''))}</li>`).join('');
+      return `<ul class="space-y-sm">${items}</ul>`;
+    }
+    // Numbered list (every line starts with digit.)
+    if (lines.every(l => /^\s*\d+[.)]\s/.test(l))) {
+      const items = lines.map(l => `<li class="ml-lg list-decimal ${LB}">${inline(l.replace(/^\s*\d+[.)]\s+/, ''))}</li>`).join('');
+      return `<ol class="list-decimal ml-lg space-y-sm">${items}</ol>`;
+    }
+    // Mixed or plain: wrap each line in <p> with proper gaps
+    return lines.map((line, li) => {
+      const gap = li === 0 ? '' : ' mt-sm';
+      return `<p class="${P}${gap}">${inline(line)}</p>`;
+    }).join('');
+  }).join('');
+};
 
 const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, onBack, onStartTest }) => {
   const [data, setData] = useState<MaterialData | null>(null);
