@@ -41,6 +41,8 @@ const AppContent: React.FC = () => {
   const [drillKey, setDrillKey] = useState(0);
   const [roadmapSubtopicId, setRoadmapSubtopicId] = useState<number | null>(null);
   const [roadmapSubtopicName, setRoadmapSubtopicName] = useState<string>('');
+  // TEAM_045+ roadmap lesson player: optional theme to auto-open when entering material view
+  const [roadmapThemeName, setRoadmapThemeName] = useState<string | null>(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [signupReason, setSignupReason] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -456,9 +458,10 @@ const renderContent = () => {
       case 'ROADMAP':
         return (
           <RoadmapView
-            onStartMaterial={(subtopicId) => {
+            onStartMaterial={(subtopicId, themeName) => {
               setRoadmapSubtopicId(subtopicId);
               setRoadmapSubtopicName('');
+              setRoadmapThemeName(themeName ?? null);
               setView('ROADMAP_MATERIAL');
             }}
           />
@@ -466,8 +469,13 @@ const renderContent = () => {
       case 'ROADMAP_MATERIAL':
         return roadmapSubtopicId ? (
           <RoadmapMaterialView
+            key={`${roadmapSubtopicId}:${roadmapThemeName ?? ''}`}
             subtopicId={roadmapSubtopicId}
-            onBack={() => setView('ROADMAP')}
+            initialThemeName={roadmapThemeName}
+            onBack={() => {
+              setRoadmapThemeName(null);
+              setView('ROADMAP');
+            }}
             onStartTest={(id) => {
               setRoadmapSubtopicId(id);
               setView('ROADMAP_QUIZ');

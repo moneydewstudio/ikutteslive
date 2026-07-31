@@ -30,7 +30,7 @@ const CATEGORY_META: Record<DrillCategory, { label: string; color: string; bgLig
   TKP: { label: 'Tes Karakteristik Pribadi', color: 'bg-brand-lime', bgLight: 'bg-lime-50' },
 };
 
-const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number) => void }> = ({ onStartMaterial }) => {
+const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?: string) => void }> = ({ onStartMaterial }) => {
   const [activeCategory, setActiveCategory] = useState<DrillCategory | null>(null);
   const [expandedSubtopic, setExpandedSubtopic] = useState<number | null>(null);
   const [subtopics, setSubtopics] = useState<Record<DrillCategory, SubtopicRow[]>>({ TIU: [], TWK: [], TKP: [] });
@@ -195,7 +195,7 @@ const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number) => void }> 
                                 return (
                                   <div
                                     key={theme.id}
-                                    onClick={() => onStartMaterial?.(sub.id)}
+                                    onClick={() => onStartMaterial?.(sub.id, theme.name)}
                                     className="px-2xl py-sm pl-3xl flex items-center justify-between text-sm cursor-pointer hover:bg-gray-100 transition-colors"
                                   >
                                     <div className="flex items-center gap-lg min-w-0">

@@ -43,6 +43,7 @@ type MaterialData = {
 
 type Props = {
   subtopicId: number;
+  initialThemeName?: string | null;
   onBack: () => void;
   onStartTest: (subtopicId: number) => void;
 };
