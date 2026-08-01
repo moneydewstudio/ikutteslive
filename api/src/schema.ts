@@ -221,6 +221,7 @@ export const roadmapMaterials = pgTable('roadmap_materials', {
   subtopicId: integer('subtopic_id').notNull().references(() => questionSubtopics.id),
   content: text('content').notNull().default(''),
   exampleQuestions: jsonb('example_questions').default('[]'),
+  materialJson: jsonb('material_json').default({}),
   order: integer('ord').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

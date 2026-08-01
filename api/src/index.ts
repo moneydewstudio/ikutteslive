@@ -2208,6 +2208,7 @@ app.get('/roadmap/materials', async (c) => {
         subtopicName: questionSubtopics.name,
         content: roadmapMaterials.content,
         exampleQuestions: roadmapMaterials.exampleQuestions,
+        materialJson: roadmapMaterials.materialJson,
       })
       .from(roadmapMaterials)
       .innerJoin(questionSubtopics, eq(roadmapMaterials.subtopicId, questionSubtopics.id))
@@ -2220,6 +2221,7 @@ app.get('/roadmap/materials', async (c) => {
         subtopicName: '',
         content: `## 📖 Materi\n\nMateri ini sedang disusun. Akan segera hadir.\n\n---\n\n*Tim Ikuttes sedang menyiapkan materi belajar terstruktur untuk subtopik ini. Pantau terus pembaruannya!*`,
         exampleQuestions: [],
+        materialJson: null,
       });
     }
 
@@ -2228,6 +2230,7 @@ app.get('/roadmap/materials', async (c) => {
       subtopicName: rows[0].subtopicName,
       content: rows[0].content,
       exampleQuestions: rows[0].exampleQuestions ?? [],
+      materialJson: rows[0].materialJson,
     });
   } catch (e) {
     console.error('TEAM_045 /roadmap/materials failed', e);
