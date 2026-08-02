@@ -493,6 +493,7 @@ const renderContent = () => {
             key={`${roadmapSubtopicId}:${roadmapThemeName ?? ''}`}
             subtopicId={roadmapSubtopicId}
             initialThemeName={roadmapThemeName}
+            isPremium={!!user?.isPro}
             onBack={() => {
               setRoadmapThemeName(null);
               setView('ROADMAP');
@@ -501,6 +502,7 @@ const renderContent = () => {
               setRoadmapSubtopicId(id);
               setView('ROADMAP_QUIZ');
             }}
+            onNavigateToBonus={() => setView('BONUS')}
           />
         ) : null;
       case 'ROADMAP_QUIZ':

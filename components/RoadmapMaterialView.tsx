@@ -4,6 +4,7 @@ import { apiFetch } from '../services/apiClient';
 import { ArrowLeft, Play, CheckCircle2, BrainCircuit } from 'lucide-react';
 import OptionButton from './ui/OptionButton';
 import CTA from './ui/CTA';
+import { usePaywall } from '../src/contexts/PaywallContext';
 import {
   buildLessonSlides,
   buildSlideKey,
@@ -22,8 +23,10 @@ type MaterialData = {
 type Props = {
   subtopicId: number;
   initialThemeName?: string | null;
+  isPremium: boolean;
   onBack: () => void;
   onStartTest: (subtopicId: number) => void;
+  onNavigateToBonus: () => void;
 };
 
 type Screen = { mode: 'list' } | { mode: 'player'; themeName: string; slideIndex: number };
@@ -60,7 +63,8 @@ const renderMarkdown = (text: string) => {
   }).join('');
 };
 
-const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, onBack, onStartTest }) => {
+const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, isPremium, onBack, onStartTest, onNavigateToBonus }) => {
+  const { openPaywall } = usePaywall();
   const [data, setData] = useState<MaterialData | null>(null);
   const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<Screen>({ mode: 'list' });
@@ -332,6 +336,18 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
           onClick={() => setScreen({ mode: 'list' })}
         >
           Kembali ke Daftar
+        </CTA>
+        <CTA
+          fullWidth
+          onClick={() => {
+            if (!isPremium) {
+              openPaywall('roadmap_drill_cta');
+              return;
+            }
+            onNavigateToBonus();
+          }}
+        >
+          Coba Drill Per Tema
         </CTA>
       </div>
     </div>
