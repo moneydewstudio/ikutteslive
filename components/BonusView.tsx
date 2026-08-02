@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Lock } from 'lucide-react';
 import BonusCard, { Pack } from './BonusCard';
 import DeltaBanner from './DeltaBanner';
 import { User } from '../types';
@@ -106,31 +107,41 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
     [isPremium, todayCategory]
   );
 
-  const packs: Pack[] = useMemo(() => {
-    const categoryCards: Pack[] = (['TIU', 'TWK', 'TKP'] as DrillCategory[]).map((cat, i) => ({
-      id: 1000 + i,
-      title: 'Drill ' + cat,
-      subject: cat,
-      questions: 20,
-      difficulty: 'Harian',
-      price: isUnlocked(cat) ? 'Gratis' : 'Terkunci',
-      color: isUnlocked(cat) ? (cat === 'TIU' ? 'bg-brand-pink' : cat === 'TWK' ? 'bg-brand-cream' : 'bg-brand-lime') : 'bg-white',
-    }));
-
-    const themeCards: Pack[] = (['TIU', 'TWK', 'TKP'] as DrillCategory[]).flatMap((cat) =>
-      themesByCategory[cat].map((t) => ({
-        id: t.themeId,
-        title: t.themeName,
+  const heroPacks: Pack[] = useMemo(
+    () =>
+      (['TIU', 'TWK', 'TKP'] as DrillCategory[]).map((cat, i) => ({
+        id: 1000 + i,
+        title: 'Drill ' + cat,
         subject: cat,
-        questions: t.questionCount,
-        difficulty: 'Tema',
-        price: isPremium ? 'Premium' : 'Terkunci',
-        color: isPremium ? (cat === 'TIU' ? 'bg-brand-pink' : cat === 'TWK' ? 'bg-brand-cream' : 'bg-brand-lime') : 'bg-white',
-      }))
-    );
+        questions: 20,
+        difficulty: 'Harian',
+        price: isUnlocked(cat) ? 'Gratis' : 'Terkunci',
+        color: '',
+      })),
+    [isUnlocked]
+  );
 
-    return [...categoryCards, ...themeCards];
-  }, [isUnlocked, isPremium, themesByCategory]);
+  const CATS: DrillCategory[] = ['TIU', 'TWK', 'TKP'];
+
+  const handleClick = (pack: Pack) => {
+    const category = pack.subject as DrillCategory;
+    if (pack.difficulty === 'Tema') {
+      if (!isPremium) {
+        openPaywall('drills_locked_theme');
+        return;
+      }
+      onStartDrill(category, pack.id);
+      return;
+    }
+    if (!isUnlocked(category)) {
+      openPaywall('drills_locked_card');
+      return;
+    }
+    onStartDrill(category);
+  };
+
+  const themeFOCUS =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2';
 
   return (
     <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
@@ -146,31 +157,61 @@ const BonusView: React.FC<BonusViewProps> = ({ user, onStartDrill }) => {
         compact
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" data-tour="drills-cards">
-          {packs.map((pack) => (
-              <BonusCard
-                key={pack.id}
-                pack={pack}
-                onClick={() => {
-                  const category = pack.subject as DrillCategory;
-                  const isTheme = pack.difficulty === 'Tema';
-                  if (isTheme) {
-                    if (!isPremium) {
-                      openPaywall('drills_locked_theme');
-                      return;
-                    }
-                    onStartDrill(category, pack.id);
-                    return;
-                  }
-                  if (!isUnlocked(category)) {
-                    openPaywall('drills_locked_card');
-                    return;
-                  }
-                  onStartDrill(category);
-                }}
-              />
-          ))}
+      <div className="grid grid-cols-3 gap-md px-2xl pt-xl" data-tour="drills-cards">
+        {heroPacks.map((pack) => (
+          <BonusCard key={pack.id} pack={pack} onClick={() => handleClick(pack)} />
+        ))}
       </div>
+
+      {CATS.map((cat) => {
+        const themes = themesByCategory[cat];
+        return (
+          <section key={cat} className="mt-xl">
+            <header className="border-b border-black px-2xl py-md">
+              <h2 className="uppercase font-black text-sm tracking-wide">
+                {cat}
+                <span className="font-bold text-gray-500"> · {themes.length} tema</span>
+              </h2>
+            </header>
+            {themes.length === 0 ? (
+              <p className="px-2xl pt-md text-sm text-gray-500">Belum ada tema.</p>
+            ) : (
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-md px-2xl pt-lg pb-lg [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {themes.map((t) => {
+                  const locked = !isPremium;
+                  return (
+                    <button
+                      key={t.themeId}
+                      type="button"
+                      onClick={() => handleClick({
+                        id: t.themeId,
+                        title: t.themeName,
+                        subject: cat,
+                        questions: t.questionCount,
+                        difficulty: 'Tema',
+                        price: locked ? 'Terkunci' : 'Premium',
+                        color: '',
+                      })}
+                      className={[
+                        'snap-center shrink-0 w-40 border border-black rounded-xl p-lg text-left',
+                        'flex flex-col justify-between h-36 transition-colors',
+                        locked ? 'bg-white opacity-60' : 'bg-brand-cream',
+                        themeFOCUS,
+                      ].join(' ')}
+                    >
+                      <span className="flex items-start justify-between gap-sm min-w-0">
+                        <span className="font-bold text-sm leading-tight min-w-0">{t.themeName}</span>
+                        {locked && <Lock className="w-4 h-4 shrink-0 opacity-50" aria-hidden="true" />}
+                      </span>
+                      <span className="text-xs font-bold text-gray-600">{t.questionCount} Soal</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        );
+      })}
 
       <OnboardingTour />
     </div>

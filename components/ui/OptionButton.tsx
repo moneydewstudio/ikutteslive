@@ -11,7 +11,7 @@ type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   marker?: React.ReactNode;
 };
 
-const STATE: Record<OptionState, string> = {
+export const STATE: Record<OptionState, string> = {
   idle: 'bg-white text-black hover:bg-gray-50',
   selected: 'bg-brand-lime text-black font-bold',
   correct: 'bg-feedback-green text-black font-bold',
