@@ -2,10 +2,10 @@
 // Shows: instant status comprehension without mental math
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowRight, ChevronDown, ChevronUp, Target, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { ProgressEstimate, calculateProgressEstimate, getSessionsEstimateText } from '../services/progressEstimator';
-import { UserSession } from '../types';
+import { ArrowRight, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ProgressEstimate, calculateProgressEstimate } from '../services/progressEstimator';
 import * as QuizService from '../services/quizService';
+import { FOCUS } from './ui/Card';
 
 // TEAM_032: Status determination for visual feedback
 type StatusType = 'critical' | 'warning' | 'approaching' | 'passing';
@@ -18,29 +18,29 @@ const getStatusFromScore = (score: number): StatusType => {
 };
 
 const StatusConfig: Record<StatusType, { label: string; color: string; bgColor: string; icon: React.ReactNode; pulse?: boolean }> = {
-  critical: { 
-    label: 'Perlu Belajar Intensif', 
-    color: 'text-white', 
-    bgColor: 'bg-red-600',
+  critical: {
+    label: 'Perlu Belajar Intensif',
+    color: 'text-black',
+    bgColor: 'bg-feedback-red',
     icon: <AlertCircle className="w-4 h-4" />
   },
-  warning: { 
-    label: 'Menuju Passing Grade', 
-    color: 'text-black', 
+  warning: {
+    label: 'Menuju Passing Grade',
+    color: 'text-black',
     bgColor: 'bg-brand-orange',
     icon: <TrendingUp className="w-4 h-4" />
   },
-  approaching: { 
-    label: 'Hampir Lolos!', 
-    color: 'text-black', 
+  approaching: {
+    label: 'Hampir Lolos!',
+    color: 'text-black',
     bgColor: 'bg-brand-lime',
     icon: <TrendingUp className="w-4 h-4" />,
     pulse: true
   },
-  passing: { 
-    label: 'Siap Lolos!', 
-    color: 'text-black', 
-    bgColor: 'bg-green-500',
+  passing: {
+    label: 'Siap Lolos!',
+    color: 'text-black',
+    bgColor: 'bg-feedback-green',
     icon: <CheckCircle2 className="w-4 h-4" />
   },
 };
@@ -99,8 +99,8 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
   if (isLoading) {
     return (
       <div className="bg-brand-cream border border-black p-lg animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-sm"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        <div className="h-6 bg-gray-200 rounded-xl w-1/3 mb-sm"></div>
+        <div className="h-4 bg-gray-200 rounded-xl w-1/2"></div>
       </div>
     );
   }
@@ -121,45 +121,46 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
         <div className="flex items-center justify-between gap-lg">
           <div className="flex-1 min-w-0">
             {/* Explanatory label */}
-            <div className="text-xs font-bold text-gray-500 mb-sm">Estimasi Nilai SKD Kamu</div>
-            
+            <div className="text-xs font-bold text-gray-600 mb-sm">Estimasi Nilai SKD Kamu</div>
+
             {/* Status Badge + Score */}
             <div className="flex items-center gap-md mb-md">
-              <span className={`inline-flex items-center gap-sm px-2 py-0.5 rounded text-xs font-black ${config.bgColor} ${config.color} ${config.pulse ? 'animate-pulse' : ''}`}>
+              <span className={`inline-flex items-center gap-sm px-sm py-xs rounded-full text-xs font-black border border-black ${config.bgColor} ${config.color} ${config.pulse ? 'animate-pulse' : ''}`}>
                 {config.icon}
                 {config.label}
               </span>
-              <span className="font-black text-lg">{estimate.estimatedTotal}<span className="text-sm text-gray-500">/500</span></span>
+              <span className="font-black text-lg">{estimate.estimatedTotal}<span className="text-sm text-gray-600">/500</span></span>
             </div>
-            
+
             {/* Visual Progress Bar with 300 marker */}
             <div className="relative h-2 bg-gray-300 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-black transition-all duration-700 ease-out"
                 style={{ width: `${compactProgressPercent}%` }}
               />
               {/* 300 passing marker */}
-              <div 
+              <div
                 className="absolute top-0 bottom-0 w-0.5 bg-black"
                 style={{ left: `${passingPercent}%` }}
               />
             </div>
             {/* Scale: 0 - 300 (Nilai Minimal Lolos SKD) - 500 */}
-            <div className="flex justify-between text-[10px] text-gray-500 mt-xs font-medium">
+            <div className="flex justify-between text-[10px] text-gray-600 mt-xs font-medium">
               <span>0</span>
               <span className="font-bold text-black">300</span>
               <span>500</span>
             </div>
             <div className="text-center">
-              <span className="text-[10px] font-black bg-black text-white px-1.5 py-0.5 rounded">Nilai Minimal Lolos SKD</span>
+              <span className="text-[10px] font-black bg-black text-white px-sm py-xs rounded-xl">Nilai Minimal Lolos SKD</span>
             </div>
           </div>
-          
+
           <button
+            type="button"
             onClick={onContinueClick}
-            className="flex-shrink-0 flex items-center gap-sm text-sm font-bold bg-black text-white px-3 py-2 hover:bg-gray-800 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)] active:translate-y-[1px] active:shadow-none"
+            className={['flex-shrink-0 flex items-center gap-sm text-sm font-bold bg-black text-white rounded-xl px-md py-sm hover:bg-gray-800 transition-colors', FOCUS].join(' ')}
           >
-            {continueLabel} <ArrowRight className="w-4 h-4" />
+            {continueLabel} <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -174,30 +175,30 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
   return (
     <div className="bg-brand-cream border border-black overflow-hidden">
       {/* Main row - Visual-first design */}
-      <div className="p-4 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="p-lg md:p-xl">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-lg">
           {/* Left: Visual Status Dashboard */}
           <div className="flex-1">
             {/* Header */}
-            <div className="text-sm font-bold text-gray-600 mb-2">Perkiraan Nilai SKD Kamu Nanti</div>
-            
+            <div className="text-sm font-bold text-gray-600 mb-sm">Perkiraan Nilai SKD Kamu Nanti</div>
+
             {/* Status Badge - Instant comprehension */}
-            <div className="flex items-center gap-3 mb-3">
-              <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm font-black ${config.bgColor} ${config.color} shadow-sm ${config.pulse ? 'animate-pulse' : ''}`}>
+            <div className="flex items-center gap-md mb-md">
+              <span className={`inline-flex items-center gap-sm px-md py-sm rounded-full text-sm font-black border border-black ${config.bgColor} ${config.color} ${config.pulse ? 'animate-pulse' : ''}`}>
                 {config.icon}
                 {config.label}
               </span>
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-baseline gap-xs">
                 <span className="font-black text-2xl tracking-tight">{estimate.estimatedTotal}</span>
-                <span className="text-lg text-gray-500 font-bold">/500</span>
+                <span className="text-lg text-gray-600 font-bold">/500</span>
               </div>
             </div>
-            
+
             {/* Visual Progress with Passing Marker */}
             <div className="relative">
-              <div className="h-3 bg-gray-300 rounded-full overflow-hidden shadow-inner">
+              <div className="h-3 bg-gray-300 rounded-full overflow-hidden">
                 {/* Main progress */}
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-gray-700 to-black transition-all duration-1000 ease-out relative"
                   style={{ width: `${fullProgressPercent}%` }}
                 >
@@ -205,42 +206,43 @@ const DeltaBanner: React.FC<DeltaBannerProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
                 </div>
               </div>
-              
+
               {/* Passing threshold marker - THE KEY VISUAL */}
-              <div 
-                className="absolute top-0 bottom-0 w-1 bg-black shadow-lg"
+              <div
+                className="absolute top-0 bottom-0 w-1 bg-black"
                 style={{ left: `${passingPercent}%`, transform: 'translateX(-50%)' }}
               >
                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black rounded-full" />
                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  <span className="text-[10px] font-black bg-black text-white px-1.5 py-0.5 rounded">Nilai Minimal Lolos SKD</span>
+                  <span className="text-[10px] font-black bg-black text-white px-sm py-xs rounded-xl">Nilai Minimal Lolos SKD</span>
                 </div>
               </div>
             </div>
-            
+
             {/* Practice encouragement */}
-            <div className="mt-4 text-sm text-gray-600">
+            <div className="mt-lg text-sm text-gray-600">
               Sering Berlatih Meningkatkan Skor Estimasi Kamu
             </div>
           </div>
 
           {/* Right: CTA */}
           <button
+            type="button"
             onClick={onContinueClick}
-            className="flex items-center justify-center gap-2 bg-black text-white font-bold px-6 py-3 hover:bg-gray-800 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:translate-y-[2px] active:shadow-none"
+            className={['flex items-center justify-center gap-sm bg-black text-white font-bold rounded-xl px-xl py-md hover:bg-gray-800 transition-colors', FOCUS].join(' ')}
           >
             {continueLabel}
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Scale legend */}
-        <div className="flex justify-between text-xs text-gray-500 mt-6 font-medium">
+        <div className="flex justify-between text-xs text-gray-600 mt-xl font-medium">
           <span>0</span>
-          <span className="text-gray-400">100</span>
-          <span className="text-gray-400">200</span>
+          <span className="text-gray-600">100</span>
+          <span className="text-gray-600">200</span>
           <span className="font-bold text-black">300</span>
-          <span className="text-gray-400">400</span>
+          <span className="text-gray-600">400</span>
           <span>500</span>
         </div>
       </div>

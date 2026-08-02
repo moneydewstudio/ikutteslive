@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Button from './Button';
+import { FOCUS } from './ui/Card';
+import { CTA } from './ui/CTA';
 import { cancelPayment, claimPayment, createPayment, getPayment, type PaymentResponse, type PaymentStatus } from '../services/payments';
 
 type PaymentModalProps = {
@@ -150,15 +151,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 p-lg">
-      <div className="w-full max-w-lg border border-black rounded-2xl bg-white overflow-hidden">
-        <div className="p-5 border-b border-black bg-gray-50">
-          <div className="flex items-start justify-between gap-3">
+      <div className="w-full max-w-lg border border-black rounded-xl bg-white overflow-hidden">
+        <div className="p-lg border-b border-black bg-gray-50">
+          <div className="flex items-start justify-between gap-md">
             <div>
               <div className="font-black text-xl uppercase">Pembayaran QRIS</div>
-              <div className="text-sm font-medium text-gray-700 mt-1">Bayar persis sesuai nominal agar otomatis terdeteksi.</div>
+              <div className="text-sm font-medium text-gray-600 mt-sm">Bayar persis sesuai nominal agar otomatis terdeteksi.</div>
             </div>
             <button
-              className="text-xs font-black uppercase border border-black rounded-lg px-2 py-1"
+              type="button"
+              className={['text-xs font-black uppercase border border-black rounded-xl px-sm py-xs hover:bg-gray-100 transition-colors', FOCUS].join(' ')}
               onClick={onClose}
             >
               Tutup
@@ -166,11 +168,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         </div>
 
-        <div className="p-5">
+        <div className="p-lg">
           {error ? (
-            <div className="mb-4 border border-black rounded-xl p-3 bg-brand-cream">
+            <div className="mb-lg border border-black rounded-xl p-md bg-brand-cream">
               <div className="font-black">Error</div>
-              <div className="text-sm font-medium text-gray-700 mt-1">
+              <div className="text-sm font-medium text-gray-600 mt-xs">
                 {error === 'claim_failed'
                   ? 'Gagal mengirim status. Coba lagi.'
                   : error === 'recreate_failed'
@@ -182,46 +184,51 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           ) : null}
 
-          <div className="border border-black rounded-xl p-4 bg-white">
-            <div className="flex items-center justify-between gap-3">
+          <div className="border border-black rounded-xl p-lg bg-white">
+            <div className="flex items-center justify-between gap-md">
               <div>
                 <div className="text-xs font-black uppercase text-gray-500">Nominal</div>
                 <div className="font-black text-2xl">{formatRupiah(payment?.amountExpected ?? 0)}</div>
               </div>
               <div className="text-right">
                 <div className="text-xs font-black uppercase text-gray-500">Sisa waktu</div>
-                <div className={`font-black text-2xl ${isExpired ? 'text-red-600' : ''}`}>{formatCountdown(countdownMs)}</div>
+                <div className={`font-black text-2xl ${isExpired ? 'text-feedback-red' : ''}`}>{formatCountdown(countdownMs)}</div>
               </div>
             </div>
 
-            <div className="mt-4 border border-black rounded-xl bg-gray-50 p-4 flex items-center justify-center">
+            <div className="mt-lg border border-black rounded-xl bg-gray-50 p-lg flex items-center justify-center">
               <div className="text-center">
-                <img src="/AdWdkD345CkD.jpeg" alt="QRIS" className="w-56 h-56 object-contain mx-auto" />
+                <img src="/AdWdkD345CkD.jpeg" alt="QRIS" className="w-2xl h-2xl object-contain mx-auto" />
               </div>
             </div>
 
-            <div className="mt-3 text-[11px] text-gray-600 font-medium break-all">Payment ID: {paymentId}</div>
-            <div className="mt-1 text-[11px] text-gray-600 font-medium">Status: {status}</div>
+            <div className="mt-md text-xs text-gray-600 font-medium break-all">Payment ID: {paymentId}</div>
+            <div className="mt-xs text-xs text-gray-600 font-medium">Status: {status}</div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-2">
-            <Button variant="black" fullWidth isLoading={loading} disabled={isExpired || status !== 'pending'} onClick={() => void handleClaim()}>
-              Saya sudah bayar
-            </Button>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" fullWidth isLoading={loading} onClick={() => void handleRecreate()}>
-                Buat ulang
-              </Button>
-              <Button variant="outline" fullWidth isLoading={loading} onClick={() => void handleCancel()}>
-                Batal
-              </Button>
+          <div className="mt-lg grid grid-cols-1 gap-sm">
+            <CTA
+              variant="primary"
+              fullWidth
+              disabled={isExpired || status !== 'pending' || loading}
+              onClick={() => void handleClaim()}
+            >
+              {loading ? 'Memproses...' : 'Saya sudah bayar'}
+            </CTA>
+            <div className="grid grid-cols-2 gap-sm">
+              <CTA variant="secondary" fullWidth disabled={loading} onClick={() => void handleRecreate()}>
+                {loading ? 'Memproses...' : 'Buat ulang'}
+              </CTA>
+              <CTA variant="secondary" fullWidth disabled={loading} onClick={() => void handleCancel()}>
+                {loading ? 'Memproses...' : 'Batal'}
+              </CTA>
             </div>
           </div>
 
           {claimed ? (
-            <div className="mt-4 border border-black rounded-xl p-3 bg-brand-lime">
+            <div className="mt-lg border border-black rounded-xl p-md bg-brand-lime">
               <div className="font-black">Menunggu konfirmasi</div>
-              <div className="text-sm font-medium text-gray-700 mt-1">Biasanya 1–5 menit. Panel admin akan mengkonfirmasi setelah nominal cocok.</div>
+              <div className="text-sm font-medium text-gray-600 mt-xs">Biasanya 1–5 menit. Panel admin akan mengkonfirmasi setelah nominal cocok.</div>
             </div>
           ) : null}
         </div>

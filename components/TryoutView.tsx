@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, Calendar, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2, Share2, Target } from 'lucide-react';
-import Button from './Button';
+import { Clock, ChevronRight, ArrowUpRight, Menu, X, CheckCircle, ChevronLeft, Award, RefreshCw, XCircle, Loader2, Share2, Target } from 'lucide-react';
 import QuizCard from './QuizCard';
+import CTA from './ui/CTA';
+import { FOCUS } from './ui/Card';
 import InterstitialAd from './InterstitialAd';
 import { Question } from '../types';
 import * as QuizService from '../services/quizService';
@@ -49,14 +50,14 @@ interface GridItemProps {
 }
 
 const GridItem = React.memo(({ index, isActive, isAnswered, onSelect }: GridItemProps) => {
-    let styleClass = "bg-gray-500";
-    if (isAnswered) styleClass = "bg-green-600";
-    if (isActive) styleClass = "bg-red-500";
-    
+    let styleClass = "bg-brand-gray";
+    if (isAnswered) styleClass = "bg-feedback-green";
+    if (isActive) styleClass = "bg-feedback-red";
+
     return (
       <button
         onClick={() => onSelect(index)}
-        className={`w-10 h-10 rounded text-xs font-bold flex items-center justify-center text-white transition-transform active:scale-95 ${styleClass} border border-black/10`}
+        className={`w-2xl h-2xl rounded-xl text-xs font-bold flex items-center justify-center text-black transition-transform active:scale-95 border border-black ${FOCUS} ${styleClass}`}
       >
         {index + 1}
       </button>
@@ -64,9 +65,10 @@ const GridItem = React.memo(({ index, isActive, isAnswered, onSelect }: GridItem
 });
 
 const SubmitButton = React.memo(({ onClick }: { onClick: () => void }) => (
-    <button 
+    <button
+        type="button"
         onClick={onClick}
-        className="w-full px-6 py-3 rounded border border-black bg-brand-orange text-black font-bold text-sm hover:bg-opacity-90 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-md"
+        className={`w-full px-xl py-md rounded-xl border border-black bg-brand-orange text-black font-bold text-sm hover:bg-opacity-90 transition-colors flex items-center justify-center gap-md ${FOCUS}`}
      >
         <CheckCircle className="w-4 h-4" />
         Cek Nilaimu Sekarang!
@@ -417,27 +419,28 @@ const TryoutView: React.FC = () => {
 
   if (!isStarted) {
     return (
-      <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
+      <div className="flex flex-col w-full animate-fade-in pb-2xl md:pb-0">
          <div className="grid grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-80px)]">
              {/* Left: Main Action */}
              <div className="p-2xl md:p-3xl border-b md:border-b-0 md:border-r border-black bg-brand-purple flex flex-col justify-center relative overflow-hidden">
                  <div className="relative z-10">
-                     <div className="inline-flex items-center gap-md border border-black bg-black text-white px-3 py-1 rounded-full text-xs font-bold uppercase mb-xl">
-                         <Clock className="w-3 h-3" />
+                     <div className="inline-flex items-center gap-md border border-black bg-black text-white px-md py-xs rounded-full text-xs font-bold uppercase mb-xl">
+                         <Clock className="w-4 h-4" />
                          Waktu Terbatas
                      </div>
                      <h1 className="text-5xl md:text-7xl font-black leading-none mb-xl">
                          Simulasi<br/>Tryout
                      </h1>
-                     <p className="font-bold text-lg mb-8 max-w-md">
+                     <p className="font-bold text-lg mb-2xl max-w-md">
                          Simulasi skala penuh dengan 110 soal dalam 100 menit.
                          Uji kesiapanmu dengan standar SKD CPNS sesungguhnya.
                      </p>
-                     <Button size="lg" variant="black" withArrow onClick={startTryout}>
+                     <CTA size="lg" onClick={startTryout}>
                          Mulai Simulasi
-                     </Button>
+                         <ArrowUpRight className="w-5 h-5 ml-sm" />
+                     </CTA>
                  </div>
-                 <div className="absolute -bottom-20 -right-20 w-64 h-64 border-[40px] border-black opacity-10 rounded-full"></div>
+                 <div className="absolute -bottom-2xl -right-2xl w-2xl h-2xl bg-black/10 rounded-full" aria-hidden="true"></div>
              </div>
              {/* Right: Info */}
             <div className="flex flex-col bg-white">
@@ -452,7 +455,7 @@ const TryoutView: React.FC = () => {
   // LOADING STATE
   if (isLoading) {
     return (
-        <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center space-y-4 font-sans">
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center space-y-lg font-sans">
             <Loader2 className="w-12 h-12 animate-spin text-brand-black" />
             <p className="font-bold text-lg animate-pulse">Menyiapkan Paket Soal...</p>
         </div>
@@ -462,7 +465,7 @@ const TryoutView: React.FC = () => {
   // SIMULATION VIEW (Overlay Mode)
   const currentQ = questions[currentIndex];
   // Safety check if loading failed or array empty
-  if (!currentQ && !isLoading) return <div className="p-8">Gagal memuat soal. Silakan refresh.</div>;
+  if (!currentQ && !isLoading) return <div className="p-2xl">Gagal memuat soal. Silakan refresh.</div>;
 
   // TEAM_013: allow Tryout overlay to scroll on mobile only (desktop keeps fixed layout)
   return (
@@ -482,68 +485,68 @@ const TryoutView: React.FC = () => {
       {/* RESULT MODAL */}
       {result && (
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-lg animate-fade-in">
-           <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-black animate-scale-in">
-              <div className={`p-6 text-center border-b border-black ${result.passed ? 'bg-brand-lime' : 'bg-brand-pink'}`}>
-                  {result.passed ? <Award className="w-12 h-12 mx-auto mb-2" /> : <XCircle className="w-12 h-12 mx-auto mb-2" />}
+           <div className="bg-white w-full max-w-md rounded-xl overflow-hidden border border-black animate-scale-in">
+              <div className={`p-xl text-center border-b border-black ${result.passed ? 'bg-brand-lime' : 'bg-brand-pink'}`}>
+                  {result.passed ? <Award className="w-12 h-12 mx-auto mb-sm" /> : <XCircle className="w-12 h-12 mx-auto mb-sm" />}
                   <h2 className="text-2xl font-black uppercase tracking-tight">{result.passed ? 'Lulus Passing Grade' : 'Belum Lulus'}</h2>
                   <p className="font-medium opacity-80">{result.passed ? 'Pertahankan performa ini!' : 'Jangan menyerah, coba lagi!'}</p>
               </div>
-              <div className="p-6 bg-brand-cream">
-                  <div className="flex justify-between items-center mb-6">
+              <div className="p-xl bg-brand-cream">
+                  <div className="flex justify-between items-center mb-xl">
                       <span className="font-bold text-gray-500 uppercase text-xs">Total Skor</span>
                       <span className="font-black text-4xl">{result.totalScore}</span>
                   </div>
 
                   {/* TEAM_033: Near-miss trigger - strongest natural hook */}
                   {!result.passed && result.totalScore >= 275 && result.totalScore < 300 && (
-                    <div className="mb-4 p-3 bg-brand-orange border border-black rounded">
-                      <div className="font-bold text-sm flex items-center gap-2">
+                    <div className="mb-lg p-md bg-brand-orange text-black border border-black rounded-xl">
+                      <div className="font-bold text-sm flex items-center gap-sm">
                         <Target className="w-4 h-4" />
                         🎯 Hampir lulus! {300 - result.totalScore} poin lagi.
                       </div>
-                      <p className="text-xs mt-1">Coba lagi hari ini untuk mencapai passing grade.</p>
+                      <p className="text-xs mt-xs">Coba lagi hari ini untuk mencapai passing grade.</p>
                     </div>
                   )}
 
                   {/* TEAM_033: Delta feedback - show gap to passing */}
                   {!result.passed && result.totalScore < 275 && (
-                    <div className="mb-4 p-3 bg-white border border-black rounded">
+                    <div className="mb-lg p-md bg-white border border-black rounded-xl">
                       <div className="text-sm font-bold text-brand-orange">
                         Kurang {300 - result.totalScore} poin lagi untuk lulus
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">
+                      <div className="text-xs text-gray-600 mt-xs">
                         ≈ {Math.ceil((300 - result.totalScore) / 12)} sesi latihan lagi
                       </div>
                     </div>
                   )}
 
-                  <div className="space-y-3 mb-6">
-                      <div className="flex justify-between p-3 bg-white border border-black rounded">
+                  <div className="space-y-md mb-xl">
+                      <div className="flex justify-between p-md bg-white border border-black rounded-xl">
                           <span className="font-bold text-sm">TWK (Kebangsaan)</span>
                           <span className="font-black">{result.details.twk}</span>
                       </div>
-                      <div className="flex justify-between p-3 bg-white border border-black rounded">
+                      <div className="flex justify-between p-md bg-white border border-black rounded-xl">
                           <span className="font-bold text-sm">TIU (Intelegensia)</span>
                           <span className="font-black">{result.details.tiu}</span>
                       </div>
-                       <div className="flex justify-between p-3 bg-white border border-black rounded">
+                       <div className="flex justify-between p-md bg-white border border-black rounded-xl">
                           <span className="font-bold text-sm">TKP (Pribadi)</span>
                           <span className="font-black">{result.details.tkp}</span>
                       </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                     <Button variant="outline" onClick={handleRetry}>
-                        <RefreshCw className="w-4 h-4 mr-2" /> Ulangi
-                     </Button>
-                     <Button variant="black" onClick={resetTryout}>
+                  <div className="grid grid-cols-2 gap-md">
+                     <CTA variant="secondary" onClick={handleRetry}>
+                        <RefreshCw className="w-4 h-4 mr-sm" /> Ulangi
+                     </CTA>
+                     <CTA onClick={resetTryout}>
                         Tutup
-                     </Button>
+                     </CTA>
                   </div>
-                  <div className="mt-3">
-                     <Button onClick={handleShareClick} variant="outline" fullWidth>
-                        <Share2 className="w-4 h-4 mr-2" /> Bagikan
-                     </Button>
+                  <div className="mt-md">
+                     <CTA variant="secondary" fullWidth onClick={handleShareClick}>
+                        <Share2 className="w-4 h-4 mr-sm" /> Bagikan
+                     </CTA>
                   </div>
               </div>
            </div>
@@ -578,12 +581,12 @@ const TryoutView: React.FC = () => {
       />
 
       {/* 1. Header */}
-      <div className="bg-white border-b border-black shadow-sm h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-20">
-         <h2 className="font-bold text-lg md:text-xl truncate mr-4">
+      <div className="bg-white border-b border-black h-lg flex items-center justify-between px-lg md:px-2xl flex-shrink-0 z-20">
+         <h2 className="font-bold text-lg md:text-xl truncate mr-lg">
             Tryout SKD
-            <span className="ml-2 text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded">No. {currentIndex + 1}</span>
+            <span className="ml-sm text-sm font-normal text-gray-500 bg-gray-100 px-sm py-xs rounded-full">No. {currentIndex + 1}</span>
          </h2>
-         <div className="text-xl md:text-2xl font-bold text-red-600 font-mono tracking-widest bg-red-50 px-3 py-1 rounded border border-red-100">
+         <div className="text-xl md:text-2xl font-bold text-black font-mono tracking-widest bg-feedback-red px-md py-xs rounded-xl border border-black">
             {formatTime(timeLeft)}
          </div>
       </div>
@@ -608,25 +611,28 @@ const TryoutView: React.FC = () => {
               </div>
 
               {/* Bottom Navigation Bar */}
-              <div className="h-auto border-t border-black bg-white p-4 flex items-center justify-between shrink-0 z-10">
-                  <div className="flex gap-2 w-full md:w-auto">
-                    <button 
+              <div className="h-auto border-t border-black bg-white p-lg flex items-center justify-between shrink-0 z-10">
+                  <div className="flex gap-sm w-full md:w-auto">
+                    <button
+                        type="button"
                         onClick={handlePrev}
                         disabled={currentIndex === 0}
-                        className="flex-1 md:flex-none justify-center px-4 py-2 rounded border border-black bg-gray-100 text-black font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        className={`flex-1 md:flex-none justify-center px-lg py-sm rounded-xl border border-black bg-gray-100 text-black font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${FOCUS}`}
                     >
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Sebelumnya
+                        <ChevronLeft className="w-4 h-4 mr-xs" /> Sebelumnya
                     </button>
-                    <button 
+                    <button
+                        type="button"
                         onClick={handleNext}
                         disabled={currentIndex === questions.length - 1}
-                        className="flex-1 md:flex-none justify-center px-4 py-2 rounded border border-black bg-brand-lime text-black font-bold text-sm hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        className={`flex-1 md:flex-none justify-center px-lg py-sm rounded-xl border border-black bg-brand-lime text-black font-bold text-sm hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${FOCUS}`}
                     >
-                        Selanjutnya <ChevronRight className="w-4 h-4 ml-1" />
+                        Selanjutnya <ChevronRight className="w-4 h-4 ml-xs" />
                     </button>
-                    <button 
+                    <button
+                        type="button"
                         onClick={() => setIsMobileGridOpen(true)}
-                        className="md:hidden px-3 py-2 rounded border border-black bg-black text-white hover:bg-gray-800 transition-colors flex items-center justify-center"
+                        className={`md:hidden px-md py-sm rounded-xl border border-black bg-black text-white hover:bg-gray-800 transition-colors flex items-center justify-center ${FOCUS}`}
                     >
                         <Menu className="w-5 h-5" />
                     </button>
@@ -636,16 +642,16 @@ const TryoutView: React.FC = () => {
 
           {/* Right Column: Navigation Grid (Desktop) */}
           <div className="hidden md:flex w-80 bg-white border-l border-black flex-col flex-shrink-0">
-             <div className="p-4 border-b border-black bg-brand-cream">
+             <div className="p-lg border-b border-black bg-brand-cream">
                 <h3 className="font-black text-sm uppercase tracking-wider">Navigasi Soal</h3>
              </div>
-             
-             <div className="p-4 flex-1 overflow-y-auto bg-gray-50">
-                 <div className="grid grid-cols-5 gap-2">
+
+             <div className="p-lg flex-1 overflow-y-auto bg-gray-50">
+                 <div className="grid grid-cols-5 gap-sm">
                     {questions.map((q, idx) => (
-                        <GridItem 
-                            key={q.id} 
-                            index={idx} 
+                        <GridItem
+                            key={q.id}
+                            index={idx}
                             isActive={idx === currentIndex}
                             isAnswered={!!answers[q.id]}
                             onSelect={handleJumpToQuestion}
@@ -655,23 +661,23 @@ const TryoutView: React.FC = () => {
              </div>
 
              {/* Legend */}
-             <div className="p-4 bg-white border-t border-black space-y-2 text-xs font-bold text-gray-600">
+             <div className="p-lg bg-white border-t border-black space-y-sm text-xs font-bold text-gray-600">
                  <div className="flex items-center justify-between">
-                     <span className="flex items-center gap-2"><div className="w-3 h-3 bg-green-600 rounded border border-black"></div> Terjawab</span>
+                     <span className="flex items-center gap-sm"><div className="w-md h-md bg-feedback-green rounded-xl border border-black"></div> Terjawab</span>
                      <span>{stats.answered}</span>
                  </div>
                  <div className="flex items-center justify-between">
-                     <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded border border-black"></div> Posisi Sekarang</span>
+                     <span className="flex items-center gap-sm"><div className="w-md h-md bg-feedback-red rounded-xl border border-black"></div> Posisi Sekarang</span>
                      <span>-</span>
                  </div>
                  <div className="flex items-center justify-between">
-                     <span className="flex items-center gap-2"><div className="w-3 h-3 bg-gray-500 rounded border border-black"></div> Belum Dijawab</span>
+                     <span className="flex items-center gap-sm"><div className="w-md h-md bg-brand-gray rounded-xl border border-black"></div> Belum Dijawab</span>
                      <span>{stats.unread}</span>
                  </div>
              </div>
-             
+
              {/* Submit Button (Desktop) */}
-             <div className="p-4 border-t border-black bg-white">
+             <div className="p-lg border-t border-black bg-white">
                 <SubmitButton onClick={submitTryout} />
              </div>
           </div>
@@ -683,19 +689,23 @@ const TryoutView: React.FC = () => {
           {/* Drawer Overlay */}
           {isMobileGridOpen && (
               <div className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex justify-end">
-                  <div className="w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col animate-slide-in-right border-l border-black">
-                      <div className="p-4 border-b border-black flex justify-between items-center bg-brand-cream">
+                  <div className="w-4/5 max-w-sm bg-white h-full flex flex-col animate-slide-in-right border-l border-black">
+                      <div className="p-lg border-b border-black flex justify-between items-center bg-brand-cream">
                           <h3 className="font-black text-lg">Daftar Soal</h3>
-                          <button onClick={() => setIsMobileGridOpen(false)} className="p-1 hover:bg-black hover:text-white rounded border border-transparent hover:border-black transition-colors">
+                          <button
+                              type="button"
+                              onClick={() => setIsMobileGridOpen(false)}
+                              className={`p-xs hover:bg-black hover:text-white rounded-xl border border-transparent hover:border-black transition-colors ${FOCUS}`}
+                          >
                               <X className="w-6 h-6" />
                           </button>
                       </div>
-                      <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-                          <div className="grid grid-cols-5 gap-3">
+                      <div className="flex-1 p-lg overflow-y-auto bg-gray-50">
+                          <div className="grid grid-cols-5 gap-md">
                                 {questions.map((q, idx) => (
-                                    <GridItem 
-                                        key={q.id} 
-                                        index={idx} 
+                                    <GridItem
+                                        key={q.id}
+                                        index={idx}
                                         isActive={idx === currentIndex}
                                         isAnswered={!!answers[q.id]}
                                         onSelect={handleMobileJump}
@@ -705,7 +715,7 @@ const TryoutView: React.FC = () => {
                       </div>
 
                       {/* Submit Button (Mobile) */}
-                      <div className="p-4 border-t border-black bg-white">
+                      <div className="p-lg border-t border-black bg-white">
                          <SubmitButton onClick={submitTryout} />
                       </div>
                   </div>

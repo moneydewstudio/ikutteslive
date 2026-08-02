@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { TrendingUp, ChevronRight, BookOpen } from 'lucide-react';
+import { FOCUS } from '../components/ui/Card';
 import { apiFetch } from '../services/apiClient';
 import { useOnboardingTour } from '../src/contexts/OnboardingTourContext';
 import { getPendingDailyQuizSubmit, syncPendingDailyQuizSubmit } from '../services/dailyQuizSync';
@@ -154,9 +155,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
                   <h2 className="font-black text-lg leading-tight truncate">{user.name || 'Tamu'}</h2>
                 </div>
                 <button
+                  type="button"
                   onClick={replayTour}
-                  className="flex-shrink-0 p-2 border border-black hover:bg-gray-100 transition-colors"
+                  className={['flex-shrink-0 p-sm border border-black rounded-xl hover:bg-gray-100 transition-colors', FOCUS].join(' ')}
                   title="Panduan"
+                  aria-label="Panduan"
                 >
                   <BookOpen className="w-4 h-4" />
                 </button>
@@ -176,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
             {/* TEAM_001: Swipable Radar Charts (TIU / TWK / TKP) */}
             <div className="p-2xl flex-1 flex flex-col bg-brand-lime">
               <div className="flex items-center justify-between mb-lg">
-                <span className="font-bold text-sm uppercase tracking-widest border border-black px-2 py-1 rounded-full bg-white">Kemampuan per Subtopik</span>
+                <span className="font-bold text-sm uppercase tracking-widest border border-black px-sm py-xs rounded-full bg-white">Kemampuan per Subtopik</span>
               </div>
 
               {radarLoading ? (
@@ -194,8 +197,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
             
             {/* Chart Section */}
             <div className="h-64 md:h-80 border-b border-black p-2xl relative">
-                 <div className="absolute top-6 left-6 z-10">
-                    <h3 className="font-black text-xl flex items-center gap-2">
+                 <div className="absolute top-xl left-xl z-10">
+                    <h3 className="font-black text-xl flex items-center gap-sm">
                         <TrendingUp className="w-5 h-5" /> Tren Performa
                     </h3>
                  </div>
@@ -220,33 +223,34 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
 
             {/* Riwayat Tryout — scrollable within remaining viewport space */}
             <div className="flex flex-col flex-1 min-h-0">
-              <div className="p-4 border-b border-black bg-gray-50 flex justify-between items-center">
-                <h3 className="font-black text-lg flex items-center gap-2">
+              <div className="p-lg border-b border-black bg-gray-50 flex justify-between items-center">
+                <h3 className="font-black text-lg flex items-center gap-sm">
                   Riwayat Tryout
                 </h3>
               </div>
 
               {tryoutHistoryLoading ? (
-                <div className="p-8 text-center text-gray-600 font-medium">Memuat...</div>
+                <div className="p-2xl text-center text-gray-600 font-medium">Memuat...</div>
               ) : tryoutHistoryError ? (
-                <div className="p-8 text-center text-gray-600 font-medium">Gagal memuat.</div>
+                <div className="p-2xl text-center text-gray-600 font-medium">Gagal memuat.</div>
               ) : tryoutHistory.length === 0 ? (
-                <div className="p-8 text-center text-gray-400 font-medium">Belum ada tryout.</div>
+                <div className="p-2xl text-center text-gray-600 font-medium">Belum ada tryout.</div>
               ) : (
                 <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {tryoutHistory.slice(0, 20).map((row) => (
                     <button
+                      type="button"
                       key={row.id}
-                      className="w-full text-left p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                      className={['w-full text-left p-lg border-b border-black hover:bg-gray-50 transition-colors flex items-center justify-between', FOCUS].join(' ')}
                       onClick={() => setSelectedTryout(row)}
                     >
                       <div>
                         <div className="font-black text-sm">{new Date(row.createdAt).toLocaleDateString()}</div>
                         <div className="text-xs text-gray-600 font-medium">TWK {row.twk} | TIU {row.tiu} | TKP {row.tkp}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs font-black px-2 py-1 border border-black rounded-md bg-white">{row.total}</div>
-                        <ChevronRight className="w-4 h-4" />
+                      <div className="flex items-center gap-sm">
+                        <div className="text-xs font-black px-sm py-xs border border-black rounded-xl bg-white">{row.total}</div>
+                        <ChevronRight className="w-4 h-4" aria-hidden="true" />
                       </div>
                     </button>
                   ))}
@@ -254,21 +258,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, history, onStartQuiz }) => 
               )}
 
               {selectedTryout ? (
-                <div className="p-4 border-t border-black bg-white">
+                <div className="p-lg border-t border-black bg-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-black text-sm">Detail</div>
                       <div className="text-xs text-gray-600 font-medium">{new Date(selectedTryout.createdAt).toLocaleString()}</div>
                     </div>
-                    <button className="text-xs font-bold uppercase" onClick={() => setSelectedTryout(null)}>
+                    <button type="button" className={['text-xs font-bold uppercase rounded-xl px-sm py-xs', FOCUS].join(' ')} onClick={() => setSelectedTryout(null)}>
                       Tutup
                     </button>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                    <div className="border border-black rounded-md p-2 bg-gray-50"><span className="font-black">TWK</span> {selectedTryout.twk}</div>
-                    <div className="border border-black rounded-md p-2 bg-gray-50"><span className="font-black">TIU</span> {selectedTryout.tiu}</div>
-                    <div className="border border-black rounded-md p-2 bg-gray-50"><span className="font-black">TKP</span> {selectedTryout.tkp}</div>
-                    <div className="border border-black rounded-md p-2 bg-gray-50"><span className="font-black">Total</span> {selectedTryout.total}</div>
+                  <div className="mt-md grid grid-cols-2 gap-sm text-sm">
+                    <div className="border border-black rounded-xl p-sm bg-gray-50"><span className="font-black">TWK</span> {selectedTryout.twk}</div>
+                    <div className="border border-black rounded-xl p-sm bg-gray-50"><span className="font-black">TIU</span> {selectedTryout.tiu}</div>
+                    <div className="border border-black rounded-xl p-sm bg-gray-50"><span className="font-black">TKP</span> {selectedTryout.tkp}</div>
+                    <div className="border border-black rounded-xl p-sm bg-gray-50"><span className="font-black">Total</span> {selectedTryout.total}</div>
                   </div>
                 </div>
               ) : null}

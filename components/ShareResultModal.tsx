@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Download, Share, MessageCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import Button from './Button';
+import { FOCUS } from './ui/Card';
+import { CTA } from './ui/CTA';
 import { canShareFiles, shareWithFile, downloadImage, dataUrlToFile, openWhatsAppShare } from '../src/utils/share';
 
 interface ShareResultModalProps {
@@ -46,29 +47,35 @@ const ShareResultModal: React.FC<ShareResultModalProps> = ({
     openWhatsAppShare(`${caption}\n\n${link}`);
   };
 
-  const isActionsDisabled = imageState !== 'ready';
-
   return (
     <div className="fixed inset-0 z-[130] bg-black/60 backdrop-blur-sm flex items-center justify-center p-lg animate-fade-in">
-      <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-black animate-scale-in">
-        <div className="p-4 border-b border-black flex justify-between items-center bg-gray-50">
+      <div className="bg-white w-full max-w-md rounded-xl overflow-hidden border border-black animate-scale-in">
+        <div className="p-lg border-b border-black flex justify-between items-center bg-gray-50">
           <h3 className="font-black text-lg">Bagikan Hasil</h3>
-          <button onClick={onClose} className="p-1 hover:bg-black hover:text-white rounded border border-transparent hover:border-black transition-colors">
-            <X className="w-5 h-5" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Tutup"
+            className={[
+              'p-xs hover:bg-black hover:text-white rounded-full border border-transparent hover:border-black transition-colors',
+              FOCUS,
+            ].join(' ')}
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="p-6 bg-brand-cream">
+        <div className="p-xl bg-brand-cream">
           {/* Preview area */}
-          <div className="mb-6 bg-white rounded-lg overflow-hidden border border-black">
+          <div className="mb-xl bg-white rounded-xl overflow-hidden border border-black">
             {imageState === 'loading' && (
               <div className="w-full h-48 flex flex-col items-center justify-center text-gray-500">
-                <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                <Loader2 className="w-5 h-5 animate-spin mb-sm" aria-hidden="true" />
                 <span className="text-sm">Menyiapkan gambar...</span>
               </div>
             )}
             {imageState === 'error' && (
-              <div className="w-full h-48 flex flex-col items-center justify-center text-red-500">
-                <AlertCircle className="w-8 h-8 mb-2" />
+              <div className="w-full h-48 flex flex-col items-center justify-center text-feedback-red">
+                <AlertCircle className="w-5 h-5 mb-sm" aria-hidden="true" />
                 <span className="text-sm">Gagal membuat gambar</span>
               </div>
             )}
@@ -80,26 +87,26 @@ const ShareResultModal: React.FC<ShareResultModalProps> = ({
           {/* Action buttons */}
           {imageState === 'error' && (
             <div className="flex justify-center">
-              <Button onClick={onRetryGenerate} variant="outline" size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" /> Coba lagi
-              </Button>
+              <CTA onClick={onRetryGenerate} variant="secondary" size="sm" className="inline-flex items-center gap-sm">
+                <RefreshCw className="w-4 h-4" aria-hidden="true" /> Coba lagi
+              </CTA>
             </div>
           )}
 
           {imageState === 'ready' && (
-            <div className="flex w-full gap-3 mb-4">
+            <div className="flex w-full gap-md mb-lg">
               {canNativeShareFile ? (
-                <Button onClick={handleNativeShare} variant="black" size="sm" className="flex-1">
-                  <Share className="w-4 h-4 mr-2" /> Bagikan
-                </Button>
+                <CTA onClick={handleNativeShare} variant="primary" size="sm" className="flex-1 inline-flex items-center justify-center gap-sm">
+                  <Share className="w-4 h-4" aria-hidden="true" /> Bagikan
+                </CTA>
               ) : (
-                <Button onClick={handleWhatsApp} variant="black" size="sm" className="flex-1">
-                  <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
-                </Button>
+                <CTA onClick={handleWhatsApp} variant="primary" size="sm" className="flex-1 inline-flex items-center justify-center gap-sm">
+                  <MessageCircle className="w-4 h-4" aria-hidden="true" /> WhatsApp
+                </CTA>
               )}
-              <Button onClick={handleDownload} variant="outline" size="sm" className="flex-1">
-                <Download className="w-4 h-4 mr-2" /> Download
-              </Button>
+              <CTA onClick={handleDownload} variant="secondary" size="sm" className="flex-1 inline-flex items-center justify-center gap-sm">
+                <Download className="w-4 h-4" aria-hidden="true" /> Download
+              </CTA>
             </div>
           )}
 

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../services/apiClient';
 import { ArrowLeft, Play, CheckCircle2, BrainCircuit } from 'lucide-react';
+import OptionButton from './ui/OptionButton';
+import CTA from './ui/CTA';
 import {
   buildLessonSlides,
   buildSlideKey,
@@ -126,13 +128,13 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
   const renderList = () => (
     <div className="flex flex-col w-full min-h-0 animate-fade-in pb-20 md:pb-0">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-sm px-2xl h-14">
-          <button type="button" onClick={onBack} className={`flex items-center gap-1 text-sm font-bold text-gray-600 hover:text-black ${FOCUS}`}>
+      <div className="sticky top-0 z-30 bg-white border-b border-black">
+        <div className="flex items-center gap-sm px-2xl h-lg">
+          <button type="button" onClick={onBack} className={`flex items-center gap-xs text-sm font-bold text-gray-600 hover:text-black ${FOCUS}`}>
             <ArrowLeft className="w-4 h-4" />
             Kembali
           </button>
-          <span className="text-sm text-gray-400 mx-1">/</span>
+          <span className="text-sm text-gray-400 mx-xs">/</span>
           <span className="text-sm font-bold truncate">{data.subtopicName}</span>
         </div>
       </div>
@@ -142,14 +144,14 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
           <>
             <div dangerouslySetInnerHTML={{ __html: renderMarkdown(data.content) }} />
             <div className="mt-2xl mb-xl">
-              <button
-                type="button"
+              <CTA
+                fullWidth
+                size="lg"
                 onClick={() => onStartTest(subtopicId)}
-                className={`w-full flex items-center justify-center gap-2 bg-black text-white font-black text-lg py-lg px-xl rounded-xl hover:bg-gray-800 transition-colors ${FOCUS}`}
               >
                 <Play className="w-5 h-5" />
                 Mulai Tes (10 Soal)
-              </button>
+              </CTA>
             </div>
           </>
         ) : (
@@ -164,22 +166,22 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
                     key={t.name}
                     type="button"
                     onClick={() => setScreen({ mode: 'player', themeName: t.name, slideIndex: 0 })}
-                    className={`w-full text-left border border-gray-200 rounded-xl px-lg py-md hover:border-gray-400 transition-colors ${FOCUS}`}
+                    className={`w-full text-left border border-black rounded-xl px-lg py-md hover:bg-gray-50 transition-colors ${FOCUS}`}
                   >
                     <div className="flex items-center justify-between gap-md">
                       <span className="font-bold text-sm truncate">{t.name}</span>
                       <div className="flex items-center gap-sm shrink-0">
                         <span className="text-xs text-gray-400">{count} slide</span>
                         {done ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" aria-hidden="true" />
+                          <CheckCircle2 className="w-5 h-5 text-feedback-green" aria-hidden="true" />
                         ) : isNext ? (
-                          <Play className="w-5 h-5 text-amber-500" aria-hidden="true" />
+                          <Play className="w-5 h-5 text-brand-orange" aria-hidden="true" />
                         ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" aria-hidden="true" />
+                          <div className="w-5 h-5 rounded-full border border-black" aria-hidden="true" />
                         )}
                       </div>
                     </div>
-                    <div className={`text-xs ${done ? 'text-green-600' : 'text-gray-400'}`}>
+                    <div className={`text-xs ${done ? 'text-feedback-green' : 'text-gray-400'}`}>
                       {done ? 'Selesai' : isNext ? 'Lanjut' : 'Belum'}
                     </div>
                   </button>
@@ -187,14 +189,14 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
               })}
             </div>
             <div className="mt-2xl mb-xl">
-              <button
-                type="button"
+              <CTA
+                fullWidth
+                size="lg"
                 onClick={() => onStartTest(subtopicId)}
-                className={`w-full flex items-center justify-center gap-2 bg-black text-white font-black text-lg py-lg px-xl rounded-xl hover:bg-gray-800 transition-colors ${FOCUS}`}
               >
                 <Play className="w-5 h-5" />
                 Mulai Tes (10 Soal)
-              </button>
+              </CTA>
             </div>
           </>
         )}
@@ -219,7 +221,7 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
   const nextTheme = themes.find(t => t.name !== theme.name && !completedThemes.has(t.name)) ?? null;
 
   const ctaClasses = `w-full py-lg px-xl rounded-xl font-black text-base transition-colors ${FOCUS} ${
-    canAdvance ? 'bg-black text-white hover:bg-gray-800' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+    canAdvance ? 'bg-black text-white hover:bg-gray-800' : 'bg-brand-gray text-gray-600 cursor-not-allowed'
   }`;
 
   const renderContent = (s: Extract<LessonSlide, { kind: 'content' }>) => (
@@ -238,39 +240,33 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
       <>
         <div className="flex items-center gap-sm mb-lg">
           <BrainCircuit className="w-4 h-4 text-gray-500" aria-hidden="true" />
-          <span className="text-[10px] font-bold uppercase bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{s.title}</span>
+          <span className="text-xs font-bold uppercase bg-gray-100 text-gray-500 px-sm py-xs rounded-full">{s.title}</span>
         </div>
         <h3 className="text-lg font-bold mb-lg">{s.question}</h3>
         <div className="space-y-sm">
           {s.options.map(opt => {
             const isSelected = answered === opt.key;
             const isCorrectOpt = opt.key === s.correctKey;
-            let cls = 'w-full text-left border-2 rounded-xl px-lg py-md text-sm transition-all ' + FOCUS;
-            if (!answered) {
-              cls += 'border-gray-200 hover:border-gray-400';
-            } else if (isCorrectOpt) {
-              cls += 'border-green-500 bg-green-50 text-green-900 font-bold';
-            } else if (isSelected) {
-              cls += 'border-red-500 bg-red-50 text-red-900';
-            } else {
-              cls += 'border-gray-100 text-gray-400';
-            }
+            const state = answered
+              ? isCorrectOpt
+                ? 'correct'
+                : isSelected && !isCorrectOpt
+                ? 'wrong'
+                : 'dimmed'
+              : isSelected
+              ? 'selected'
+              : 'idle';
+
             return (
-              <button
+              <OptionButton
                 key={opt.key}
-                type="button"
-                disabled={!!answered}
-                aria-pressed={isSelected}
+                state={state}
+                letter={opt.key.toUpperCase()}
+                marker={answered && isCorrectOpt ? '✓' : answered && isSelected && !isCorrectOpt ? '✗' : undefined}
                 onClick={() => setAnswers(p => ({ ...p, [slideKey]: opt.key }))}
-                className={cls}
               >
-                <span className="font-bold mr-sm uppercase">{opt.key}.</span>
                 {opt.text}
-                <span aria-hidden="true">
-                  {answered && isCorrectOpt && ' ✅'}
-                  {answered && isSelected && !isCorrectOpt && ' ❌'}
-                </span>
-              </button>
+              </OptionButton>
             );
           })}
         </div>
@@ -278,27 +274,27 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
         {answered && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-xl space-y-md">
             {s.weighted ? (
-              <div className="bg-amber-50 border border-amber-500 rounded-xl px-lg py-md" role="alert" aria-live="polite">
-                <p className="font-bold text-sm text-amber-800">
+              <div className="bg-brand-orange text-black border border-black rounded-xl px-lg py-md" role="alert" aria-live="polite">
+                <p className="font-bold text-sm">
                   {userWeight !== undefined && userWeight === maxWeight
                     ? `+${userWeight} poin — jawaban terbaik!`
                     : `+${userWeight ?? 0} poin (terbaik +${maxWeight} poin)`}
                 </p>
               </div>
             ) : isRight ? (
-              <div className="bg-green-50 border border-green-500 rounded-xl px-lg py-md" role="alert" aria-live="polite">
-                <p className="flex items-center gap-2 font-bold text-sm text-green-700">
+              <div className="bg-feedback-green text-black border border-black rounded-xl px-lg py-md" role="alert" aria-live="polite">
+                <p className="flex items-center gap-sm font-bold text-sm">
                   <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
                   Benar!
                 </p>
               </div>
             ) : (
-              <div className="bg-red-50 border border-red-500 rounded-xl px-lg py-md" role="alert" aria-live="polite">
-                <p className="font-bold text-sm text-red-700">Kurang tepat — jawaban benar: {s.correctKey}</p>
+              <div className="bg-feedback-red text-black border border-black rounded-xl px-lg py-md" role="alert" aria-live="polite">
+                <p className="font-bold text-sm">Kurang tepat — jawaban benar: {s.correctKey}</p>
               </div>
             )}
             {s.explanation && (
-              <div className="p-lg bg-amber-50 rounded-xl border border-amber-200">
+              <div className="p-lg bg-brand-cream rounded-xl border border-black">
                 <p className="text-sm text-gray-700 leading-relaxed">{s.explanation}</p>
               </div>
             )}
@@ -310,34 +306,33 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
 
   const renderCompletion = (s: Extract<LessonSlide, { kind: 'completion' }>) => (
     <div className="text-center">
-      <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-lg" aria-hidden="true" />
+      <CheckCircle2 className="w-16 h-16 text-feedback-green mx-auto mb-lg" aria-hidden="true" />
       <h2 className="text-2xl font-black mb-sm">Tema selesai! 🎉</h2>
       {quizzes.length > 0 && (
         <p className="text-sm text-gray-500 mb-lg">{right}/{quizzes.length} benar</p>
       )}
       {s.summary && (
-        <div className="bg-gray-50 rounded-xl px-lg py-md text-left mb-xl">
+        <div className="bg-brand-cream rounded-xl px-lg py-md text-left mb-xl border border-black">
           <p className="font-black text-sm mb-sm">📌 Intisari</p>
           <div dangerouslySetInnerHTML={{ __html: renderMarkdown(s.summary) }} />
         </div>
       )}
       <div className="flex flex-col gap-md">
         {nextTheme && (
-          <button
-            type="button"
+          <CTA
+            fullWidth
             onClick={() => setScreen({ mode: 'player', themeName: nextTheme.name, slideIndex: 0 })}
-            className={`w-full bg-black text-white font-black text-base py-lg px-xl rounded-xl hover:bg-gray-800 transition-colors ${FOCUS}`}
           >
             Tema Berikutnya
-          </button>
+          </CTA>
         )}
-        <button
-          type="button"
+        <CTA
+          fullWidth
+          variant="secondary"
           onClick={() => setScreen({ mode: 'list' })}
-          className={`w-full text-gray-600 font-bold py-md px-xl rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors ${FOCUS}`}
         >
           Kembali ke Daftar
-        </button>
+        </CTA>
       </div>
     </div>
   );
@@ -345,17 +340,17 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
   return (
     <div className="flex flex-col w-full h-full min-h-0 animate-fade-in">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-2xl h-14">
-          <button type="button" onClick={() => setScreen({ mode: 'list' })} className={`flex items-center gap-1 text-sm font-bold text-gray-600 hover:text-black ${FOCUS}`}>
+      <div className="sticky top-0 z-30 bg-white border-b border-black">
+        <div className="flex items-center justify-between px-2xl h-lg">
+          <button type="button" onClick={() => setScreen({ mode: 'list' })} className={`flex items-center gap-xs text-sm font-bold text-gray-600 hover:text-black ${FOCUS}`}>
             <ArrowLeft className="w-4 h-4" />
             Kembali
           </button>
           <span className="text-sm font-bold truncate">{theme.name}</span>
         </div>
         {/* Progress bar */}
-        <div className="h-1 bg-gray-100" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
-          <motion.div className="h-full bg-black" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.3 }} />
+        <div className="h-xs bg-brand-gray border-t border-b border-black" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+          <motion.div className="h-full bg-brand-lime" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.3 }} />
         </div>
       </div>
 

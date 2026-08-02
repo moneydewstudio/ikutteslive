@@ -5,6 +5,7 @@ import { UserSession } from '../types';
 import * as QuizService from '../services/quizService';
 import { getExplanation } from '../services/backend';
 import { recordAnswerEvent } from '../services/userEvents';
+import { CTA } from './ui/CTA';
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
@@ -151,21 +152,15 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, themeI
     const total = questions.length;
     return (
       <div className="flex-1 flex items-center justify-center p-lg">
-        <div className="max-w-sm w-full border border-black bg-white p-8 text-center space-y-4">
+        <div className="max-w-sm w-full border border-black bg-white p-2xl text-center space-y-lg">
           <h2 className="text-3xl font-black uppercase tracking-tight">Selesai! &#x1F389;</h2>
           <p className="text-lg font-bold">{correctCount} / {total} benar</p>
-          <button
-            onClick={refreshSession}
-            className="inline-block px-6 py-3 bg-black text-white font-bold text-sm border border-black hover:bg-gray-800 transition-colors"
-          >
+          <CTA onClick={refreshSession} size="md" variant="primary" fullWidth>
             Coba Lagi
-          </button>
-          <button
-            onClick={onBackToBonus}
-            className="inline-block px-6 py-3 bg-white text-black font-bold text-sm border border-black hover:bg-gray-100 transition-colors"
-          >
+          </CTA>
+          <CTA onClick={onBackToBonus} size="md" variant="secondary" fullWidth>
             Kembali
-          </button>
+          </CTA>
         </div>
       </div>
     );

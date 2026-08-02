@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Button from './Button';
+import { FOCUS } from './ui/Card';
+import { CTA } from './ui/CTA';
 import { createPayment, getEntitlements, type Offer } from '../services/payments';
 
 type PaywallModalProps = {
@@ -79,22 +80,23 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 p-lg">
-      <div className="w-full max-w-lg border border-black rounded-2xl bg-white overflow-hidden">
-        <div className="p-5 border-b border-black bg-gray-50">
-          <div className="flex items-start justify-between gap-3">
+      <div className="w-full max-w-lg border border-black rounded-xl bg-white overflow-hidden">
+        <div className="p-lg border-b border-black bg-gray-50">
+          <div className="flex items-start justify-between gap-md">
             <div>
               <div className="font-black text-xl uppercase">{isUnauthenticated ? 'Buat Akun Dulu' : 'Buka Pembahasan'}</div>
-              <div className="text-sm font-medium text-gray-700 mt-1">
+              <div className="text-sm font-medium text-gray-600 mt-sm">
                 {isUnauthenticated
                   ? 'Kamu belum buat akun. Buat akun dulu, ya!'
                   : 'Pembahasan hanya untuk Premium. Bayar 3 hari dulu biar cepat paham dan tidak mengulang kesalahan.'}
               </div>
               {effectiveTrigger ? (
-                <div className="text-[11px] font-bold text-gray-500 mt-2">Trigger: {effectiveTrigger}</div>
+                <div className="text-xs font-bold text-gray-500 mt-sm">Trigger: {effectiveTrigger}</div>
               ) : null}
             </div>
             <button
-              className="text-xs font-black uppercase border border-black rounded-lg px-2 py-1"
+              type="button"
+              className={['text-xs font-black uppercase border border-black rounded-xl px-sm py-xs hover:bg-gray-100 transition-colors', FOCUS].join(' ')}
               onClick={onClose}
             >
               Tutup
@@ -102,16 +104,16 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
           </div>
         </div>
 
-        <div className="p-5">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="p-lg">
+          <div className="flex items-center gap-sm mb-lg">
             <div className="text-sm font-bold text-gray-600 line-through">{formatRupiah(anchorPrice)}</div>
-            <div className="text-xs font-black uppercase px-2 py-1 border border-black rounded-full bg-brand-lime">Diskon</div>
+            <div className="text-xs font-black uppercase px-sm py-xs border border-black rounded-full bg-brand-lime">Diskon</div>
           </div>
 
           {error ? (
-            <div className="mb-4 border border-black rounded-xl p-3 bg-brand-cream">
+            <div className="mb-lg border border-black rounded-xl p-md bg-brand-cream">
               <div className="font-black">{error === 'unauthenticated' ? 'Akun diperlukan' : 'Error'}</div>
-              <div className="text-sm font-medium text-gray-700 mt-1">
+              <div className="text-sm font-medium text-gray-600 mt-xs">
                 {error === 'unauthenticated'
                   ? 'Kamu belum buat akun. Buat akun dulu, ya!'
                   : error === 'create_failed'
@@ -121,55 +123,55 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
             </div>
           ) : null}
 
-          <div className="grid grid-cols-1 gap-3">
-            <div className="border border-black rounded-xl p-4">
-              <div className="flex items-start justify-between gap-3">
+          <div className="grid grid-cols-1 gap-md">
+            <div className="border border-black rounded-xl p-lg">
+              <div className="flex items-start justify-between gap-md">
                 <div>
                   <div className="font-black text-lg">3-Day Sprint Pass</div>
-                  <div className="text-sm font-medium text-gray-700 mt-1">Pembahasan + review kesalahan selama 3 hari.</div>
+                  <div className="text-sm font-medium text-gray-600 mt-xs">Pembahasan + review kesalahan selama 3 hari.</div>
                 </div>
                 <div className="font-black text-lg">{formatRupiah(offerMap.get('3_day')?.price ?? 9900)}</div>
               </div>
-              <div className="mt-3">
-                <Button
-                  variant="black"
+              <div className="mt-md">
+                <CTA
+                  variant="primary"
                   fullWidth
-                  isLoading={creatingPlan === '3_day'}
+                  disabled={creatingPlan === '3_day'}
                   onClick={() => void handleUnlock('3_day')}
                 >
-                  Unlock 3-Day
-                </Button>
+                  {creatingPlan === '3_day' ? 'Memproses...' : 'Unlock 3-Day'}
+                </CTA>
               </div>
             </div>
 
             {show30Day ? (
-              <div className="border border-black rounded-xl p-4 bg-gray-50">
-                <div className="flex items-start justify-between gap-3">
+              <div className="border border-black rounded-xl p-lg bg-gray-50">
+                <div className="flex items-start justify-between gap-md">
                   <div>
                     <div className="font-black text-lg">30-Day Full Access</div>
-                    <div className="text-sm font-medium text-gray-700 mt-1">Mode serius: pembahasan penuh 30 hari.</div>
+                    <div className="text-sm font-medium text-gray-600 mt-xs">Mode serius: pembahasan penuh 30 hari.</div>
                   </div>
                   <div className="font-black text-lg">{formatRupiah(offerMap.get('30_day')?.price ?? 19000)}</div>
                 </div>
-                <div className="mt-3">
-                  <Button
-                    variant="outline"
+                <div className="mt-md">
+                  <CTA
+                    variant="secondary"
                     fullWidth
-                    isLoading={creatingPlan === '30_day'}
+                    disabled={creatingPlan === '30_day'}
                     onClick={() => void handleUnlock('30_day')}
                   >
-                    Unlock 30-Day
-                  </Button>
+                    {creatingPlan === '30_day' ? 'Memproses...' : 'Unlock 30-Day'}
+                  </CTA>
                 </div>
               </div>
             ) : null}
           </div>
 
           {loading ? (
-            <div className="mt-4 text-xs font-bold text-gray-500">Memuat penawaran...</div>
+            <div className="mt-lg text-xs font-bold text-gray-500">Memuat penawaran...</div>
           ) : null}
 
-          <div className="mt-4 text-xs text-gray-600 font-medium">
+          <div className="mt-lg text-xs text-gray-600 font-medium">
             Bayar persis sesuai nominal agar otomatis terdeteksi.
           </div>
         </div>
