@@ -782,7 +782,7 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
       <main className="flex-1 flex flex-col w-full min-h-0">
         {view === 'AD_INTERSTITIAL' ? <InterstitialAd onClose={handleAdComplete} onGoPro={handleGoPro} /> : renderContent()}
       </main>
-      {view !== 'AD_INTERSTITIAL' && view !== 'ROADMAP_MATERIAL' && view !== 'ROADMAP_QUIZ' && (
+      {view !== 'AD_INTERSTITIAL' && (
         <div className="md:hidden">
           <BottomNav
             currentView={view}

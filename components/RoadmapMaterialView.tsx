@@ -338,7 +338,7 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, on
   );
 
   return (
-    <div className="flex flex-col w-full h-full min-h-0 animate-fade-in">
+    <div className="flex flex-col w-full h-full min-h-0 animate-fade-in pb-[70px] md:pb-0">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-white border-b border-black">
         <div className="flex items-center justify-between px-2xl h-lg">

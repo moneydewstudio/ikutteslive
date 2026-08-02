@@ -220,7 +220,7 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
   const isCorrect = isConfirmed && selectedOption === currentQuestion.correct_option_id;
 
   return (
-    <div className="flex flex-col w-full h-full min-h-0 animate-fade-in">
+    <div className="flex flex-col w-full h-full min-h-0 animate-fade-in pb-[72px] md:pb-0">
       {/* Top bar */}
       <div className="sticky top-0 z-30 bg-white border-b border-black">
         <div className="flex items-center justify-between px-2xl h-lg">
@@ -386,7 +386,7 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
       </div>
 
       {/* Bottom navigation */}
-      <div className="sticky bottom-0 bg-white border-t border-black px-2xl py-md">
+      <div className="sticky bottom-[72px] md:bottom-0 bg-white border-t border-black px-2xl py-md">
         <div className="flex items-center gap-md">
           <button
             onClick={goPrev}
