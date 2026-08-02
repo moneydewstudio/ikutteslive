@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Button from './Button';
+import { FOCUS } from './ui/Card';
+import { CTA } from './ui/CTA';
 import { apiFetch } from '../services/apiClient';
 
 type PaymentStatus = 'pending' | 'confirmed' | 'expired' | 'cancelled';
@@ -23,6 +24,8 @@ type AdminPaymentsProps = {
   adminEmail: string;
   userEmail?: string;
 };
+
+const SCROLLBAR_HIDE = '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 
 const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) => {
   const [status, setStatus] = useState<PaymentStatus>('pending');
@@ -185,18 +188,18 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
 
   if (!isEmailAllowed) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
-        <div className="border border-black bg-white rounded-xl p-6">
+      <div className="p-2xl max-w-4xl mx-auto">
+        <div className="border border-black bg-white rounded-xl p-xl">
           <div className="font-black text-lg">Forbidden</div>
-          <div className="text-sm text-gray-600 font-medium mt-2">Admin panel tidak tersedia untuk akun ini.</div>
+          <div className="text-sm text-gray-600 font-medium mt-sm">Admin panel tidak tersedia untuk akun ini.</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-2xl max-w-6xl mx-auto pb-24 md:pb-0">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
+    <div className="p-2xl max-w-6xl mx-auto pb-xl md:pb-0">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-md mb-xl">
         <div>
           <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Admin Payments</h1>
           <div className="text-sm text-gray-600 font-medium">Konfirmasi pembayaran QRIS berdasarkan nominal persis.</div>
@@ -204,9 +207,9 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
       </div>
 
       {error ? (
-        <div className="mb-4 border border-black rounded-xl p-4 bg-brand-cream">
+        <div className="mb-lg border border-black rounded-xl p-lg bg-brand-cream">
           <div className="font-black">Error</div>
-          <div className="text-sm font-medium text-gray-700 mt-1">
+          <div className="text-sm font-medium text-gray-600 mt-xs">
             {error === 'forbidden'
               ? 'Admin key salah / belum di-set.'
               : error === 'action_failed'
@@ -218,14 +221,17 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3 mb-4">
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
+      <div className="flex flex-col gap-md mb-lg">
+        <div className={`flex gap-sm overflow-x-auto pb-xs -mx-xl px-xl md:mx-0 md:px-0 ${SCROLLBAR_HIDE}`}>
           {(['pending', 'confirmed', 'expired', 'cancelled'] as const).map((s) => (
             <button
               key={s}
-              className={`px-3 py-2 text-xs font-black uppercase border border-black rounded-lg whitespace-nowrap ${
-                status === s ? 'bg-brand-lime' : 'bg-white'
-              }`}
+              type="button"
+              className={[
+                'px-md py-sm text-xs font-black uppercase border border-black rounded-xl whitespace-nowrap transition-colors',
+                status === s ? 'bg-brand-lime' : 'bg-white hover:bg-gray-50',
+                FOCUS,
+              ].join(' ')}
               onClick={() => setStatus(s)}
             >
               {s}
@@ -233,14 +239,14 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-sm">
           <input
-            className="border border-black rounded-lg px-3 py-2 text-sm w-full sm:w-72"
+            className={['border border-black rounded-xl px-md py-sm text-sm w-full sm:w-72', FOCUS].join(' ')}
             placeholder="Cari amount / userId / paymentId"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <label className="flex items-center gap-2 text-sm font-bold whitespace-nowrap">
+          <label className="flex items-center gap-sm text-sm font-bold whitespace-nowrap">
             <input type="checkbox" checked={claimedOnly} onChange={(e) => setClaimedOnly(e.target.checked)} />
             Claimed only
           </label>
@@ -253,13 +259,13 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
           <table className="min-w-[900px] w-full text-left">
             <thead className="bg-gray-50 border-b border-black">
               <tr>
-                <th className="p-3 text-xs font-black uppercase">Amount</th>
-                <th className="p-3 text-xs font-black uppercase">Plan</th>
-                <th className="p-3 text-xs font-black uppercase">User</th>
-                <th className="p-3 text-xs font-black uppercase">Created</th>
-                <th className="p-3 text-xs font-black uppercase">Expires</th>
-                <th className="p-3 text-xs font-black uppercase">Claimed</th>
-                <th className="p-3 text-xs font-black uppercase">Actions</th>
+                <th className="p-md text-xs font-black uppercase">Amount</th>
+                <th className="p-md text-xs font-black uppercase">Plan</th>
+                <th className="p-md text-xs font-black uppercase">User</th>
+                <th className="p-md text-xs font-black uppercase">Created</th>
+                <th className="p-md text-xs font-black uppercase">Expires</th>
+                <th className="p-md text-xs font-black uppercase">Claimed</th>
+                <th className="p-md text-xs font-black uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -267,31 +273,32 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                 const canAct = String(p.status) === 'pending';
                 return (
                   <tr key={p.id} className="hover:bg-gray-50">
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
+                    <td className="p-md">
+                      <div className="flex items-center gap-sm">
                         <div className="font-black">Rp {Number(p.amount_expected).toLocaleString('id-ID')}</div>
                         <button
-                          className="text-xs font-bold underline"
+                          type="button"
+                          className={['text-xs font-bold underline', FOCUS].join(' ')}
                           onClick={() => void onCopyAmount(p)}
                           title="Copy amount"
                         >
                           Copy
                         </button>
                       </div>
-                      <div className="text-[11px] text-gray-600 font-medium break-all">{p.id}</div>
+                      <div className="text-xs text-gray-600 font-medium break-all">{p.id}</div>
                     </td>
-                    <td className="p-3 text-sm font-bold">{p.plan_type}</td>
-                    <td className="p-3">
+                    <td className="p-md text-sm font-bold">{p.plan_type}</td>
+                    <td className="p-md">
                       <div className="text-sm font-bold break-all">{p.user_id}</div>
                     </td>
-                    <td className="p-3 text-xs font-medium text-gray-700">{formatTime(p.created_at)}</td>
-                    <td className="p-3 text-xs font-medium text-gray-700">{formatTime(p.expires_at)}</td>
-                    <td className="p-3 text-xs font-medium text-gray-700">{formatTime(p.user_claimed_at)}</td>
-                    <td className="p-3">
-                      <div className="flex gap-2">
-                        <Button
+                    <td className="p-md text-xs font-medium text-gray-600">{formatTime(p.created_at)}</td>
+                    <td className="p-md text-xs font-medium text-gray-600">{formatTime(p.expires_at)}</td>
+                    <td className="p-md text-xs font-medium text-gray-600">{formatTime(p.user_claimed_at)}</td>
+                    <td className="p-md">
+                      <div className="flex gap-sm">
+                        <CTA
                           size="sm"
-                          variant="lime"
+                          variant="accent"
                           disabled={!canAct}
                           onClick={() => {
                             setModal({ kind: 'confirm', payment: p });
@@ -301,10 +308,10 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                           }}
                         >
                           Confirm
-                        </Button>
-                        <Button
+                        </CTA>
+                        <CTA
                           size="sm"
-                          variant="outline"
+                          variant="secondary"
                           disabled={!canAct}
                           onClick={() => {
                             setModal({ kind: 'expire', payment: p });
@@ -314,10 +321,10 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                           }}
                         >
                           Expire
-                        </Button>
-                        <Button
+                        </CTA>
+                        <CTA
                           size="sm"
-                          variant="outline"
+                          variant="secondary"
                           disabled={!canAct}
                           onClick={() => {
                             setModal({ kind: 'cancel', payment: p });
@@ -327,7 +334,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                           }}
                         >
                           Cancel
-                        </Button>
+                        </CTA>
                       </div>
                     </td>
                   </tr>
@@ -335,7 +342,7 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
               })}
               {!filtered.length ? (
                 <tr>
-                  <td className="p-6 text-sm font-medium text-gray-600" colSpan={7}>
+                  <td className="p-xl text-sm font-medium text-gray-600" colSpan={7}>
                     {loading ? 'Memuat...' : 'Tidak ada data.'}
                   </td>
                 </tr>
@@ -346,36 +353,37 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
       </div>
 
       {/* Mobile Cards */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-md">
         {filtered.map((p) => {
           const canAct = String(p.status) === 'pending';
           return (
-            <div key={p.id} className="border border-black rounded-xl bg-white p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
+            <div key={p.id} className="border border-black rounded-xl bg-white p-lg space-y-md">
+              <div className="flex items-start justify-between gap-sm">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-sm">
                     <div className="font-black text-lg">Rp {Number(p.amount_expected).toLocaleString('id-ID')}</div>
                     <button
-                      className="text-xs font-bold underline text-gray-600"
+                      type="button"
+                      className={['text-xs font-bold underline text-gray-600', FOCUS].join(' ')}
                       onClick={() => void onCopyAmount(p)}
                       title="Copy amount"
                     >
                       Copy
                     </button>
                   </div>
-                  <div className="text-[11px] text-gray-500 font-medium break-all mt-1">{p.id}</div>
+                  <div className="text-xs text-gray-500 font-medium break-all mt-xs">{p.id}</div>
                 </div>
-                <span className={`text-xs font-black uppercase px-2 py-1 rounded border ${
-                  p.status === 'pending' ? 'bg-yellow-100 border-yellow-400 text-yellow-800' :
-                  p.status === 'confirmed' ? 'bg-green-100 border-green-400 text-green-800' :
-                  p.status === 'expired' ? 'bg-gray-100 border-gray-400 text-gray-600' :
-                  'bg-red-100 border-red-400 text-red-800'
+                <span className={`text-xs font-black uppercase px-sm py-xs rounded border ${
+                  p.status === 'pending' ? 'bg-brand-lime border-black text-black' :
+                  p.status === 'confirmed' ? 'bg-feedback-green border-black text-black' :
+                  p.status === 'expired' ? 'bg-gray-100 border-black text-black' :
+                  'bg-feedback-red border-black text-black'
                 }`}>
                   {p.status}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-sm text-sm">
                 <div>
                   <div className="text-xs text-gray-500 font-medium">Plan</div>
                   <div className="font-bold">{p.plan_type}</div>
@@ -398,10 +406,10 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
-                <Button
+              <div className="flex flex-col gap-sm pt-sm border-t border-gray-100">
+                <CTA
                   size="sm"
-                  variant="lime"
+                  variant="accent"
                   disabled={!canAct}
                   className="w-full"
                   onClick={() => {
@@ -412,11 +420,11 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                   }}
                 >
                   Confirm Payment
-                </Button>
-                <div className="flex gap-2">
-                  <Button
+                </CTA>
+                <div className="flex gap-sm">
+                  <CTA
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={!canAct}
                     className="flex-1"
                     onClick={() => {
@@ -427,10 +435,10 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                     }}
                   >
                     Expire
-                  </Button>
-                  <Button
+                  </CTA>
+                  <CTA
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={!canAct}
                     className="flex-1"
                     onClick={() => {
@@ -441,40 +449,41 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                     }}
                   >
                     Cancel
-                  </Button>
+                  </CTA>
                 </div>
               </div>
             </div>
           );
         })}
         {!filtered.length ? (
-          <div className="p-6 text-sm font-medium text-gray-600 text-center border border-black rounded-xl bg-white">
+          <div className="p-xl text-sm font-medium text-gray-600 text-center border border-black rounded-xl bg-white">
             {loading ? 'Memuat...' : 'Tidak ada data.'}
           </div>
         ) : null}
       </div>
 
       {modal ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
-          <div className="w-full max-w-lg border border-black rounded-xl bg-white p-5 my-auto">
-            <div className="flex items-start justify-between gap-3">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-lg overflow-y-auto">
+          <div className="w-full max-w-lg border border-black rounded-xl bg-white p-lg my-auto">
+            <div className="flex items-start justify-between gap-md">
               <div className="min-w-0 flex-1">
                 <div className="font-black text-base md:text-lg uppercase">
                   {modal.kind === 'confirm' ? 'Confirm Payment' : modal.kind === 'expire' ? 'Expire Payment' : 'Cancel Payment'}
                 </div>
-                <div className="text-sm text-gray-700 font-medium mt-1">
+                <div className="text-sm text-gray-600 font-medium mt-xs">
                   Nominal: <span className="font-black">Rp {Number(modal.payment.amount_expected).toLocaleString('id-ID')}</span>
                 </div>
-                <div className="text-xs text-gray-600 font-medium mt-1 break-all">Payment ID: {modal.payment.id}</div>
-                <div className="text-xs text-gray-600 font-medium mt-1 break-all">User ID: {modal.payment.user_id}</div>
-                <div className="text-xs text-gray-600 font-medium mt-1">Plan: {modal.payment.plan_type}</div>
-                <div className="text-xs text-gray-600 font-medium mt-1">Created: {formatTime(modal.payment.created_at)}</div>
-                <div className="text-xs text-gray-600 font-medium mt-1">Expires: {formatTime(modal.payment.expires_at)}</div>
-                <div className="text-xs text-gray-600 font-medium mt-1">Claimed: {formatTime(modal.payment.user_claimed_at)}</div>
+                <div className="text-xs text-gray-600 font-medium mt-xs break-all">Payment ID: {modal.payment.id}</div>
+                <div className="text-xs text-gray-600 font-medium mt-xs break-all">User ID: {modal.payment.user_id}</div>
+                <div className="text-xs text-gray-600 font-medium mt-xs">Plan: {modal.payment.plan_type}</div>
+                <div className="text-xs text-gray-600 font-medium mt-xs">Created: {formatTime(modal.payment.created_at)}</div>
+                <div className="text-xs text-gray-600 font-medium mt-xs">Expires: {formatTime(modal.payment.expires_at)}</div>
+                <div className="text-xs text-gray-600 font-medium mt-xs">Claimed: {formatTime(modal.payment.user_claimed_at)}</div>
               </div>
 
               <button
-                className="text-xs font-black uppercase border border-black rounded-lg px-2 py-1 shrink-0"
+                type="button"
+                className={['text-xs font-black uppercase border border-black rounded-xl px-sm py-xs shrink-0 hover:bg-gray-100 transition-colors', FOCUS].join(' ')}
                 onClick={() => {
                   setModal(null);
                   setConfirmChecked(false);
@@ -487,8 +496,8 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
             </div>
 
             {modal.kind === 'confirm' ? (
-              <div className="mt-4">
-                <label className="flex items-start gap-2 text-sm font-bold">
+              <div className="mt-lg">
+                <label className="flex items-start gap-sm text-sm font-bold">
                   <input
                     type="checkbox"
                     checked={confirmChecked}
@@ -496,15 +505,15 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                   />
                   <span className="leading-tight">Saya sudah cek transaksi masuk dengan nominal yang sama persis</span>
                 </label>
-                <div className="mt-3 grid grid-cols-1 gap-2">
+                <div className="mt-md grid grid-cols-1 gap-sm">
                   <input
-                    className="border border-black rounded-lg px-3 py-2 text-sm"
+                    className={['border border-black rounded-xl px-md py-sm text-sm', FOCUS].join(' ')}
                     placeholder="Transaction ref (optional)"
                     value={transactionRef}
                     onChange={(e) => setTransactionRef(e.target.value)}
                   />
                   <textarea
-                    className="border border-black rounded-lg px-3 py-2 text-sm"
+                    className={['border border-black rounded-xl px-md py-sm text-sm', FOCUS].join(' ')}
                     placeholder="Catatan (optional)"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
@@ -513,9 +522,9 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
                 </div>
               </div>
             ) : (
-              <div className="mt-4">
+              <div className="mt-lg">
                 <textarea
-                  className="border border-black rounded-lg px-3 py-2 text-sm w-full"
+                  className={['border border-black rounded-xl px-md py-sm text-sm w-full', FOCUS].join(' ')}
                   placeholder="Catatan (optional)"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -524,16 +533,15 @@ const AdminPayments: React.FC<AdminPaymentsProps> = ({ adminEmail, userEmail }) 
               </div>
             )}
 
-            <div className="mt-5 flex flex-col sm:flex-row gap-2 sm:justify-end">
-              <Button
-                variant={modal.kind === 'confirm' ? 'lime' : 'outline'}
+            <div className="mt-xl flex flex-col sm:flex-row gap-sm sm:justify-end">
+              <CTA
+                variant={modal.kind === 'confirm' ? 'accent' : 'secondary'}
                 onClick={() => void runAction()}
-                disabled={modal.kind === 'confirm' ? !confirmChecked : false}
-                isLoading={loading}
+                disabled={modal.kind === 'confirm' ? !confirmChecked || loading : loading}
                 className="w-full sm:w-auto"
               >
-                {modal.kind === 'confirm' ? 'Confirm' : modal.kind === 'expire' ? 'Expire' : 'Cancel'}
-              </Button>
+                {loading ? 'Memproses...' : modal.kind === 'confirm' ? 'Confirm' : modal.kind === 'expire' ? 'Expire' : 'Cancel'}
+              </CTA>
             </div>
           </div>
         </div>

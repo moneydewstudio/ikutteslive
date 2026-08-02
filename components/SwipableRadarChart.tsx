@@ -3,6 +3,7 @@
 // TEAM_043: subtopicId/Name fields, group detection, section separator SVG, grouped chips
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { FOCUS } from './ui/Card';
 
 type RadarPoint = {
   themeId: number;
@@ -244,24 +245,24 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
     >
       {/* Nav header */}
       <div className="flex items-center justify-between mb-sm">
-        <button onClick={goPrev} className="p-1 border border-black rounded-full bg-white hover:bg-gray-100" aria-label="Sebelumnya">
-          <ChevronLeft className="w-4 h-4" />
+        <button type="button" onClick={goPrev} className={['p-xs border border-black rounded-full bg-white hover:bg-gray-100', FOCUS].join(' ')} aria-label="Sebelumnya">
+          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
         </button>
         <div className="flex flex-col items-center">
-          <span className="font-bold text-sm uppercase tracking-widest border border-black px-3 py-1 rounded-full bg-white">{currentSub}</span>
+          <span className="font-bold text-sm uppercase tracking-widest border border-black px-md py-xs rounded-full bg-white">{currentSub}</span>
           <span className="text-[10px] text-black/50 mt-0.5">{SUBTOPIC_LABELS[currentSub]}</span>
         </div>
-        <button onClick={goNext} className="p-1 border border-black rounded-full bg-white hover:bg-gray-100" aria-label="Selanjutnya">
-          <ChevronRight className="w-4 h-4" />
+        <button type="button" onClick={goNext} className={['p-xs border border-black rounded-full bg-white hover:bg-gray-100', FOCUS].join(' ')} aria-label="Selanjutnya">
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
       {/* Chart */}
       <div className="border border-black bg-white rounded-xl p-lg">
-        {syncWarning && <div className="mb-2 text-xs font-bold text-black/80">Data belum tersinkron—coba lagi.</div>}
+        {syncWarning && <div className="mb-sm text-xs font-bold text-black/80">Data belum tersinkron—coba lagi.</div>}
         <div className="h-72">
           {chartData.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center gap-2 text-black/40">
+            <div className="h-full flex flex-col items-center justify-center text-center gap-sm text-black/40">
               <span className="text-3xl">📊</span>
               <p className="text-xs font-bold">
                 Selesaikan tryout atau kuis harian<br />untuk melihat profil kemampuan {currentSub}.
@@ -273,9 +274,9 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
         </div>
         {/* Score chips — flat 2-col grid without subtopic grouping */}
         {chartData.length > 0 && (
-          <div className="mt-2 grid grid-cols-2 gap-1">
+          <div className="mt-sm grid grid-cols-2 gap-xs">
             {chartData.filter(d => d.attempts > 0).map(d => (
-              <span key={d.name + '-' + (d as any).themeId} className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-black flex items-center justify-between" style={{ backgroundColor: color + '40' }}>
+              <span key={d.name + '-' + (d as any).themeId} className="text-[10px] font-bold px-sm py-xs rounded-xl border border-black flex items-center justify-between" style={{ backgroundColor: color + '40' }}>
                 <span className="uppercase">{d.name.substring(0, 3)}</span>
                 <span>{d.value !== null ? Math.round(d.value) : '—'}%</span>
               </span>
@@ -285,12 +286,13 @@ const SwipableRadarChart: React.FC<SwipableRadarChartProps> = ({
       </div>
 
       {/* Dot indicators */}
-      <div className="flex items-center justify-center gap-2 mt-3">
+      <div className="flex items-center justify-center gap-sm mt-md">
         {SUBTOPICS.map((sub, i) => (
           <button
+            type="button"
             key={sub}
             onClick={() => setCurrentIdx(i)}
-            className={`w-2 h-2 rounded-full border border-black transition-all ${i === currentIdx ? 'bg-black scale-125' : 'bg-white'}`}
+            className={`w-2 h-2 rounded-full border border-black transition-all ${FOCUS} ${i === currentIdx ? 'bg-black scale-125' : 'bg-white'}`}
             aria-label={`Lihat ${sub}`}
           />
         ))}

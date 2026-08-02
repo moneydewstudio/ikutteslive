@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, ArrowRight, Zap } from 'lucide-react';
+import { FOCUS } from './ui/Card';
 
 interface WeaknessData {
   topic: 'TWK' | 'TIU' | 'TKP';
@@ -62,54 +63,56 @@ const WeaknessCallout: React.FC<WeaknessCalloutProps> = ({
   const isWeak = weakness.accuracy < 70;
 
   return (
-    <div className={`border-l-4 p-lg mb-lg ${isCritical ? 'bg-red-50 border-red-500' : 'bg-brand-pink/30 border-brand-orange'}`}>
+    <div className={`border border-black rounded-xl p-lg mb-lg ${isCritical ? 'bg-feedback-red/10' : 'bg-brand-pink/30'}`}>
       <div className="flex items-start gap-md">
-        <div className={`mt-0.5 ${isCritical ? 'text-red-500' : 'text-brand-orange'}`}>
-          <AlertTriangle className="w-5 h-5" />
+        <div className={`mt-0.5 ${isCritical ? 'text-feedback-red' : 'text-brand-orange'}`}>
+          <AlertTriangle className="w-5 h-5" aria-hidden="true" />
         </div>
         <div className="flex-1">
-          <div className="font-bold text-sm mb-1">
+          <div className="font-bold text-sm mb-xs">
             {isCritical ? '⚠️ Kelemahan Kritis Terdeteksi' : '📊 Area Perlu Peningkatan'}
           </div>
-          <div className="text-sm mb-2">
+          <div className="text-sm mb-sm">
             <span className="font-medium">{getTopicLabel(weakness.topic)}</span>
-            <span className="text-gray-500"> • </span>
+            <span className="text-gray-600"> • </span>
             <span>{getSubtopicLabel(weakness.subtopic)}</span>
           </div>
-          <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-lg mb-md">
             <div className="flex-1">
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${isCritical ? 'bg-red-500' : 'bg-brand-orange'}`}
+                  className={`h-full rounded-full ${isCritical ? 'bg-feedback-red' : 'bg-brand-orange'}`}
                   style={{ width: `${weakness.accuracy}%` }}
                 />
               </div>
             </div>
-            <span className={`text-sm font-bold ${isCritical ? 'text-red-600' : 'text-brand-orange'}`}>
+            <span className={`text-sm font-bold ${isCritical ? 'text-feedback-red' : 'text-brand-orange'}`}>
               {weakness.accuracy}%
             </span>
           </div>
 
           {isCritical && (
-            <p className="text-xs text-red-700 mb-3">
+            <p className="text-xs text-feedback-red mb-md">
               Akurasi di bawah 50% — perlu latihan intensif untuk mencapai passing grade.
             </p>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             <button
+              type="button"
               onClick={onPracticeClick}
-              className="flex items-center gap-1 text-xs font-bold bg-black text-white px-3 py-2 hover:bg-gray-800 transition-colors"
+              className={['flex items-center gap-xs text-xs font-bold bg-black text-white rounded-xl px-md py-sm hover:bg-gray-800 transition-colors', FOCUS].join(' ')}
             >
-              <Zap className="w-3 h-3" />
+              <Zap className="w-3 h-3" aria-hidden="true" />
               Latihan {weakness.topic}
-              <ArrowRight className="w-3 h-3" />
+              <ArrowRight className="w-3 h-3" aria-hidden="true" />
             </button>
 
             {showPremiumCta && onPremiumClick && (
               <button
+                type="button"
                 onClick={onPremiumClick}
-                className="text-xs font-bold border border-black px-3 py-2 hover:bg-gray-100 transition-colors"
+                className={['text-xs font-bold border border-black rounded-xl px-md py-sm hover:bg-gray-100 transition-colors', FOCUS].join(' ')}
               >
                 Buka Latihan Lanjutan
               </button>
@@ -117,8 +120,9 @@ const WeaknessCallout: React.FC<WeaknessCalloutProps> = ({
           </div>
         </div>
         <button
+          type="button"
           onClick={() => setIsDismissed(true)}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className={['text-gray-600 hover:text-black transition-colors rounded-xl p-xs', FOCUS].join(' ')}
           aria-label="Dismiss"
         >
           ×

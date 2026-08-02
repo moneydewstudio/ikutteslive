@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { QUESTIONS_POOL } from '../constants';
 import { Question } from '../types';
-import Button from './Button';
+import { FOCUS } from './ui/Card';
+import { CTA } from './ui/CTA';
 import { generateQuestionWithAI } from '../services/geminiService';
-import { Wand2, Plus, Save } from 'lucide-react';
+import { Wand2, Plus } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>(QUESTIONS_POOL);
@@ -15,7 +16,7 @@ const AdminDashboard: React.FC = () => {
     setError(null);
     try {
       const newQuestionPartial = await generateQuestionWithAI(subject);
-      
+
       // Type guard and default assignment
       const newQuestion: Question = {
         id: newQuestionPartial.id || `gen_${Date.now()}`,
@@ -37,53 +38,53 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="p-2xl max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Konten</h1>
-        <div className="flex gap-2">
-            <Button variant="outline" onClick={() => handleGenerate('TIU')} isLoading={isGenerating}>
-              <Wand2 className="w-4 h-4 mr-2" />
+      <div className="flex justify-between items-center mb-2xl">
+        <h1 className="text-2xl font-bold text-black">Admin Konten</h1>
+        <div className="flex gap-sm">
+            <CTA variant="secondary" size="sm" onClick={() => handleGenerate('TIU')} disabled={isGenerating} className="inline-flex items-center gap-sm">
+              <Wand2 className="w-4 h-4" aria-hidden="true" />
               Gen TIU
-            </Button>
-             <Button variant="outline" onClick={() => handleGenerate('TWK')} isLoading={isGenerating}>
-              <Wand2 className="w-4 h-4 mr-2" />
+            </CTA>
+             <CTA variant="secondary" size="sm" onClick={() => handleGenerate('TWK')} disabled={isGenerating} className="inline-flex items-center gap-sm">
+              <Wand2 className="w-4 h-4" aria-hidden="true" />
               Gen TWK
-            </Button>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
+            </CTA>
+            <CTA variant="primary" size="sm" className="inline-flex items-center gap-sm">
+              <Plus className="w-4 h-4" aria-hidden="true" />
               Tambah Manual
-            </Button>
+            </CTA>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6">
+        <div className="bg-feedback-red text-black p-lg rounded-xl mb-xl">
           {error}
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-black overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-gray-50 border-b border-black">
             <tr>
-              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Mapel</th>
-              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Pertanyaan</th>
-              <th className="p-4 text-xs font-semibold text-gray-500 uppercase">Aksi</th>
+              <th className="p-lg text-xs font-semibold text-gray-500 uppercase">Mapel</th>
+              <th className="p-lg text-xs font-semibold text-gray-500 uppercase">Pertanyaan</th>
+              <th className="p-lg text-xs font-semibold text-gray-500 uppercase">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {questions.map((q) => (
               <tr key={q.id} className="hover:bg-gray-50 transition-colors">
-                <td className="p-4">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <td className="p-lg">
+                  <span className="inline-flex items-center px-sm py-xs rounded-full text-xs font-medium bg-brand-purple text-black">
                     {q.subject}
                   </span>
                 </td>
-                <td className="p-4 max-w-md">
-                  <p className="truncate font-medium text-gray-900">{q.text}</p>
-                  <p className="truncate text-xs text-gray-500 mt-1">{q.explanation}</p>
+                <td className="p-lg max-w-md">
+                  <p className="truncate font-medium text-black">{q.text}</p>
+                  <p className="truncate text-xs text-gray-500 mt-xs">{q.explanation}</p>
                 </td>
-                <td className="p-4">
-                  <button className="text-gray-400 hover:text-blue-600">Ubah</button>
+                <td className="p-lg">
+                  <button type="button" className={['text-gray-600 hover:text-black font-bold', FOCUS].join(' ')}>Ubah</button>
                 </td>
               </tr>
             ))}

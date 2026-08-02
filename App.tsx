@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ViewState, UserSession, User } from './types';
 import * as QuizService from './services/quizService';
 import { authService } from './services/authService';
-import ProgressBar from './components/ProgressBar';
 import { setPendingDailyQuizSubmit, submitDailyQuizAttempt, hasSuccessfullySubmittedToday, markSubmittedToday } from './services/dailyQuizSync';
 import QuizCard from './components/QuizCard';
 import ResultsView from './components/ResultsView';
@@ -16,7 +15,8 @@ import RoadmapView from './components/RoadmapView';
 import RoadmapMaterialView from './components/RoadmapMaterialView';
 import RoadmapQuizView from './components/RoadmapQuizView';
 import InterstitialAd from './components/InterstitialAd';
-import Button from './components/Button';
+import { CTA } from './components/ui/CTA';
+import { FOCUS } from './components/ui/Card';
 import { syncAuth } from './services/backend';
 import { recordAnswerEvent } from './services/userEvents';
 import { OnboardingTourProvider } from './src/contexts/OnboardingTourContext';
@@ -355,53 +355,74 @@ const AppContent: React.FC = () => {
 
   // --- HEADER COMPONENT ---
 const Header = () => (
-  <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
-    <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick} data-tour="header-logo">
+  <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-xl lg:px-2xl w-full">
+    <button type="button" onClick={handleLogoClick} data-tour="header-logo" className={FOCUS}>
       <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
-    </div>
+    </button>
 
     {/* TEAM_032: Clear navigation hierarchy - Tryout primary, others secondary */}
-    <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
+    <nav className="hidden md:flex items-center gap-sm lg:gap-xl font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
       {/* Primary path: Tryout (full simulation) - emphasized */}
-      <button 
-        onClick={() => setView('TRYOUT')} 
-        className={`px-3 py-2 rounded transition-all ${
-          view === 'TRYOUT' 
-            ? 'bg-black text-white shadow-md' 
-            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-        }`}
+      <button
+        type="button"
+        onClick={() => setView('TRYOUT')}
+        className={[
+          'px-md py-sm rounded-xl transition-colors',
+          view === 'TRYOUT' ? 'bg-black text-white' : 'text-gray-600 hover:text-black hover:bg-gray-100',
+          FOCUS,
+        ].join(' ')}
       >
         Tryout
       </button>
-      
+
       {/* Secondary: Drill (per-category practice) */}
       <button
+        type="button"
         onClick={() => setView('BONUS')}
-        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}
+        className={[
+          'px-sm py-xs hover:text-black transition-colors rounded-xl',
+          view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-600',
+          FOCUS,
+        ].join(' ')}
       >
         Drill
       </button>
 
       {/* Secondary: Roadmap (curriculum) */}
       <button
+        type="button"
         onClick={() => setView('ROADMAP')}
-        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'ROADMAP' ? 'text-black' : 'text-gray-400'}`}
+        className={[
+          'px-sm py-xs hover:text-black transition-colors rounded-xl',
+          view === 'ROADMAP' ? 'text-black' : 'text-gray-600',
+          FOCUS,
+        ].join(' ')}
       >
         Roadmap
       </button>
 
       {/* Secondary: Kuis Harian */}
       <button
+        type="button"
         onClick={handleLatihanClick}
-        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}
+        className={[
+          'px-sm py-xs hover:text-black transition-colors rounded-xl',
+          view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-600',
+          FOCUS,
+        ].join(' ')}
       >
         Kuis Harian
       </button>
-      
-      <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">Blog</a>
-      <button 
-        onClick={handleProfileClick} 
-        className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}
+
+      <a href="/blog/" className={['px-sm py-xs hover:text-black transition-colors text-gray-600 rounded-xl', FOCUS].join(' ')}>Blog</a>
+      <button
+        type="button"
+        onClick={handleProfileClick}
+        className={[
+          'px-sm py-xs hover:text-black transition-colors rounded-xl',
+          view === 'PROFILE' ? 'text-black' : 'text-gray-600',
+          FOCUS,
+        ].join(' ')}
       >
         Profil
       </button>
@@ -409,20 +430,20 @@ const Header = () => (
 
     <div>
       {user && !user.name?.includes('Tamu') ? (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-sm">
           {user?.email === 'pojok.sepak@gmail.com' ? (
-            <Button variant="outline" size="sm" onClick={() => setView('ADMIN_PAYMENTS')}>
+            <CTA variant="secondary" size="sm" onClick={() => setView('ADMIN_PAYMENTS')}>
               Admin
-            </Button>
+            </CTA>
           ) : null}
-          <Button variant="black" size="sm" onClick={handleProfileClick}>
+          <CTA variant="primary" size="sm" onClick={handleProfileClick}>
             Profil Saya
-          </Button>
+          </CTA>
         </div>
       ) : (
-        <Button variant="black" size="sm" onClick={() => openSignup('manual')} isLoading={isAuthLoading}>
+        <CTA variant="primary" size="sm" onClick={() => openSignup('manual')} disabled={isAuthLoading}>
           Masuk
-        </Button>
+        </CTA>
       )}
     </div>
   </header>
@@ -657,55 +678,76 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
 
   // --- HEADER COMPONENT ---
   const Header = () => (
-    <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-6 lg:px-12 w-full">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick} data-tour="header-logo">
+    <header className="sticky top-0 z-50 bg-bg border-b border-black h-20 flex items-center justify-between px-xl lg:px-2xl w-full">
+      <button type="button" onClick={handleLogoClick} data-tour="header-logo" className={FOCUS}>
         <img src="/ikuttes.png" alt="Ikuttes" className="h-8 w-auto" />
-      </div>
+      </button>
 
       {/* TEAM_032: Clear navigation hierarchy - Tryout primary, others secondary */}
-      <nav className="hidden md:flex items-center gap-2 lg:gap-6 font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
+      <nav className="hidden md:flex items-center gap-sm lg:gap-xl font-bold text-sm uppercase tracking-wide" data-tour="nav-bar">
         {/* Primary path: Tryout (full simulation) - emphasized */}
         <button
+          type="button"
           onClick={() => setView('TRYOUT')}
-          className={`px-3 py-2 rounded transition-all ${
-            view === 'TRYOUT'
-              ? 'bg-black text-white shadow-md'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-          }`}
+          className={[
+            'px-md py-sm rounded-xl transition-colors',
+            view === 'TRYOUT' ? 'bg-black text-white' : 'text-gray-600 hover:text-black hover:bg-gray-100',
+            FOCUS,
+          ].join(' ')}
         >
           Tryout
         </button>
-        
+
         {/* Secondary: Drill */}
         <button
+          type="button"
           onClick={() => setView('BONUS')}
-          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-400'}`}
+          className={[
+            'px-sm py-xs hover:text-black transition-colors rounded-xl',
+            view === 'BONUS' || view === 'DRILLS' ? 'text-black' : 'text-gray-600',
+            FOCUS,
+          ].join(' ')}
         >
           Drill
         </button>
 
         {/* Secondary: Roadmap */}
         <button
+          type="button"
           onClick={() => setView('ROADMAP')}
-          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'ROADMAP' ? 'text-black' : 'text-gray-400'}`}
+          className={[
+            'px-sm py-xs hover:text-black transition-colors rounded-xl',
+            view === 'ROADMAP' ? 'text-black' : 'text-gray-600',
+            FOCUS,
+          ].join(' ')}
         >
           Roadmap
         </button>
 
         {/* Secondary: Kuis Harian */}
         <button
+          type="button"
           onClick={handleLatihanClick}
-          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-400'}`}
+          className={[
+            'px-sm py-xs hover:text-black transition-colors rounded-xl',
+            view === 'QUIZ' || view === 'RESULTS' ? 'text-black' : 'text-gray-600',
+            FOCUS,
+          ].join(' ')}
         >
           Kuis Harian
         </button>
-        
-        <a href="/blog/" className="px-2 py-1 hover:text-gray-600 transition-colors text-gray-400">
+
+        <a href="/blog/" className={['px-sm py-xs hover:text-black transition-colors text-gray-600 rounded-xl', FOCUS].join(' ')}>
           Blog
         </a>
         <button
+          type="button"
           onClick={handleProfileClick}
-          className={`px-2 py-1 hover:text-gray-600 transition-colors ${view === 'PROFILE' ? 'text-black' : 'text-gray-400'}`}
+          className={[
+            'px-sm py-xs hover:text-black transition-colors rounded-xl',
+            view === 'PROFILE' ? 'text-black' : 'text-gray-600',
+            FOCUS,
+          ].join(' ')}
         >
           Profil
         </button>
@@ -714,20 +756,20 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
 
       <div>
         {user && !user.name?.includes('Tamu') ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-sm">
             {user?.email === 'pojok.sepak@gmail.com' ? (
-              <Button variant="outline" size="sm" onClick={() => setView('ADMIN_PAYMENTS')}>
+              <CTA variant="secondary" size="sm" onClick={() => setView('ADMIN_PAYMENTS')}>
                 Admin
-              </Button>
+              </CTA>
             ) : null}
-            <Button variant="black" size="sm" onClick={handleProfileClick}>
+            <CTA variant="primary" size="sm" onClick={handleProfileClick}>
               Profil Saya
-            </Button>
+            </CTA>
           </div>
         ) : (
-          <Button variant="black" size="sm" onClick={() => openSignup('manual')} isLoading={isAuthLoading}>
+          <CTA variant="primary" size="sm" onClick={() => openSignup('manual')} disabled={isAuthLoading}>
             Masuk
-          </Button>
+          </CTA>
         )}
       </div>
     </header>

@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../services/apiClient';
-import { Compass, CheckCircle, ArrowRight } from 'lucide-react';
+import { Compass } from 'lucide-react';
+import { CTA } from './ui/CTA';
+import { Badge } from './ui/Badge';
+import { FOCUS } from './ui/Card';
+import ProgressBar from './ProgressBar';
 
 type DrillCategory = 'TIU' | 'TWK' | 'TKP';
 
@@ -24,15 +28,15 @@ type ProgressRow = {
   attempts: number;
 };
 
-const CATEGORY_META: Record<DrillCategory, { label: string; color: string; bgLight: string }> = {
-  TIU: { label: 'Tes Intelegensia Umum', color: 'bg-brand-pink', bgLight: 'bg-pink-50' },
-  TWK: { label: 'Tes Wawasan Kebangsaan', color: 'bg-brand-cream', bgLight: 'bg-amber-50' },
-  TKP: { label: 'Tes Karakteristik Pribadi', color: 'bg-brand-lime', bgLight: 'bg-lime-50' },
+const CATEGORY_LABELS: Record<DrillCategory, string> = {
+  TIU: 'Tes Intelegensia Umum',
+  TWK: 'Tes Wawasan Kebangsaan',
+  TKP: 'Tes Karakteristik Pribadi',
 };
 
 const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?: string) => void }> = ({ onStartMaterial }) => {
-  const [activeCategory, setActiveCategory] = useState<DrillCategory | null>(null);
-  const [expandedSubtopic, setExpandedSubtopic] = useState<number | null>(null);
+  const [activeCategory, setActiveCategory] = useState<DrillCategory>('TIU');
+  const [deckIndex, setDeckIndex] = useState(0);
   const [subtopics, setSubtopics] = useState<Record<DrillCategory, SubtopicRow[]>>({ TIU: [], TWK: [], TKP: [] });
   const [progress, setProgress] = useState<Record<number, ProgressRow>>({});
   const [loading, setLoading] = useState(true);
@@ -73,38 +77,34 @@ const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?:
     return () => { cancelled = true; };
   }, []);
 
-  const toggleCategory = (cat: DrillCategory) => {
-    setActiveCategory(activeCategory === cat ? null : cat);
+  const selectCategory = (cat: DrillCategory) => {
+    setActiveCategory(cat);
+    setDeckIndex(0);
   };
 
-  const getStatusIcon = (subtopicId: number) => {
-    const p = progress[subtopicId];
-    if (!p || p.status === 'not_started') return null;
-    if (p.status === 'completed') return <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />;
-    return <div className="w-5 h-5 rounded-full border-2 border-amber-500 shrink-0" />;
-  };
-
-  const getStatusText = (subtopicId: number) => {
-    const p = progress[subtopicId];
-    if (!p) return 'Belum dimulai';
-    if (p.status === 'completed') return `✅ ${p.bestScore ?? 0}%`;
-    if (p.status === 'in_progress') return `🔄 ${p.attempts}x percobaan`;
-    return 'Belum dimulai';
+  const onDeckScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const max = Math.max((subtopics[activeCategory] ?? []).length - 1, 0);
+    const idx = Math.min(Math.round(el.scrollLeft / el.clientWidth), max);
+    if (idx >= 0 && idx !== deckIndex) setDeckIndex(idx);
   };
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center gap-sm">
+        <span className="w-6 h-6 border border-black border-t-transparent rounded-full animate-spin" aria-hidden="true" />
         <span className="font-medium text-sm text-gray-500">Memuat roadmap...</span>
       </div>
     );
   }
 
+  const list = subtopics[activeCategory] ?? [];
+
   return (
-    <div className="flex flex-col w-full animate-fade-in pb-20 md:pb-0">
+    <div className="flex flex-col w-full animate-fade-in pb-3xl md:pb-0">
       <div className="p-2xl border-b border-black bg-brand-cream">
-        <div className="flex items-center gap-3 mb-xl">
-          <Compass className="w-8 h-8" />
+        <div className="flex items-center gap-md mb-xl">
+          <Compass className="w-8 h-8" aria-hidden="true" />
           <h1 className="text-5xl font-black uppercase tracking-tight">Roadmap Belajar</h1>
         </div>
         <p className="text-lg max-w-xl">
@@ -112,115 +112,123 @@ const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?:
         </p>
       </div>
 
-      <div className="flex flex-col divide-y divide-black">
+      <div className="flex border-b border-black">
         {(['TIU', 'TWK', 'TKP'] as DrillCategory[]).map((cat) => {
-          const meta = CATEGORY_META[cat];
-          const list = subtopics[cat] ?? [];
-          const completed = list.filter((s) => progress[s.id]?.status === 'completed').length;
+          const catList = subtopics[cat] ?? [];
+          const completed = catList.filter((s) => progress[s.id]?.status === 'completed').length;
+          const active = activeCategory === cat;
           return (
-            <div key={cat}>
-              {/* Category header button */}
-              <button
-                onClick={() => toggleCategory(cat)}
-                className={`w-full text-left px-2xl py-lg flex items-center justify-between hover:bg-gray-50 transition-colors ${meta.bgLight}`}
-              >
-                <div className="flex items-center gap-lg">
-                  <div className={`w-10 h-10 rounded-full ${meta.color} border border-black flex items-center justify-center font-black text-sm`}>
-                    {cat}
-                  </div>
-                  <div>
-                    <div className="font-black text-lg">{cat}</div>
-                    <div className="text-sm text-gray-600">{meta.label}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-lg">
-                  <span className="text-sm font-bold text-gray-500">{completed}/{list.length} selesai</span>
-                  <ArrowRight className={`w-5 h-5 transition-transform ${activeCategory === cat ? 'rotate-90' : ''}`} />
-                </div>
-              </button>
-
-              {/* Subtopic list (expandable) */}
-              {activeCategory === cat && (
-                <div className="divide-y divide-gray-200 bg-white">
-                  {list.length === 0 ? (
-                    <div className="px-2xl py-lg text-sm text-gray-400">Belum ada subtopik untuk kategori ini.</div>
-                  ) : (
-                    list.map((sub, idx) => {
-                      const isCompleted = progress[sub.id]?.status === 'completed';
-                      const isExpanded = expandedSubtopic === sub.id;
-                      const hasThemes = (sub.themes ?? []).length > 0;
-                      const completedThemes = (sub.themes ?? []).filter((t) => progress[t.id]?.status === 'completed').length;
-                      return (
-                        <div key={sub.id}>
-                          <div
-                            className={`px-2xl py-md flex items-center justify-between transition-colors ${isCompleted ? 'opacity-70' : 'cursor-pointer hover:bg-gray-50'}`}
-                            onClick={() => {
-                              if (!isCompleted) {
-                                if (hasThemes) {
-                                  setExpandedSubtopic(isExpanded ? null : sub.id)
-                                } else {
-                                  onStartMaterial?.(sub.id)
-                                }
-                              }
-                            }}
-                          >
-                            <div className="flex items-center gap-lg min-w-0">
-                              <span className="text-xs font-bold text-gray-400 w-6 shrink-0">{`${idx + 1}.`}</span>
-                              <div className="min-w-0">
-                                <span className="font-bold text-sm truncate block">{sub.name}</span>
-                                <span className="text-xs text-gray-500">
-                                  {hasThemes
-                                    ? `${completedThemes}/${sub.themes.length} tema`
-                                    : getStatusText(sub.id)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-md shrink-0">
-                              {getStatusIcon(sub.id)}
-                              {!isCompleted && hasThemes && (
-                                <ArrowRight className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                              )}
-                              {!isCompleted && !hasThemes && (
-                                <span className="text-xs font-bold text-gray-400 uppercase border border-gray-300 px-2 py-0.5 rounded">
-                                  Mulai
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Nested themes */}
-                          {isExpanded && hasThemes && (
-                            <div className="bg-gray-50 border-t border-b border-gray-200">
-                              {sub.themes.map((theme) => {
-                                return (
-                                  <div
-                                    key={theme.id}
-                                    onClick={() => onStartMaterial?.(sub.id, theme.name)}
-                                    className="px-2xl py-sm pl-3xl flex items-center justify-between text-sm cursor-pointer hover:bg-gray-100 transition-colors"
-                                  >
-                                    <div className="flex items-center gap-lg min-w-0">
-                                      <span className="text-xs text-gray-300 w-4 shrink-0">•</span>
-                                      <span className="text-gray-700 truncate">{theme.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-md shrink-0">
-                                      <span className="text-[10px] font-bold text-gray-400 uppercase border border-gray-300 px-1.5 py-0.5 rounded">
-                                        Tes
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            </div>
+            <button
+              key={cat}
+              type="button"
+              aria-pressed={active}
+              aria-label={CATEGORY_LABELS[cat]}
+              onClick={() => selectCategory(cat)}
+              className={`flex-1 py-md px-2xl flex items-center justify-center gap-md border-r border-black last:border-r-0 transition-colors ${active ? 'bg-brand-lime' : 'bg-white hover:bg-gray-50'} ${FOCUS}`}
+            >
+              <span className="font-black uppercase">{cat}</span>
+              <span className="text-xs font-bold text-gray-500">{completed}/{catList.length}</span>
+            </button>
           );
         })}
+      </div>
+
+      {list.length > 0 && (
+        <div className="flex items-center justify-center gap-sm py-md" aria-hidden="true">
+          {list.map((_, i) => (
+            <span
+              key={i}
+              className={`w-2 h-2 rounded-full transition-colors ${i === deckIndex ? 'bg-black' : 'bg-gray-300'}`}
+            />
+          ))}
+        </div>
+      )}
+
+      <div
+        key={activeCategory}
+        onScroll={onDeckScroll}
+        className="flex overflow-x-auto snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {list.length === 0 ? (
+          <div className="w-full px-2xl">
+            <div className="border border-black rounded-xl p-xl text-sm text-gray-500">
+              Belum ada subtopik untuk kategori ini.
+            </div>
+          </div>
+        ) : (
+          list.map((sub) => {
+            const subProgress = progress[sub.id];
+            const themes = sub.themes ?? [];
+            const hasThemes = themes.length > 0;
+            const isCompleted = subProgress?.status === 'completed';
+            const completedCount = hasThemes
+              ? themes.filter((t) => progress[t.id]?.status === 'completed').length
+              : isCompleted ? 1 : 0;
+            const totalCount = hasThemes ? themes.length : 1;
+            const progressLabel = hasThemes
+              ? `${completedCount}/${totalCount} tema`
+              : isCompleted ? 'Selesai' : 'Belum dimulai';
+            const allDone = hasThemes && themes.every((t) => progress[t.id]?.status === 'completed');
+            const ctaTheme = (hasThemes ? themes.find((t) => progress[t.id]?.status !== 'completed') : undefined)?.name
+              ?? (hasThemes ? themes[0].name : undefined);
+            const ctaLabel = !hasThemes ? 'Mulai' : allDone ? 'Ulangi Tema' : 'Lanjut Belajar';
+
+            return (
+              <div key={sub.id} className="snap-center shrink-0 w-full px-2xl">
+                <div className="border border-black rounded-xl p-xl flex flex-col gap-md min-w-0">
+                  <div className="flex items-center justify-between gap-md">
+                    <h2 className="uppercase font-black text-lg min-w-0 truncate">{sub.name}</h2>
+                    <Badge accent={isCompleted ? 'lime' : 'white'} className="shrink-0">
+                      {isCompleted ? 'SELESAI' : 'BELUM DIMULAI'}
+                    </Badge>
+                  </div>
+
+                  <ProgressBar
+                    current={completedCount}
+                    total={totalCount}
+                    ariaLabel={`${progressLabel} selesai`}
+                  />
+                  <span className="text-xs font-bold text-gray-500 -mt-lg">{progressLabel}</span>
+
+                  {hasThemes && (
+                    <div className="flex flex-col divide-y divide-black border-t border-black">
+                      {themes.map((theme) => {
+                        const t = progress[theme.id]?.status;
+                        const done = t === 'completed';
+                        const inProgress = t === 'in_progress';
+                        const marker = done ? '✓' : inProgress ? '▸' : '○';
+                        const markerCls = done
+                          ? 'text-feedback-green font-bold'
+                          : inProgress
+                            ? 'text-gray-600 font-bold'
+                            : 'text-gray-400';
+                        return (
+                          <button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => onStartMaterial?.(sub.id, theme.name)}
+                            className={`w-full text-left px-xs py-md min-h-[44px] flex items-center justify-between gap-md transition-colors hover:bg-gray-50 ${FOCUS}`}
+                          >
+                            <span className="min-w-0 truncate font-medium">{theme.name}</span>
+                            <span className={`shrink-0 ${markerCls}`} aria-hidden="true">{marker}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <CTA
+                    variant="secondary"
+                    fullWidth
+                    onClick={() => onStartMaterial?.(sub.id, ctaTheme)}
+                  >
+                    {ctaLabel}
+                  </CTA>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

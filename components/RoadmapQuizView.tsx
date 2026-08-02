@@ -2,6 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../services/apiClient';
 import { ArrowLeft, ArrowRight, RotateCcw, CheckCircle2, XCircle, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import OptionButton from './ui/OptionButton';
+import CTA from './ui/CTA';
+import { FOCUS } from './ui/Card';
 
 type Option = { id: string; text: string };
 type Question = {
@@ -133,7 +136,7 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
           animate={{ opacity: 1 }}
           className="text-center"
         >
-          <div className="w-10 h-10 border-3 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-lg" />
+          <div className="w-10 h-10 border border-black/30 border-t-black rounded-full animate-spin mx-auto mb-lg" />
           <span className="font-medium text-sm text-gray-500">Memuat soal...</span>
         </motion.div>
       </div>
@@ -145,7 +148,7 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
       <div className="flex-1 flex flex-col items-center justify-center gap-xl p-2xl">
         <XCircle className="w-12 h-12 text-gray-300" />
         <p className="text-gray-500 text-sm text-center">{error}</p>
-        <button onClick={onBack} className="text-sm font-bold text-black underline">Kembali</button>
+        <button onClick={onBack} className={`text-sm font-bold text-black underline ${FOCUS}`}>Kembali</button>
       </div>
     );
   }
@@ -160,12 +163,12 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
           className="text-center max-w-sm"
         >
           {passed ? (
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-xl">
-              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            <div className="w-20 h-20 rounded-full bg-feedback-green flex items-center justify-center mx-auto mb-xl">
+              <CheckCircle2 className="w-10 h-10 text-black" />
             </div>
           ) : (
-            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-xl">
-              <XCircle className="w-10 h-10 text-red-600" />
+            <div className="w-20 h-20 rounded-full bg-feedback-red flex items-center justify-center mx-auto mb-xl">
+              <XCircle className="w-10 h-10 text-black" />
             </div>
           )}
 
@@ -178,38 +181,32 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
               : `Skor kamu ${score}%. Minimal 70% untuk lulus.`}
           </p>
 
-          <div className="w-32 h-32 rounded-full border-4 border-gray-200 flex items-center justify-center mx-auto mb-xl">
-            <span className={`text-3xl font-black ${passed ? 'text-green-600' : 'text-red-600'}`}>
+          <div className="w-32 h-32 rounded-full border border-black bg-white flex items-center justify-center mx-auto mb-xl">
+            <span className="text-3xl font-black text-black">
               {score}%
             </span>
           </div>
 
           <div className="flex flex-col gap-md">
             {passed ? (
-              <button
-                onClick={() => onComplete(score, subtopicId)}
-                className="w-full bg-black text-white font-bold py-3 px-xl rounded-xl hover:bg-gray-800 transition-colors"
-              >
+              <CTA fullWidth onClick={() => onComplete(score, subtopicId)}>
                 Kembali ke Roadmap
-              </button>
+              </CTA>
             ) : (
               <>
-                <button
+                <CTA
+                  fullWidth
                   onClick={() => {
                     setFinished(false);
                     setCurrentIdx(0);
                   }}
-                  className="w-full bg-black text-white font-bold py-3 px-xl rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                 >
                   <RotateCcw className="w-4 h-4" />
                   Coba Lagi
-                </button>
-                <button
-                  onClick={() => onComplete(score, subtopicId)}
-                  className="w-full text-gray-600 font-bold py-3 px-xl rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors"
-                >
+                </CTA>
+                <CTA fullWidth variant="secondary" onClick={() => onComplete(score, subtopicId)}>
                   Kembali ke Roadmap
-                </button>
+                </CTA>
               </>
             )}
           </div>
@@ -225,9 +222,9 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
   return (
     <div className="flex flex-col w-full h-full min-h-0 animate-fade-in">
       {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-2xl h-14">
-          <button onClick={onBack} className="flex items-center gap-1 text-sm font-bold text-gray-600 hover:text-black">
+      <div className="sticky top-0 z-30 bg-white border-b border-black">
+        <div className="flex items-center justify-between px-2xl h-lg">
+          <button onClick={onBack} className={`flex items-center gap-xs text-sm font-bold text-gray-600 hover:text-black ${FOCUS}`}>
             <ArrowLeft className="w-4 h-4" />
             Keluar
           </button>
@@ -237,9 +234,9 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 bg-gray-100">
+        <div className="h-xs bg-brand-gray border-t border-b border-black">
           <motion.div
-            className="h-full bg-black transition-all"
+            className="h-full bg-brand-lime transition-all"
             initial={{ width: 0 }}
             animate={{ width: `${progressPct}%` }}
             transition={{ duration: 0.3 }}
@@ -247,7 +244,7 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
         </div>
 
         {/* Progress dots */}
-        <div className="flex gap-1.5 px-2xl py-sm overflow-x-auto">
+        <div className="flex gap-sm px-2xl py-sm overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {questions.map((q, i) => {
             const qid = String(q.id);
             const isAnswered = !!confirmed[qid];
@@ -258,17 +255,17 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
               <button
                 key={q.id}
                 onClick={() => setCurrentIdx(i)}
-                className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 transition-colors ${
+                className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0 transition-colors ${FOCUS} ${
                   isCurrent
                     ? 'ring-2 ring-black ring-offset-1'
                     : ''
                 } ${
                   qCorrect
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-feedback-green text-black'
                     : qWrong
-                    ? 'bg-red-500 text-white'
+                    ? 'bg-feedback-red text-black'
                     : isAnswered
-                    ? 'bg-gray-300 text-white'
+                    ? 'bg-brand-gray text-black'
                     : 'bg-gray-100 text-gray-400'
                 }`}
               >
@@ -292,10 +289,10 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
           >
             {/* Subject badge + difficulty */}
             <div className="flex items-center gap-sm mb-lg">
-              <span className="text-[10px] font-bold uppercase bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
+              <span className="text-xs font-bold uppercase bg-gray-100 text-gray-500 px-sm py-xs rounded-full">
                 {currentQuestion.subject}
               </span>
-              <span className="text-[10px] text-gray-400">
+              <span className="text-xs text-gray-400">
                 {'★'.repeat(currentQuestion.difficulty)}{'☆'.repeat(5 - currentQuestion.difficulty)}
               </span>
             </div>
@@ -310,34 +307,26 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
               {currentQuestion.options.map((opt) => {
                 const isSelected = selectedOption === opt.id;
                 const isCorrectOpt = opt.id === currentQuestion.correct_option_id;
-                let classes = 'w-full text-left border-2 rounded-xl px-lg py-md text-sm transition-all';
-
-                if (isConfirmed) {
-                  if (isCorrectOpt) {
-                    classes += ' border-green-500 bg-green-50 text-green-900 font-bold';
-                  } else if (isSelected && !isCorrectOpt) {
-                    classes += ' border-red-500 bg-red-50 text-red-900';
-                  } else {
-                    classes += ' border-gray-100 text-gray-400';
-                  }
-                } else if (isSelected) {
-                  classes += ' border-black bg-gray-50';
-                } else {
-                  classes += ' border-gray-200 hover:border-gray-400';
-                }
+                const state = isConfirmed
+                  ? isCorrectOpt
+                    ? 'correct'
+                    : isSelected && !isCorrectOpt
+                    ? 'wrong'
+                    : 'dimmed'
+                  : isSelected
+                  ? 'selected'
+                  : 'idle';
 
                 return (
-                  <button
+                  <OptionButton
                     key={opt.id}
+                    state={state}
+                    letter={opt.id.toUpperCase()}
+                    marker={isConfirmed && isCorrectOpt ? '✓' : isConfirmed && isSelected && !isCorrectOpt ? '✗' : undefined}
                     onClick={() => handleSelectOption(opt.id)}
-                    disabled={isConfirmed}
-                    className={classes}
                   >
-                    <span className="font-bold mr-sm uppercase">{opt.id}.</span>
                     {opt.text}
-                    {isConfirmed && isCorrectOpt && ' ✅'}
-                    {isConfirmed && isSelected && !isCorrectOpt && ' ❌'}
-                  </button>
+                  </OptionButton>
                 );
               })}
             </div>
@@ -349,17 +338,9 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-xl"
               >
-                <button
-                  onClick={handleConfirm}
-                  disabled={!selectedOption}
-                  className={`w-full font-bold text-base py-3 px-xl rounded-xl transition-colors ${
-                    selectedOption
-                      ? 'bg-black text-white hover:bg-gray-800'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
+                <CTA fullWidth onClick={handleConfirm} disabled={!selectedOption}>
                   Konfirmasi Jawaban
-                </button>
+                </CTA>
               </motion.div>
             )}
 
@@ -370,14 +351,14 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-xl space-y-md"
               >
-                <div className={`flex items-center gap-2 font-bold text-sm ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`flex items-center gap-sm font-bold text-sm px-lg py-md rounded-xl border border-black ${isCorrect ? 'bg-feedback-green text-black' : 'bg-feedback-red text-black'}`}>
                   {isCorrect ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                   {isCorrect ? 'Benar!' : 'Kurang tepat'}
                 </div>
 
                 <button
                   onClick={toggleExplanation}
-                  className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-black"
+                  className={`flex items-center gap-xs text-xs font-bold text-gray-500 hover:text-black ${FOCUS}`}
                 >
                   <HelpCircle className="w-4 h-4" />
                   {showExplanation[String(currentQuestion.id)] ? 'Sembunyikan' : 'Lihat'} Pembahasan
@@ -392,7 +373,7 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="p-lg bg-amber-50 rounded-xl border border-amber-200">
+                      <div className="p-lg bg-brand-cream rounded-xl border border-black">
                         <p className="text-sm text-gray-700 leading-relaxed">{currentQuestion.explanation}</p>
                       </div>
                     </motion.div>
@@ -405,12 +386,12 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
       </div>
 
       {/* Bottom navigation */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-2xl py-md">
+      <div className="sticky bottom-0 bg-white border-t border-black px-2xl py-md">
         <div className="flex items-center gap-md">
           <button
             onClick={goPrev}
             disabled={currentIdx === 0}
-            className="flex items-center gap-1 text-sm font-bold text-gray-500 disabled:text-gray-200 hover:text-black transition-colors"
+            className={`flex items-center gap-xs text-sm font-bold text-gray-500 disabled:text-gray-400 hover:text-black transition-colors ${FOCUS}`}
           >
             <ArrowLeft className="w-4 h-4" />
             Sebelumnya
@@ -421,18 +402,15 @@ const RoadmapQuizView: React.FC<Props> = ({ subtopicId, subtopicName, onBack, on
           {currentIdx < totalQuestions - 1 ? (
             <button
               onClick={goNext}
-              className="flex items-center gap-1 text-sm font-bold text-black hover:text-gray-600 transition-colors"
+              className={`flex items-center gap-xs text-sm font-bold text-black hover:text-gray-600 transition-colors ${FOCUS}`}
             >
               Selanjutnya
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button
-              onClick={finish}
-              className="bg-black text-white font-bold text-sm py-2 px-lg rounded-xl hover:bg-gray-800 transition-colors"
-            >
+            <CTA onClick={finish} size="md">
               Selesai
-            </button>
+            </CTA>
           )}
         </div>
       </div>

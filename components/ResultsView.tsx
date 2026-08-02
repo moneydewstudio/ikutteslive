@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { UserSession } from '../types';
-import Button from './Button';
-import { ChevronDown, ChevronUp, Check, X, Share2, RefreshCw, TrendingUp, AlertCircle, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Share2, RefreshCw, TrendingUp, AlertCircle, BookOpen } from 'lucide-react';
+import { CTA } from './ui/CTA';
+import { FOCUS } from './ui/Card';
 import { getQuestionsForSession } from '../services/quizService';
 import { getExplanation } from '../services/backend';
 import ShareResultModal from './ShareResultModal';
@@ -277,20 +278,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
 
         {/* Left: Score */}
         <div className="md:w-1/2 p-3xl bg-brand-lime border-b md:border-b-0 md:border-r border-black flex flex-col justify-center items-center text-center">
-          <span className="font-bold text-xs uppercase tracking-[0.2em] mb-4">Hasil Sesi</span>
-          <h1 className="text-9xl font-black mb-2 leading-none tracking-tighter">
+          <span className="font-bold text-xs uppercase tracking-[0.2em] mb-lg">Hasil Sesi</span>
+          <h1 className="text-9xl font-black mb-sm leading-none tracking-tighter">
             {Math.round((correctAnswers / totalQuestions) * 100)}%
           </h1>
-          <p className="font-bold text-xl mb-6">Anda menjawab {correctAnswers} dari {totalQuestions} dengan benar.</p>
+          <p className="font-bold text-xl mb-xl">Anda menjawab {correctAnswers} dari {totalQuestions} dengan benar.</p>
         </div>
 
         {/* Right: Actions */}
-        <div className="md:w-1/2 bg-white p-8 flex flex-col justify-center items-start space-y-4">
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-black uppercase mb-2 ${
-            resultMessage.mood === 'excellent' ? 'bg-green-100 text-green-800' :
-            resultMessage.mood === 'good' ? 'bg-brand-lime/30 text-black' :
-            resultMessage.mood === 'needs-work' ? 'bg-brand-orange/20 text-brand-orange' :
-            'bg-gray-100 text-gray-600'
+        <div className="md:w-1/2 bg-white p-2xl flex flex-col justify-center items-start space-y-lg">
+          <div className={`inline-flex items-center gap-sm px-md py-sm rounded-full text-xs font-black uppercase mb-sm border border-black ${
+            resultMessage.mood === 'excellent' ? 'bg-feedback-green text-black' :
+            resultMessage.mood === 'good' ? 'bg-brand-lime text-black' :
+            resultMessage.mood === 'needs-work' ? 'bg-brand-orange text-black' :
+            'bg-brand-gray text-black'
           }`}>
             {resultMessage.mood === 'excellent' && <Check className="w-3.5 h-3.5" />}
             {resultMessage.mood === 'good' && <TrendingUp className="w-3.5 h-3.5" />}
@@ -298,25 +299,25 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
             {resultMessage.mood === 'starting' && <BookOpen className="w-3.5 h-3.5" />}
             {percentage >= 60 ? 'Di Atas Rata-rata' : 'Perlu Peningkatan'}
           </div>
-          
+
           <h2 className="text-3xl font-black uppercase leading-tight">{resultMessage.headline}</h2>
-          <p className="text-gray-600 mb-6 max-w-sm">{resultMessage.subtext}</p>
-          
-          <div className="flex w-full gap-3">
-            <Button onClick={onRetryClick} variant="outline" fullWidth>
-              <RefreshCw className="w-4 h-4 mr-2" /> Coba Lagi
-            </Button>
-            <Button onClick={handleShareClick} variant="black" fullWidth>
-              <Share2 className="w-4 h-4 mr-2" /> Bagikan hasil
-            </Button>
+          <p className="text-gray-600 mb-xl max-w-sm">{resultMessage.subtext}</p>
+
+          <div className="flex w-full gap-md">
+            <CTA onClick={onRetryClick} variant="secondary" fullWidth>
+              <RefreshCw className="w-4 h-4 mr-sm" aria-hidden="true" /> Coba Lagi
+            </CTA>
+            <CTA onClick={handleShareClick} variant="primary" fullWidth>
+              <Share2 className="w-4 h-4 mr-sm" aria-hidden="true" /> Bagikan hasil
+            </CTA>
           </div>
         </div>
       </div>
 
       {/* REVIEW LIST */}
       <div className="bg-bg">
-        <div className="p-4 border-b border-black flex items-center gap-2 bg-gray-50">
-          <div className="w-2 h-2 bg-black rounded-full"></div>
+        <div className="p-lg border-b border-black flex items-center gap-sm bg-gray-50">
+          <div className="w-2 h-2 bg-black rounded-full" aria-hidden="true"></div>
           <h3 className="font-black text-sm uppercase tracking-wider">Tinjauan Detail</h3>
         </div>
 
@@ -328,49 +329,50 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
             return (
               <div key={q.id} className="border-b border-black bg-white group">
                 <button
+                  type="button"
                   onClick={() => toggleQuestion(q.id)}
-                  className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors focus:outline-none"
+                  className={['w-full flex items-center justify-between p-xl text-left hover:bg-gray-50 transition-colors', FOCUS].join(' ')}
                 >
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-xl">
                     <span className={`
                       flex-shrink-0 w-8 h-8 flex items-center justify-center border border-black font-black text-sm
-                      ${isCorrect ? 'bg-brand-lime' : 'bg-brand-pink'}
+                      ${isCorrect ? 'bg-feedback-green text-black' : 'bg-feedback-red text-black'}
                     `}>
                       {idx + 1}
                     </span>
                     <div>
-                      <p className={`font-bold text-base md:text-lg ${isCorrect ? 'text-black' : 'text-red-500'}`}>
+                      <p className={`font-bold text-base md:text-lg ${isCorrect ? 'text-black' : 'text-feedback-red'}`}>
                         {isCorrect ? 'Benar' : 'Salah'}
                       </p>
-                      <p className="text-sm text-gray-500 font-medium truncate max-w-[200px] md:max-w-md">
+                      <p className="text-sm text-gray-600 font-medium truncate max-w-[200px] md:max-w-md">
                         {q.text}
                       </p>
                     </div>
                   </div>
-                  {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  {isOpen ? <ChevronUp className="w-5 h-5" aria-hidden="true" /> : <ChevronDown className="w-5 h-5" aria-hidden="true" />}
                 </button>
 
                 {isOpen && (
-                  <div className="p-6 pt-0 pl-6 md:pl-20 max-w-3xl">
-                    <div className="p-6 bg-brand-cream border border-black text-sm space-y-4">
+                  <div className="p-xl pt-0 pl-xl md:pl-20 max-w-3xl">
+                    <div className="p-xl bg-brand-cream border border-black text-sm space-y-lg">
                       <div>
-                        <span className="font-black uppercase text-xs block mb-1 text-gray-500">Pertanyaan</span>
+                        <span className="font-black uppercase text-xs block mb-xs text-gray-600">Pertanyaan</span>
                         <p className="font-bold text-sm md:text-lg">{q.text}</p>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className={`p-3 border border-black ${isCorrect ? 'bg-brand-lime' : 'bg-brand-pink/20'}`}>
-                          <span className="text-[10px] font-black uppercase mb-1 block">Jawaban Anda</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                        <div className={`p-md border border-black ${isCorrect ? 'bg-feedback-green text-black' : 'bg-brand-pink/20'}`}>
+                          <span className="text-[10px] font-black uppercase mb-xs block">Jawaban Anda</span>
                           <span className="font-bold">{q.options.find(o => o.id === session.answers[q.id])?.text || 'Dilewati'}</span>
                         </div>
-                        <div className="p-3 border border-black bg-white">
-                          <span className="text-[10px] font-black uppercase mb-1 block">Jawaban Benar</span>
+                        <div className="p-md border border-black bg-white">
+                          <span className="text-[10px] font-black uppercase mb-xs block">Jawaban Benar</span>
                           <span className="font-bold">{q.options.find(o => o.id === q.correct_option_id)?.text}</span>
                         </div>
                       </div>
 
                       <div>
-                        <span className="font-black uppercase text-xs block mb-1 text-gray-500">Penjelasan</span>
+                        <span className="font-black uppercase text-xs block mb-xs text-gray-600">Penjelasan</span>
                         {(() => {
                           const st = expState[q.id]?.status || 'idle';
                           if (st === 'ready') {
@@ -378,16 +380,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({ session, onSignupClick, onRet
                           }
                           if (st === 'locked') {
                             return (
-                              <div className="flex items-center justify-between gap-3 p-3 border border-black bg-white">
+                              <div className="flex items-center justify-between gap-md p-md border border-black bg-white rounded-xl">
                                 <p className="text-sm font-medium">Fitur Premium. Tingkatkan akun untuk melihat pembahasan.</p>
-                                <Button variant="black" size="sm" onClick={openPaywall}>Buka Premium</Button>
+                                <CTA variant="primary" size="sm" onClick={openPaywall}>Buka Premium</CTA>
                               </div>
                             );
                           }
                           if (st === 'loading') {
-                            return <p className="text-sm text-gray-500">Memuat pembahasan...</p>;
+                            return <p className="text-sm text-gray-600">Memuat pembahasan...</p>;
                           }
-                          return <p className="text-sm text-gray-500">Pembahasan tersedia untuk pengguna serius.</p>;
+                          return <p className="text-sm text-gray-600">Pembahasan tersedia untuk pengguna serius.</p>;
                         })()}
                       </div>
                     </div>

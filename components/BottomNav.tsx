@@ -1,6 +1,7 @@
 import React from 'react';
 import { PenTool, Zap, Trophy, User, BookOpen, Compass } from 'lucide-react';
 import { ViewState } from '../types';
+import { FOCUS } from './ui/Card';
 
 interface BottomNavProps {
   currentView: ViewState;
@@ -35,6 +36,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => {
                 if (item.id === 'BLOG') {
                   window.open('/blog/', '_blank');
@@ -42,25 +44,27 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
                   onChange(item.id as ViewState);
                 }
               }}
-              className={`
-                flex flex-col items-center justify-center py-sm px-md rounded-lg transition-all duration-200 min-w-[56px]
-                ${isActive ? 'text-black' : 'text-gray-400 hover:text-gray-600'}
-              `}
+              className={[
+                'flex flex-col items-center justify-center py-md px-lg rounded-xl transition-colors min-w-[56px] min-h-[44px]',
+                isActive ? 'text-black' : 'text-gray-600 hover:text-black',
+                FOCUS,
+              ].join(' ')}
               data-tour={item.id === 'QUIZ' ? 'nav-latihan' : undefined}
             >
-              <div className={`
-                relative p-1.5 rounded-lg transition-all
-                ${isActive ? 'bg-black text-white' : 'bg-transparent'}
-              `}>
-                <Icon 
-                  className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} 
-                  strokeWidth={isActive ? 2.5 : 2} 
-                />
+              <div
+                className={[
+                  'relative p-sm rounded-xl transition-colors',
+                  isActive ? 'bg-brand-lime text-black' : 'bg-transparent',
+                ].join(' ')}
+              >
+                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={`
-                text-[10px] font-bold mt-1 leading-none
-                ${isActive ? 'text-black' : 'text-gray-500'}
-              `}>
+              <span
+                className={[
+                  'text-xs font-bold mt-xs leading-none',
+                  isActive ? 'text-black' : 'text-gray-600',
+                ].join(' ')}
+              >
                 {item.shortLabel}
               </span>
             </button>
