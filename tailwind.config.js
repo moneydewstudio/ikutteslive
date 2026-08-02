@@ -23,12 +23,7 @@ export default {
           green: '#00CC66',
         }
       },
-      boxShadow: {
-        'neo': '4px 4px 0px 0px rgba(0,0,0,1)',
-        'neo-sm': '2px 2px 0px 0px rgba(0,0,0,1)',
-        'neo-lg': '6px 6px 0px 0px rgba(0,0,0,1)',
-      },
-      borderWidth: {
+            borderWidth: {
         '1': '1px',
         '3': '3px',
       },

@@ -38,9 +38,9 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({ onClose, onGoPro }) => 
                 Video akan berakhir dalam {timeLeft}
              </div>
           ) : (
-             <button 
+             <button
                onClick={onClose}
-               className="bg-white text-black px-6 py-3 rounded-full font-black text-sm flex items-center gap-2 hover:bg-gray-200 transition-all transform hover:scale-105 shadow-neo"
+               className="bg-white text-black px-6 py-3 rounded-full font-black text-sm flex items-center gap-2 hover:bg-gray-200 transition-all transform hover:scale-105"
              >
                 LEWATI IKLAN <X className="w-4 h-4" />
              </button>
