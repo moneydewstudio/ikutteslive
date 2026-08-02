@@ -34,7 +34,7 @@ const CATEGORY_LABELS: Record<DrillCategory, string> = {
   TKP: 'Tes Karakteristik Pribadi',
 };
 
-const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?: string) => void }> = ({ onStartMaterial }) => {
+const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?: string, category?: string) => void }> = ({ onStartMaterial }) => {
   const [activeCategory, setActiveCategory] = useState<DrillCategory>('TIU');
   const [deckIndex, setDeckIndex] = useState(0);
   const [subtopics, setSubtopics] = useState<Record<DrillCategory, SubtopicRow[]>>({ TIU: [], TWK: [], TKP: [] });
@@ -206,7 +206,7 @@ const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?:
                           <button
                             key={theme.id}
                             type="button"
-                            onClick={() => onStartMaterial?.(sub.id, theme.name)}
+                            onClick={() => onStartMaterial?.(sub.id, theme.name, activeCategory)}
                             className={`w-full text-left px-xs py-md min-h-[44px] flex items-center justify-between gap-md transition-colors hover:bg-gray-50 ${FOCUS}`}
                           >
                             <span className="min-w-0 truncate font-medium">{theme.name}</span>
@@ -220,7 +220,7 @@ const RoadmapView: React.FC<{ onStartMaterial?: (subtopicId: number, themeName?:
                   <CTA
                     variant="secondary"
                     fullWidth
-                    onClick={() => onStartMaterial?.(sub.id, ctaTheme)}
+                    onClick={() => onStartMaterial?.(sub.id, ctaTheme, activeCategory)}
                   >
                     {ctaLabel}
                   </CTA>

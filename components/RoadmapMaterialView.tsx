@@ -24,9 +24,10 @@ type Props = {
   subtopicId: number;
   initialThemeName?: string | null;
   isPremium: boolean;
+  category: string;
   onBack: () => void;
   onStartTest: (subtopicId: number) => void;
-  onNavigateToBonus: () => void;
+  onNavigateToDrill: (themeCode: string, category: string) => void;
 };
 
 type Screen = { mode: 'list' } | { mode: 'player'; themeName: string; slideIndex: number };
@@ -63,7 +64,7 @@ const renderMarkdown = (text: string) => {
   }).join('');
 };
 
-const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, isPremium, onBack, onStartTest, onNavigateToBonus }) => {
+const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, isPremium, category, onBack, onStartTest, onNavigateToDrill }) => {
   const { openPaywall } = usePaywall();
   const [data, setData] = useState<MaterialData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -344,10 +345,10 @@ const RoadmapMaterialView: React.FC<Props> = ({ subtopicId, initialThemeName, is
               openPaywall('roadmap_drill_cta');
               return;
             }
-            onNavigateToBonus();
+            onNavigateToDrill(theme.code ?? '', category);
           }}
         >
-          Coba Drill Per Tema
+          Coba Drill {theme.name}
         </CTA>
       </div>
     </div>

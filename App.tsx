@@ -43,6 +43,8 @@ const AppContent: React.FC = () => {
   const [roadmapSubtopicName, setRoadmapSubtopicName] = useState<string>('');
   // TEAM_045+ roadmap lesson player: optional theme to auto-open when entering material view
   const [roadmapThemeName, setRoadmapThemeName] = useState<string | null>(null);
+  // TEAM_046: category (TIU/TWK/TKP) for the currently-open roadmap subtopic, used to launch a matching drill
+  const [roadmapCategory, setRoadmapCategory] = useState<DrillCategory>('TIU');
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [signupReason, setSignupReason] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -479,10 +481,13 @@ const renderContent = () => {
       case 'ROADMAP':
         return (
           <RoadmapView
-            onStartMaterial={(subtopicId, themeName) => {
+            onStartMaterial={(subtopicId, themeName, category) => {
               setRoadmapSubtopicId(subtopicId);
               setRoadmapSubtopicName('');
               setRoadmapThemeName(themeName ?? null);
+              if (category === 'TIU' || category === 'TWK' || category === 'TKP') {
+                setRoadmapCategory(category);
+              }
               setView('ROADMAP_MATERIAL');
             }}
           />
@@ -494,6 +499,7 @@ const renderContent = () => {
             subtopicId={roadmapSubtopicId}
             initialThemeName={roadmapThemeName}
             isPremium={!!user?.isPro}
+            category={roadmapCategory}
             onBack={() => {
               setRoadmapThemeName(null);
               setView('ROADMAP');
@@ -502,7 +508,24 @@ const renderContent = () => {
               setRoadmapSubtopicId(id);
               setView('ROADMAP_QUIZ');
             }}
-            onNavigateToBonus={() => setView('BONUS')}
+            onNavigateToDrill={async (themeCode, category) => {
+              // TEAM_046: resolve roadmap theme code (e.g. VERBAL_ANALOGI) to a drill
+              // themeId, then launch the per-theme drill directly.
+              const cat = (category === 'TIU' || category === 'TWK' || category === 'TKP') ? category : 'TIU';
+              let themeId: number | null = null;
+              try {
+                const themes = await QuizService.fetchThemesFromApi(cat);
+                const match = themes.find((t) => t.themeCode === themeCode);
+                themeId = match ? match.themeId : null;
+              } catch {
+                themeId = null;
+              }
+              QuizService.clearDrillSession(cat);
+              setSelectedDrillCategory(cat);
+              setSelectedDrillThemeId(themeId);
+              setDrillKey((k) => k + 1);
+              setView('DRILLS');
+            }}
           />
         ) : null;
       case 'ROADMAP_QUIZ':
