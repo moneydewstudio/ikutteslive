@@ -21,6 +21,7 @@ import { syncAuth } from './services/backend';
 import { recordAnswerEvent } from './services/userEvents';
 import { OnboardingTourProvider } from './src/contexts/OnboardingTourContext';
 import { PaywallProvider, usePaywall } from './src/contexts/PaywallContext';
+import { track, trackUserId } from './services/analytics';
 import AdminPayments from './components/AdminPayments';
 import GoalSettingModal from './components/GoalSettingModal';
 import { apiFetch } from './services/apiClient';
@@ -136,6 +137,13 @@ const AppContent: React.FC = () => {
       if (!isMounting) return;
 
       if (authUser) {
+        // GA4: link user id + fire login once per browser session
+        trackUserId(authUser.uid);
+        if (!sessionStorage.getItem('ga_login_sent')) {
+          sessionStorage.setItem('ga_login_sent', '1');
+          track('login', { method: authUser.isAnonymous ? 'anonymous' : 'email' });
+        }
+
         // Map Firebase Auth User to internal User type
         setUser({
           id: authUser.uid,

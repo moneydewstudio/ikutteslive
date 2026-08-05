@@ -13,6 +13,7 @@ import { SHARE_CAPTION, SHARE_LINK_TRYOUT } from '../src/constants/share';
 import type { TryoutShareData } from '../src/types/share';
 import { waitForCardAssets } from '../src/utils/share';
 import { usePaywall } from '../src/contexts/PaywallContext';
+import { track } from '../services/analytics';
 
 // TEAM_004: connect Tryout (SKD) UI to server endpoints (free now; paywall-ready server-side)
 
@@ -157,6 +158,7 @@ const TryoutView: React.FC = () => {
         totalQuestions: questions.length,
         passed,
       });
+      track('tryout_submit', { score: totalScore, passed });
       setIsMobileGridOpen(false);
     } catch (e: any) {
       console.error('TEAM_004 submit tryout failed', e);
@@ -424,10 +426,6 @@ const TryoutView: React.FC = () => {
              {/* Left: Main Action */}
              <div className="p-2xl md:p-3xl border-b md:border-b-0 md:border-r border-black bg-brand-purple flex flex-col justify-center relative overflow-hidden">
                  <div className="relative z-10">
-                     <div className="inline-flex items-center gap-md border border-black bg-black text-white px-md py-xs rounded-full text-xs font-bold uppercase mb-xl">
-                         <Clock className="w-4 h-4" />
-                         Waktu Terbatas
-                     </div>
                      <h1 className="text-5xl md:text-7xl font-black leading-none mb-xl">
                          Simulasi<br/>Tryout
                      </h1>

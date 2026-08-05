@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import PaywallModal from '../../components/PaywallModal';
 import PaymentModal from '../../components/PaymentModal';
+import { track } from '../../services/analytics';
 
 // TEAM_027: Global paywall provider so any feature can open the same PaywallModal + PaymentModal flow
 
@@ -23,6 +24,7 @@ export const PaywallProvider: React.FC<PaywallProviderProps> = ({ children, onPr
   const [currentTrigger, setCurrentTrigger] = useState<string | null>(null);
 
   const openPaywall = useCallback((trigger?: string) => {
+    track('paywall_open', { trigger: trigger ?? 'unknown' });
     // TEAM_028: guests/anonymous users must create an account before upgrading to premium.
     if (getIsGuest()) {
       onOpenSignup('premium_requires_account');
