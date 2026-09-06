@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"C:/Users/UseR/AppData/Roaming/npm/node_modules/lean-ctx-bin/bin/lean-ctx.exe -c \\\"git pull origin main 2>&1\\\"\",\"description\":\"Pull latest commit 979b4d7\"}",
+  "error": "Exit code 1\nFrom https://github.com/moneydewstudio/ikutteslive\n * branch            main       -> FETCH_HEAD\nerror: The following untracked working tree files would be overwritten by merge:\n\t.omc/state/hud-stdin-cache.json\n\t.omc/state/sessions/5d667e8b-a650-4bde-b130-16ae39736ecf/hud-state.json\nPlease move or remove them before you merge.\nAborting\nUpdating 979b4d7..53022d2",
+  "timestamp": "2026-09-06T04:21:14.164Z",
+  "retry_count": 4
+}
