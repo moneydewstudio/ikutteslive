@@ -43,8 +43,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
   return (
     // TEAM_011: restore split scrolling and set a 35/65 desktop ratio so answers have more space
     // TEAM_014: prevent mobile answer overlap by bounding question height and letting answers scroll
-    // TODO(TEAM_014): verify on mobile that answers no longer overlap question content
-    <div className="flex flex-col md:flex-row flex-1 overflow-hidden pb-xl md:pb-0">
+    // Mobile: bottom CTA is sticky-bottom so it floats above the fixed BottomNav (~72px)
+    // regardless of how long the options/feedback scroll.
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
       {/* Left: Question Content */}
       <div className="md:w-[35%] p-lg md:p-2xl flex flex-none md:flex-initial flex-col justify-start md:justify-center bg-brand-cream border-b md:border-b-0 md:border-r border-black overflow-y-auto max-h-[35vh] md:max-h-none min-h-0">
@@ -60,8 +61,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
          </div>
       </div>
 
-      {/* Right: Options with Playful Feedback + Explanation */}
-      <div className="md:w-[65%] bg-white flex flex-1 md:flex-none flex-col justify-start p-lg md:p-2xl overflow-y-auto min-h-0">
+      {/* Right: Options with Playful Feedback + Explanation + sticky CTA */}
+      <div className="md:w-[65%] bg-white flex flex-1 md:flex-none flex-col justify-start overflow-hidden min-h-0">
+         <div className="flex-1 overflow-y-auto p-lg md:p-2xl min-h-0">
          <div className="grid grid-cols-1 gap-sm md:gap-md max-w-none mx-auto w-full">
             {question.options.map((option) => {
                 const isSelected = selectedOptionId === option.id;
@@ -126,10 +128,11 @@ const QuizCard: React.FC<QuizCardProps> = ({
              )}
            </div>
          )}
+         </div>
 
-         {/* Next question button */}
+         {/* Sticky bottom CTA so it floats above the fixed BottomNav (~72px) on mobile */}
          {showFeedback && onNextQuestion && (
-           <div className="mt-lg flex justify-end">
+           <div className="shrink-0 sticky bottom-[72px] md:bottom-0 bg-white border-t border-black p-lg md:p-2xl flex justify-end z-10">
              <CTA onClick={onNextQuestion} size="md">
                {nextButtonLabel || (isLastQuestion ? 'Selesai' : 'Lanjut')}
              </CTA>
