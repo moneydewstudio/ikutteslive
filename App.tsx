@@ -812,7 +812,9 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
     <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
       <Header />
       {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
-      <main className="flex-1 flex flex-col w-full min-h-0">
+      {/* pb-[72px] on mobile reserves space for the fixed BottomNav so any view that */}
+      {/* fills main via flex-1 stops above the footer. Desktop keeps no padding. */}
+      <main className="flex-1 flex flex-col w-full min-h-0 pb-[72px] md:pb-0">
         {view === 'AD_INTERSTITIAL' ? <InterstitialAd onClose={handleAdComplete} onGoPro={handleGoPro} /> : renderContent()}
       </main>
       {view !== 'AD_INTERSTITIAL' && (
