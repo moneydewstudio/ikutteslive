@@ -40,6 +40,8 @@ import {
 } from './schema';
 import { and, desc, eq, inArray, notInArray, or, sql } from 'drizzle-orm';
 import { SignJWT, jwtVerify } from 'jose';
+import { readQrisifyConfig, createQrisTransaction, fetchQrisQrImage, verifyWebhookSignature } from '../../services/qrisify';
+import type { QrisifyWebhookPayload } from '../../services/qrisify';
 
 // TEAM_001: add server-side logging to diagnose intermittent Neon connectivity/query failures
 
@@ -486,7 +488,38 @@ app.post('/payments', async (c) => {
         expiresAt,
       });
 
-      return c.json({ paymentId: id, amountExpected, expiresAt: expiresAt.toISOString(), status: 'pending' });
+      // TEAM_046: attempt dynamic QRIS via QRIS-ify middleware.
+      // On failure, log and fall through to the static-QRIS response shape (no qrImageUrl).
+      const qrisConfig = readQrisifyConfig(c.env);
+      const responsePayload: { paymentId: string; amountExpected: number; expiresAt: string; status: 'pending'; qrImageUrl?: string } = {
+        paymentId: id,
+        amountExpected,
+        expiresAt: expiresAt.toISOString(),
+        status: 'pending',
+      };
+      if (qrisConfig) {
+        try {
+          const txn = await createQrisTransaction(qrisConfig, {
+            merchantName: 'Ikuttes',
+            amount: amountExpected,
+            externalId: id,
+          });
+          // TEAM_046: store qrisify_* columns via raw SQL (schema.ts doesn't define them yet).
+          await db.execute(sql`
+            update payments
+            set qrisify_transaction_id = ${txn.qrisifyTransactionId},
+                qrisify_qr_image_url = ${`/payments/${id}/qr`},
+                qrisify_amount_total = ${txn.amountTotal},
+                qrisify_unique_code = ${txn.uniqueCode}
+            where id = ${id}
+          `);
+          responsePayload.qrImageUrl = `/payments/${id}/qr`;
+        } catch (e) {
+          console.error('TEAM_046 /payments qrisify transaction creation failed', e);
+        }
+      }
+
+      return c.json(responsePayload);
     }
 
     return c.json({ error: 'busy_try_again' }, 409);
@@ -494,6 +527,120 @@ app.post('/payments', async (c) => {
     console.error('TEAM_023 /payments create failed', e);
     const msg = e instanceof Error ? e.message : 'unavailable';
     return c.json({ error: msg }, msg === 'NEON_DATABASE_URL is not configured' ? 500 : 503);
+  }
+});
+
+// TEAM_046: proxy QRIS-ify QR image through own origin to avoid CORS/CORB issues.
+// No auth — UUIDs are unguessable and the QR is non-sensitive (see qrisify-qr-proxy.md).
+app.get('/payments/:id/qr', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const db = await getDb(c.env);
+    // Query qrisify_* columns via raw SQL (schema.ts doesn't define them).
+    const res = await db.execute<{ qrisify_transaction_id: string | null }>(sql`
+      select qrisify_transaction_id
+      from payments
+      where id = ${id}
+      limit 1
+    `);
+
+    const row = res.rows?.[0] ?? null;
+    if (!row || !row.qrisify_transaction_id) return c.json({ error: 'not_found' }, 404);
+
+    const qrisConfig = readQrisifyConfig(c.env);
+    if (!qrisConfig) return c.json({ error: 'not_configured' }, 500);
+
+    const imageData = await fetchQrisQrImage(qrisConfig, row.qrisify_transaction_id);
+    c.header('Content-Type', 'image/png');
+    c.header('Cache-Control', 'public, max-age=60');
+    return new Response(imageData);
+  } catch (e) {
+    console.error('TEAM_046 GET /payments/:id/qr failed', e);
+    return c.json({ error: 'unavailable' }, 503);
+  }
+});
+
+// TEAM_046: QRIS-ify webhook endpoint (singular route per qrisify-singular-route.md).
+// Idempotency: SELECT ... where status in ('pending','confirmed') — already-confirmed rows
+// match but the UPDATE no-ops, so re-deliveries are safe (see qrisify-idempotency.md).
+app.post('/webhook/qris', async (c) => {
+  // TEAM_046: read raw body text FIRST — HMAC must verify the exact bytes received.
+  const rawBody = await c.req.text();
+  const signature = c.req.header('x-qrisify-signature');
+  const secret = c.env.QRISIFY_WEBHOOK_SECRET;
+  if (!secret) return c.json({ error: 'webhook_secret_not_configured' }, 500);
+
+  const ok = await verifyWebhookSignature(rawBody, signature, secret);
+  if (!ok) return c.json({ error: 'invalid_signature' }, 401);
+
+  let payload: QrisifyWebhookPayload;
+  try {
+    payload = JSON.parse(rawBody) as QrisifyWebhookPayload;
+  } catch {
+    return c.json({ error: 'invalid_json' }, 400);
+  }
+
+  const txnId = payload.transaction_id;
+  if (payload.status !== 'paid') return c.json({ ok: true, ignored: true });
+
+  try {
+    const db = await getDb(c.env);
+
+    // TEAM_046: find payment by qrisify_transaction_id where status is still pending/confirmed.
+    // Idempotent: if already confirmed, the UPDATE below no-ops (status stays 'confirmed').
+    const res = await db.execute<{
+      id: string;
+      user_id: string;
+      plan_type: string;
+      status: string;
+    }>(sql`
+      select id, user_id, plan_type, status
+      from payments
+      where qrisify_transaction_id = ${txnId}
+        and status in ('pending', 'confirmed')
+      limit 1
+    `);
+
+    const payment = res.rows?.[0] ?? null;
+    if (!payment) return c.json({ ok: true, unknown: true });
+
+    // TEAM_046: fetch the user row to get current premium_until for the extension calculation.
+    const userRes = await db
+      .select({ premiumUntil: users.premiumUntil })
+      .from(users)
+      .where(eq(users.id, payment.user_id))
+      .limit(1);
+    const currentUntil = userRes.length ? userRes[0].premiumUntil : null;
+
+    // TEAM_046: extend premium until (idempotent — re-extending from a still-valid future
+    // timestamp is a no-op, extending from an expired timestamp correctly re-grants).
+    const newUntil = extendPremiumUntil(currentUntil, payment.plan_type as PlanType);
+
+    // TEAM_046: confirm the payment + extend premium + increment purchase_count in one go.
+    // The payment UPDATE is guarded to only transition pending -> confirmed (idempotent).
+    // Use a transaction via raw SQL so both writes succeed or fail together.
+    await db.execute(sql`
+      update payments
+      set status = 'confirmed',
+          confirmed_at = now(),
+          confirmed_by = 'qrisify_webhook'
+      where id = ${payment.id}
+        and status = 'pending'
+    `);
+
+    await db.execute(sql`
+      update users
+      set is_premium = true,
+          premium_until = ${newUntil.toISOString()},
+          purchase_count = coalesce(purchase_count, 0) + 1,
+          last_purchase_type = ${payment.plan_type}
+      where id = ${payment.user_id}
+    `);
+
+    return c.json({ ok: true });
+  } catch (e) {
+    console.error('TEAM_046 /webhook/qris failed', e);
+    return c.json({ ok: true });
   }
 });
 

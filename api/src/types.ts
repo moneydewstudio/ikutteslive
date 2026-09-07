@@ -10,6 +10,10 @@ export type AppEnv = {
     TRYOUT_PREMIUM_ENABLED?: string;
     // TEAM_023: shared secret for admin payment operations (manual QRIS confirmation)
     ADMIN_KEY?: string;
+    // TEAM_046: QRIS-ify dynamic QRIS payment integration
+    QRISIFY_API_KEY?: string;
+    QRISIFY_WEBHOOK_SECRET?: string;
+    QRISIFY_WEBHOOK_URL?: string;
   };
   Variables: {
     user?: {
