@@ -1,0 +1,9 @@
+- [QRIS-ify webhook route is singular](memory/qrisify-singular-route.md) — `/webhook/qris`, not `/webhooks/qris`. Spec-mandated.
+- [QRIS-ify sandbox needs test key](memory/qrisify-sandbox-key.md) — `qris_test_...` not `qris_live_...`; /test-pay only works in sandbox.
+- [requireAdmin hardcoded to true](memory/require-admin-disabled.md) — api/src/index.ts:116, fix before live money flows.
+- [Vite build silently fails on TS error](memory/tsc-build-silent-fail.md) — `tsc -p tsconfig.build.json && vite build` short-circuits; tsc errors are easy to miss.
+- [QRIS-ify webhook idempotency](memory/qrisify-idempotency.md) — handler must be safe to re-deliver; don't gate UPDATE on `status='pending'`.
+- [QRIS-ify proxies through own worker](memory/qrisify-qr-proxy.md) — never expose QRIS-ify URL in `<img src>`; CORB blocks it. Use `/payments/:id/qr` proxy.
+- [QRIS-ify qr_image_url is relative](memory/qrisify-qr-relative-url.md) — returns `transactions/<id>/qr`, not a full URL. Normalize before storing.
+- [Programmatic payments price override](memory/qrisify-amount-override.md) — `QRISIFY_PLAN_3_DAY_AMOUNT=1` for sandbox testing.
+- [Root worker proxies API to ikuttes.workers.dev](memory/root-worker-proxies-api.md) — don't put routes there; Hono handles them on the api worker.

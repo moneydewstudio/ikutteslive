@@ -566,7 +566,7 @@ const renderContent = () => {
         }
         const currentQ = questions[currentQuestionIdx];
         return (
-          <div className="flex flex-col h-[calc(100vh-80px-72px)] md:h-[calc(100vh-80px)] w-full">
+          <div className="flex flex-col w-full">
              <div className="w-full h-1 bg-gray-200">
                 <div 
                   className="h-full bg-brand-lime transition-all duration-300 ease-out"
@@ -809,12 +809,18 @@ const AppWithPaywall: React.FC<AppWithPaywallProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col">
+    <div className="h-[100dvh] md:h-screen bg-bg text-black font-sans selection:bg-brand-lime selection:text-black flex flex-col overflow-hidden">
       <Header />
-      {/* TEAM_011: keep question UI within the viewport so the header never overlaps content */}
-      {/* pb-[72px] on mobile reserves space for the fixed BottomNav so any view that */}
-      {/* fills main via flex-1 stops above the footer. Desktop keeps no padding. */}
-      <main className="flex-1 flex flex-col w-full min-h-0 pb-[72px] md:pb-0">
+      {/* Instagram-style fixed bottom nav pattern:
+          • Outer App has h-[100dvh] (exact viewport) + overflow-hidden, so the page
+            itself never scrolls. Only <main> scrolls.
+          • <main> is the scroll container (overflow-y-auto) with flex-1 min-h-0.
+          • BottomNav is fixed bottom-0 (z-40), so it overlays the bottom of
+            <main> without taking flow space.
+          • pb-[calc(57px+env(safe-area-inset-bottom))] = 1 (border) + 56 (button
+            row) + safe-area, exactly matching BottomNav's total height. The last
+            item in any scrolling view rests ABOVE the fixed nav. */}
+      <main className="flex-1 w-full min-h-0 overflow-y-auto pb-[calc(57px+env(safe-area-inset-bottom))] md:pb-0 overscroll-behavior-contain">
         {view === 'AD_INTERSTITIAL' ? <InterstitialAd onClose={handleAdComplete} onGoPro={handleGoPro} /> : renderContent()}
       </main>
       {view !== 'AD_INTERSTITIAL' && (

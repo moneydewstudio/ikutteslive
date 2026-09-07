@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"D:\\\\ikutteslive\\\" && node scripts/verify-tkp-shuffle.mjs\",\"description\":\"Verify shuffle integrity\"}",
+  "error": "Exit code 127\nQuestions with != 5 options: 0\nDistribution after shuffle: [\n  { option_key: 'A', n: '850' },\n  { option_key: 'B', n: '850' },\n  { option_key: 'C', n: '850' },\n  { option_key: 'D', n: '850' },\n  { option_key: 'E', n: '850' }\n]\nfile:///D:/ikutteslive/node_modules/@neondatabase/serverless/index.mjs:1298\r\njson(),$=new be(M.message);for(let me of Ru)$[me]=M[me]??void 0;throw $}else{let M=await ye.text();throw new be(\r\n         ^\r\n\r\nNeonDbError: operator does not exist: character[] = te...",
+  "timestamp": "2026-09-06T15:23:44.033Z",
+  "retry_count": 2
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "mcp__lean-ctx__ctx_shell",
+  "tool_input_preview": "{\"command\":\"node --check scripts/setup-qrisify.mjs && echo \\\"✓ syntax OK\\\"; echo \\\"===\\\"; node -e \\\"import('./scripts/setup-qrisify.mjs').catch(e => { if (e.code === 'ERR_MODULE_NOT_FOUND' || /parse/i...",
+  "error": "[BLOCKED — DO NOT RETRY] Interpreter 'node' with inline code execution flag '-e' is blocked. Use a script file instead.\nThis is a permanent security restriction.",
+  "timestamp": "2026-09-06T13:28:19.503Z",
+  "retry_count": 1
+}

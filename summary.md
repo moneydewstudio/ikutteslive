@@ -1,3 +1,53 @@
+# Summary — BottomNav Instagram pattern (TEAM-047) + Tailwind content glob fix
+
+Date: 2026-09-07
+Team file: `.teams/TEAM_047_bottomnav_instagram_pattern.md`
+
+## What shipped
+
+- Fixed mobile BottomNav overlap on DRILLS / QUIZ / ROADMAP views (question + options + Lanjut button as one unit) using Instagram-style fixed-bottom-nav pattern:
+  - Outer App: `h-[100dvh] md:h-screen overflow-hidden` — page itself never scrolls
+  - `<main>`: `flex-1 w-full min-h-0 overflow-y-auto` — sole scroll container
+  - `pb-[calc(57px+env(safe-area-inset-bottom))]` reserves exactly BottomNav's height (1 border + 56 button row + safe-area)
+  - `BottomNav`: `fixed bottom-0 left-0 right-0 z-40 md:hidden` with `pb-[env(safe-area-inset-bottom)]`
+- `index.html` viewport meta += `viewport-fit=cover` (required for `env(safe-area-inset-bottom)` on iOS Safari)
+
+## Critical CSS pipeline fix (root cause of every previous attempt failing)
+
+`tailwind.config.js` content glob was **broken**:
+```js
+// Before:
+content: ["./{App,components,services}/**/*.{ts,tsx}", "./index.tsx"]
+// After:
+content: ["./App.tsx", "./index.tsx", "./components/**/*.{ts,tsx}",
+          "./services/**/*.{ts,tsx}"]
+```
+
+The brace glob `./{App,...}` matched `App/**/*` (folder) — but `App.tsx` is a file at repo root, not a folder. Result: **Tailwind JIT never scanned `App.tsx`**, silently dropping every new class I added to it (`h-[100dvh]`, `pb-[calc(...)]`, etc.). The CSS rules never reached the browser, so every previous "still overlaps" report was correct — the fix literally wasn't in the CSS.
+
+A `safelist` was also added for the arbitrary values that escaped the JIT scan.
+
+## Verification
+
+- Production `npm run build`: emitted CSS contains `.h-[100dvh]`, `padding-bottom: calc(57px + env(safe-area-inset-bottom))`, and `safe-area-inset-bottom` rules.
+- Playwright headless (iPhone 14 viewport, real DRILLS flow with 3000px forced-trailing content): when main scrolls to bottom (scrollTop=2844), Lanjut CTA bottom=863.5px, BottomNav top=881px → **clearance 17.5px, no overlap** ✓.
+
+## Files modified (uncommitted)
+
+- `tailwind.config.js` (+11/-1)
+- `index.html` (+1/-1)
+- `App.tsx` (+12/-6)
+- `components/BottomNav.tsx` (+5/-5)
+- `components/QuizCard.tsx` (+11/-12)
+- `components/DrillsView.tsx` (+1/-1)
+
+## Status
+
+- [x] Verified locally via headless test + production build
+- [ ] Pending user confirmation on real device before commit
+
+---
+
 # Summary — Per-Theme Drill (TEAM-037) deploy + theme-seed fix
 
 Date: 2026-07-20

@@ -41,14 +41,14 @@ const QuizCard: React.FC<QuizCardProps> = ({
   isLastQuestion,
 }) => {
   return (
-    // TEAM_011: restore split scrolling and set a 35/65 desktop ratio so answers have more space
-    // TEAM_014: prevent mobile answer overlap by bounding question height and letting answers scroll
-    // Mobile: bottom CTA is sticky-bottom so it floats above the fixed BottomNav (~72px)
-    // regardless of how long the options/feedback scroll.
-    <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+    // TEAM_011: 35/65 desktop split. On mobile everything stacks and scrolls inside
+    // the parent <main> (Instagram pattern) so the fixed BottomNav never overlaps.
+    // Desktop: flex-row split; each pane scrolls internally if its content exceeds
+    // the viewport height.
+    <div className="flex flex-col md:flex-row w-full md:h-[calc(100dvh-80px)] md:overflow-hidden">
 
       {/* Left: Question Content */}
-      <div className="md:w-[35%] p-lg md:p-2xl flex flex-none md:flex-initial flex-col justify-start md:justify-center bg-brand-cream border-b md:border-b-0 md:border-r border-black overflow-y-auto max-h-[35vh] md:max-h-none min-h-0">
+      <div className="md:w-[35%] p-lg md:p-2xl flex flex-none md:flex-initial flex-col justify-start md:justify-center bg-brand-cream border-b md:border-b-0 md:border-r border-black md:overflow-y-auto md:min-h-0">
          <div className="mb-lg md:mb-xl">
             {!hideSubjectLabel && (
               <span className="inline-flex px-md py-xs border border-black bg-white text-xs font-black uppercase tracking-widest mb-lg">
@@ -61,9 +61,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
          </div>
       </div>
 
-      {/* Right: Options with Playful Feedback + Explanation + sticky CTA */}
-      <div className="md:w-[65%] bg-white flex flex-1 md:flex-none flex-col justify-start overflow-hidden min-h-0">
-         <div className="flex-1 overflow-y-auto p-lg md:p-2xl min-h-0">
+      {/* Right: Options with Playful Feedback + Explanation + CTA */}
+      <div className="md:w-[65%] bg-white flex flex-1 md:flex-none flex-col justify-start md:min-h-0">
+         <div className="md:flex-1 md:overflow-y-auto p-lg md:p-2xl md:min-h-0">
          <div className="grid grid-cols-1 gap-sm md:gap-md max-w-none mx-auto w-full">
             {question.options.map((option) => {
                 const isSelected = selectedOptionId === option.id;
@@ -130,9 +130,10 @@ const QuizCard: React.FC<QuizCardProps> = ({
          )}
          </div>
 
-         {/* Sticky bottom CTA so it floats above the fixed BottomNav (~72px) on mobile */}
+         {/* CTA at the end of the scroll content. <main>'s bottom padding guarantees */}
+         {/* the CTA rests above the fixed BottomNav on mobile. */}
          {showFeedback && onNextQuestion && (
-           <div className="shrink-0 sticky bottom-[72px] md:bottom-0 bg-white border-t border-black p-lg md:p-2xl flex justify-end z-40">
+           <div className="mt-lg md:shrink-0 md:bg-white md:border-t md:border-black p-lg md:p-2xl flex justify-end">
              <CTA onClick={onNextQuestion} size="md">
                {nextButtonLabel || (isLastQuestion ? 'Selesai' : 'Lanjut')}
              </CTA>

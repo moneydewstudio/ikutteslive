@@ -2,8 +2,17 @@
 export default {
   content: [
     "./index.html",
-    "./{App,components,services}/**/*.{ts,tsx}",
+    "./App.tsx",
     "./index.tsx",
+    "./components/**/*.{ts,tsx}",
+    "./services/**/*.{ts,tsx}",
+  ],
+  safelist: [
+    'pb-[calc(57px+env(safe-area-inset-bottom))]',
+    'pb-[env(safe-area-inset-bottom)]',
+    'h-[100dvh]',
+    'min-h-[100dvh]',
+    'pb-[72px]',
   ],
   theme: {
     extend: {

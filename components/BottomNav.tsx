@@ -24,15 +24,15 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black py-md pb-safe z-50" data-tour="nav-bar">
-      <div className="flex justify-between items-end max-w-md mx-auto px-md">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-black pb-[env(safe-area-inset-bottom)] md:hidden" data-tour="nav-bar">
+      <div className="flex justify-between items-stretch max-w-md mx-auto px-md h-[56px]">
         {navItems.map((item) => {
           const isActive =
             currentView === item.id ||
             (item.id === 'QUIZ' && currentView === 'RESULTS') ||
             (item.id === 'BONUS' && currentView === 'DRILLS');
           const Icon = item.icon;
-          
+
           return (
             <button
               key={item.id}
@@ -45,7 +45,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
                 }
               }}
               className={[
-                'flex flex-col items-center justify-center py-md px-lg rounded-xl transition-colors min-w-[56px] min-h-[44px]',
+                'flex flex-col items-center justify-center py-xs px-lg rounded-xl transition-colors min-w-[56px]',
                 isActive ? 'text-black' : 'text-gray-600 hover:text-black',
                 FOCUS,
               ].join(' ')}
@@ -53,7 +53,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChange }) => {
             >
               <div
                 className={[
-                  'relative p-sm rounded-xl transition-colors',
+                  'relative p-xs rounded-xl transition-colors',
                   isActive ? 'bg-brand-lime text-black' : 'bg-transparent',
                 ].join(' ')}
               >

@@ -1,0 +1,604 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1788687582588,
+  "projectRoot": "d:\\ikutteslive",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "astro",
+        "version": "5.17.2",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "5.4.1",
+        "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "1.2.2",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "dev:api": "node -r esbuild-register api/src/index.ts",
+      "build": "tsc -p tsconfig.build.json && vite build",
+      "preview": "vite preview",
+      "test": "vitest run"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "components",
+      "docs",
+      "public",
+      "scripts",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "api": {
+      "path": "api",
+      "purpose": "API routes",
+      "fileCount": 9,
+      "lastAccessed": 1788687582484,
+      "keyFiles": [
+        "package-lock.json",
+        "package.json",
+        "tsconfig.json",
+        "vitest.config.mts",
+        "worker-configuration.d.ts"
+      ]
+    },
+    "blog": {
+      "path": "blog",
+      "purpose": null,
+      "fileCount": 10,
+      "lastAccessed": 1788687582486,
+      "keyFiles": [
+        "astro.config.mjs",
+        "CLAUDE.md",
+        "package-lock.json",
+        "package.json",
+        "postcss.config.cjs"
+      ]
+    },
+    "components": {
+      "path": "components",
+      "purpose": "UI components",
+      "fileCount": 24,
+      "lastAccessed": 1788687582501,
+      "keyFiles": [
+        "AdminDashboard.tsx",
+        "AdminPayments.tsx",
+        "BonusCard.tsx",
+        "BonusView.tsx",
+        "BottomNav.tsx"
+      ]
+    },
+    "db": {
+      "path": "db",
+      "purpose": null,
+      "fileCount": 26,
+      "lastAccessed": 1788687582502,
+      "keyFiles": [
+        "check-all-tables-schemas.mjs",
+        "check-constraint.mjs",
+        "check-distinct-tags.mjs",
+        "check-legacy-themes.mjs",
+        "check-mapping.mjs"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 11,
+      "lastAccessed": 1788687582503,
+      "keyFiles": [
+        "ads.txt",
+        "AdWdkD345CkD.jpeg",
+        "full-logo.png",
+        "ikuttes.png",
+        "index.html"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 1,
+      "lastAccessed": 1788687582504,
+      "keyFiles": [
+        "roadmap-summary.md"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 10,
+      "lastAccessed": 1788687582504,
+      "keyFiles": [
+        "ads.txt",
+        "AdWdkD345CkD.jpeg",
+        "full-logo.png",
+        "ikuttes.png",
+        "llms.txt"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 6,
+      "lastAccessed": 1788687582505,
+      "keyFiles": [
+        "check_api_logic.js",
+        "check_db.js",
+        "check_radar.js",
+        "contrast-audit.mjs",
+        "run_seed.js"
+      ]
+    },
+    "services": {
+      "path": "services",
+      "purpose": "Business logic services",
+      "fileCount": 12,
+      "lastAccessed": 1788687582505,
+      "keyFiles": [
+        "analytics.ts",
+        "apiClient.ts",
+        "authService.ts",
+        "backend.ts",
+        "dailyQuizSync.ts"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1788687582506,
+      "keyFiles": []
+    },
+    "utils": {
+      "path": "utils",
+      "purpose": "Utility functions",
+      "fileCount": 2,
+      "lastAccessed": 1788687582506,
+      "keyFiles": [
+        "roadmapSlides.test.ts",
+        "roadmapSlides.ts"
+      ]
+    },
+    "api\\node_modules": {
+      "path": "api\\node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 1,
+      "lastAccessed": 1788687582509,
+      "keyFiles": []
+    },
+    "api\\src": {
+      "path": "api\\src",
+      "purpose": "Source code",
+      "fileCount": 6,
+      "lastAccessed": 1788687582509,
+      "keyFiles": [
+        "db.ts",
+        "index.test.ts",
+        "index.ts"
+      ]
+    },
+    "blog\\data": {
+      "path": "blog\\data",
+      "purpose": "Data files",
+      "fileCount": 1,
+      "lastAccessed": 1788687582510,
+      "keyFiles": [
+        "cpns2024RealData.ts"
+      ]
+    },
+    "blog\\dist": {
+      "path": "blog\\dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 2,
+      "lastAccessed": 1788687582510,
+      "keyFiles": [
+        "_routes.json"
+      ]
+    },
+    "dist\\assets": {
+      "path": "dist\\assets",
+      "purpose": "Static assets",
+      "fileCount": 3,
+      "lastAccessed": 1788687582512,
+      "keyFiles": [
+        "favicon-DP5965-h.ico",
+        "index-BLagzbwq.css",
+        "index-Bz0Yq0kj.js"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 3,
+      "lastAccessed": 1788687582514,
+      "keyFiles": [
+        "AdSenseAd.tsx",
+        "EzoicPlaceholder.tsx",
+        "OnboardingTour.tsx"
+      ]
+    },
+    "src\\types": {
+      "path": "src\\types",
+      "purpose": "Type definitions",
+      "fileCount": 3,
+      "lastAccessed": 1788687582515,
+      "keyFiles": [
+        "adsense.d.ts",
+        "share.ts",
+        "web-share.d.ts"
+      ]
+    },
+    "src\\utils": {
+      "path": "src\\utils",
+      "purpose": "Utility functions",
+      "fileCount": 3,
+      "lastAccessed": 1788687582515,
+      "keyFiles": [
+        "adConfig.ts",
+        "adFrequency.ts",
+        "share.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "api/src/index.ts",
+      "accessCount": 47,
+      "lastAccessed": 1788704394231,
+      "type": "file"
+    },
+    {
+      "path": "components/QuizCard.tsx",
+      "accessCount": 28,
+      "lastAccessed": 1788758323547,
+      "type": "file"
+    },
+    {
+      "path": "scripts/setup-qrisify.mjs",
+      "accessCount": 21,
+      "lastAccessed": 1788701407241,
+      "type": "file"
+    },
+    {
+      "path": "components/PaymentModal.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1788694073363,
+      "type": "file"
+    },
+    {
+      "path": "index.css",
+      "accessCount": 6,
+      "lastAccessed": 1788755772510,
+      "type": "file"
+    },
+    {
+      "path": "api/src/types.ts",
+      "accessCount": 3,
+      "lastAccessed": 1788692079653,
+      "type": "file"
+    },
+    {
+      "path": "api/src/schema.ts",
+      "accessCount": 3,
+      "lastAccessed": 1788702484779,
+      "type": "file"
+    },
+    {
+      "path": "worker.ts",
+      "accessCount": 2,
+      "lastAccessed": 1788695203624,
+      "type": "directory"
+    },
+    {
+      "path": "blog/astro.config.mjs",
+      "accessCount": 2,
+      "lastAccessed": 1788696199744,
+      "type": "file"
+    },
+    {
+      "path": "api/wrangler.jsonc",
+      "accessCount": 2,
+      "lastAccessed": 1788706085205,
+      "type": "file"
+    },
+    {
+      "path": ".env",
+      "accessCount": 2,
+      "lastAccessed": 1788706490801,
+      "type": "file"
+    },
+    {
+      "path": "wrangler.jsonc",
+      "accessCount": 1,
+      "lastAccessed": 1788687787141,
+      "type": "file"
+    },
+    {
+      "path": "public/_headers",
+      "accessCount": 1,
+      "lastAccessed": 1788688564243,
+      "type": "file"
+    },
+    {
+      "path": ".teams/TEAM_023_static_qris_payments_monetization.md",
+      "accessCount": 1,
+      "lastAccessed": 1788689235612,
+      "type": "file"
+    },
+    {
+      "path": ".teams/TEAM_025_payments_paywall_frontend_backend_triggers.md",
+      "accessCount": 1,
+      "lastAccessed": 1788689242169,
+      "type": "file"
+    },
+    {
+      "path": ".teams/TEAM_024_admin_payments_panel.md",
+      "accessCount": 1,
+      "lastAccessed": 1788689242232,
+      "type": "file"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/b5c82f3d5205872b.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788689384393,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/c02b1fe8fae4432d.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788689404235,
+      "type": "directory"
+    },
+    {
+      "path": "db/migrations/20260906_team_046_qrisify_dynamic.sql",
+      "accessCount": 1,
+      "lastAccessed": 1788689427133,
+      "type": "file"
+    },
+    {
+      "path": "services/payments.ts",
+      "accessCount": 1,
+      "lastAccessed": 1788689496328,
+      "type": "file"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/a33b65702ae8d9b8.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788689561501,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/092e0c5df1d98aea.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788691034030,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/d118fe5d333ed8ab.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788692036538,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/86c43c3dda23fd09.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788693042135,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/911f21af92d7ac9d.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788695183226,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/9f82c5dcf0195e97.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788695196421,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/f745c9e84a27499d.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788695196485,
+      "type": "directory"
+    },
+    {
+      "path": "blog/CLAUDE.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696187378,
+      "type": "file"
+    },
+    {
+      "path": "blog/src/lib/constants.ts",
+      "accessCount": 1,
+      "lastAccessed": 1788696199645,
+      "type": "file"
+    },
+    {
+      "path": "blog/src/lib/db/schema.ts",
+      "accessCount": 1,
+      "lastAccessed": 1788696219889,
+      "type": "file"
+    },
+    {
+      "path": "blog/src/lib/blogContent.ts",
+      "accessCount": 1,
+      "lastAccessed": 1788696219952,
+      "type": "file"
+    },
+    {
+      "path": "MEMORY.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696286078,
+      "type": "file"
+    },
+    {
+      "path": "memory/qrisify-singular-route.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696321946,
+      "type": "file"
+    },
+    {
+      "path": "memory/qrisify-sandbox-key.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696322942,
+      "type": "file"
+    },
+    {
+      "path": "memory/require-admin-disabled.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696323824,
+      "type": "file"
+    },
+    {
+      "path": "memory/qrisify-idempotency.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696325605,
+      "type": "file"
+    },
+    {
+      "path": "memory/qrisify-qr-proxy.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696326466,
+      "type": "file"
+    },
+    {
+      "path": "memory/qrisify-qr-relative-url.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696327305,
+      "type": "file"
+    },
+    {
+      "path": "memory/qrisify-amount-override.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696328205,
+      "type": "file"
+    },
+    {
+      "path": "memory/root-worker-proxies-api.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696329094,
+      "type": "file"
+    },
+    {
+      "path": "blog-post-qris-dynamic.md",
+      "accessCount": 1,
+      "lastAccessed": 1788696367816,
+      "type": "file"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/c235c2f38fbebb55.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788700911476,
+      "type": "directory"
+    },
+    {
+      "path": "test-splitter.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1788701310564,
+      "type": "file"
+    },
+    {
+      "path": "scripts/sqlSplitter.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1788701347623,
+      "type": "file"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/a8e0d35da90739b7.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788701394238,
+      "type": "directory"
+    },
+    {
+      "path": "services/quizService.ts",
+      "accessCount": 1,
+      "lastAccessed": 1788702472275,
+      "type": "file"
+    },
+    {
+      "path": "types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1788702472441,
+      "type": "file"
+    },
+    {
+      "path": "constants.ts",
+      "accessCount": 1,
+      "lastAccessed": 1788702484686,
+      "type": "file"
+    },
+    {
+      "path": "components",
+      "accessCount": 1,
+      "lastAccessed": 1788703653874,
+      "type": "directory"
+    },
+    {
+      "path": "C:/Users/UseR/AppData/Local/Temp/lean-ctx-hook/b8d44118ab70ebcd.lctx",
+      "accessCount": 1,
+      "lastAccessed": 1788703661815,
+      "type": "directory"
+    }
+  ],
+  "userDirectives": []
+}
