@@ -53,6 +53,8 @@ export type PaymentResponse = {
   createdAt: string | null;
   expiresAt: string | null;
   userClaimedAt: string | null;
+  // ponytail: set on POST /payments response only; GET /payments/:id does not populate it yet
+  qrImageUrl?: string;
 };
 
 export async function getPayment(paymentId: string): Promise<PaymentResponse> {

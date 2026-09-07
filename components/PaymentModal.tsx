@@ -41,6 +41,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
   const [nowTick, setNowTick] = useState(0);
+  // ponytail: proxy QRIS-ify PNG through own origin to avoid CORB; fall back to static QR before QRISIFY_API_KEY is set in prod
+  const [qrSrc, setQrSrc] = useState<string>(`/payments/${paymentId}/qr`);
+  const [qrLoaded, setQrLoaded] = useState(true);
 
   const refresh = useCallback(async (): Promise<PaymentResponse | null> => {
     setError(null);
@@ -198,7 +201,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
             <div className="mt-lg border border-black rounded-xl bg-gray-50 p-lg flex items-center justify-center">
               <div className="text-center">
-                <img src="/AdWdkD345CkD.jpeg" alt="QRIS" className="w-2xl h-2xl object-contain mx-auto" />
+                {/* ponytail: proxy QRIS-ify PNG through own origin to avoid CORB
+                     (qrisify.adihub.my.id sends no ACAO header); fall back to static QR before QRISIFY_API_KEY is set */}
+                <img
+                  data-qrisify={qrLoaded ? 'dynamic' : 'fallback'}
+                  src={qrSrc}
+                  onError={() => {
+                    if (!qrLoaded) return;
+                    setQrSrc('/AdWdkD345CkD.jpeg');
+                    setQrLoaded(false);
+                  }}
+                  alt="QRIS"
+                  className="w-2xl h-2xl object-contain mx-auto"
+                />
               </div>
             </div>
 
