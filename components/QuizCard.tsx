@@ -132,7 +132,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
 
          {/* Sticky bottom CTA so it floats above the fixed BottomNav (~72px) on mobile */}
          {showFeedback && onNextQuestion && (
-           <div className="shrink-0 sticky bottom-[72px] md:bottom-0 bg-white border-t border-black p-lg md:p-2xl flex justify-end z-10">
+           <div className="shrink-0 sticky bottom-[72px] md:bottom-0 bg-white border-t border-black p-lg md:p-2xl flex justify-end z-40">
              <CTA onClick={onNextQuestion} size="md">
                {nextButtonLabel || (isLastQuestion ? 'Selesai' : 'Lanjut')}
              </CTA>

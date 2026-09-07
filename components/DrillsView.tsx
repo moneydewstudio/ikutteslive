@@ -169,7 +169,7 @@ const DrillsView: React.FC<DrillsViewProps> = ({ onSignupClick, category, themeI
   const isShowingFeedback = feedbackQId === currentQ?.id;
 
   return (
-    <div className="flex flex-col w-full h-[calc(100vh-80px)] animate-fade-in">
+    <div className="flex flex-col w-full h-[calc(100vh-80px-72px)] md:h-[calc(100vh-80px)] animate-fade-in">
       <div className="w-full h-1 bg-gray-200">
         <div
           className="h-full bg-brand-lime transition-all duration-300 ease-out"

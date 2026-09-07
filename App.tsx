@@ -566,7 +566,7 @@ const renderContent = () => {
         }
         const currentQ = questions[currentQuestionIdx];
         return (
-          <div className="flex flex-col h-[calc(100vh-80px)] w-full">
+          <div className="flex flex-col h-[calc(100vh-80px-72px)] md:h-[calc(100vh-80px)] w-full">
              <div className="w-full h-1 bg-gray-200">
                 <div 
                   className="h-full bg-brand-lime transition-all duration-300 ease-out"
