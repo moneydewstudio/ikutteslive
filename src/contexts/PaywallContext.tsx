@@ -4,6 +4,11 @@ import PaymentModal from '../../components/PaymentModal';
 import { track } from '../../services/analytics';
 
 // TEAM_027: Global paywall provider so any feature can open the same PaywallModal + PaymentModal flow
+// TEAM_048: Removed guest early-return so checkout (PaywallModal) shows for Firebase-anonymous
+// users too. PaywallModal already handles `unauthenticated` errors with a friendly
+// "Akun diperlukan" card (PaywallModal.tsx:113-124). Also added funnel tracking
+// (paywall_payment_created, paywall_blocked_unauth) and a 3-per-24h frequency cap
+// to bound churn exposure per the RevenueCat 2026 finding.
 
 type PaywallContextValue = {
   openPaywall: (trigger?: string) => void;
@@ -14,30 +19,39 @@ const PaywallContext = createContext<PaywallContextValue | null>(null);
 type PaywallProviderProps = {
   children: React.ReactNode;
   onPremiumActivated: () => Promise<void> | void;
-  getIsGuest: () => boolean;
-  onOpenSignup: (reason?: string) => void;
 };
 
-export const PaywallProvider: React.FC<PaywallProviderProps> = ({ children, onPremiumActivated, getIsGuest, onOpenSignup }) => {
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_OPENS_PER_DAY = 3;
+// Module-scoped — resets on reload. Acceptable; per research, day-level cap
+// is the only meaningful cap; per-session cap is implicit (no double-show).
+const recentOpens: number[] = [];
+
+export const PaywallProvider: React.FC<PaywallProviderProps> = ({ children, onPremiumActivated }) => {
   const [showPaywall, setShowPaywall] = useState(false);
   const [paymentCtx, setPaymentCtx] = useState<{ paymentId: string; planType: '3_day' | '30_day' } | null>(null);
   const [currentTrigger, setCurrentTrigger] = useState<string | null>(null);
 
   const openPaywall = useCallback((trigger?: string) => {
-    track('paywall_open', { trigger: trigger ?? 'unknown' });
-    // TEAM_028: guests/anonymous users must create an account before upgrading to premium.
-    if (getIsGuest()) {
-      onOpenSignup('premium_requires_account');
+    // TEAM_048: day-level frequency cap — bound paywall exposure to 3/24h.
+    const now = Date.now();
+    while (recentOpens.length > 0 && now - recentOpens[0] > DAY_MS) recentOpens.shift();
+    if (recentOpens.length >= MAX_OPENS_PER_DAY) {
+      track('paywall_capped', { trigger: trigger ?? 'unknown' });
       return;
     }
+    recentOpens.push(now);
+    track('paywall_open', { trigger: trigger ?? 'unknown' });
     setCurrentTrigger(trigger ?? null);
     setShowPaywall(true);
-  }, [getIsGuest, onOpenSignup]);
+  }, []);
 
   const handlePaymentCreated = useCallback(({ paymentId, planType }: { paymentId: string; planType: '3_day' | '30_day' }) => {
+    // TEAM_048: funnel tracking — payment attempted.
+    track('paywall_payment_created', { trigger: currentTrigger ?? 'unknown' });
     setShowPaywall(false);
     setPaymentCtx({ paymentId, planType });
-  }, []);
+  }, [currentTrigger]);
 
   const handlePaymentConfirmed = useCallback(async () => {
     try {

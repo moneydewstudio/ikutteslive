@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FOCUS } from './ui/Card';
 import { CTA } from './ui/CTA';
 import { cancelPayment, claimPayment, createPayment, getPayment, type PaymentResponse, type PaymentStatus } from '../services/payments';
+import { track } from '../services/analytics';
 
 type PaymentModalProps = {
   isOpen: boolean;
@@ -49,6 +50,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setPayment(p);
       const st = String(p.status) as PaymentStatus;
       if (st === 'confirmed') {
+        // TEAM_048: funnel tracking — payment confirmed by backend.
+        track('paywall_confirmed', { paymentId });
         await onConfirmed();
       }
       return p;

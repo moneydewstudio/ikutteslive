@@ -3,6 +3,7 @@ import { Question } from '../types';
 import { motion } from 'motion/react';
 import OptionButton from './ui/OptionButton';
 import CTA from './ui/CTA';
+import { usePaywall } from '../src/contexts/PaywallContext';
 
 export type QuizExplanation = { status: 'loading'; text?: undefined }
   | { status: 'ready'; text: string }
@@ -40,6 +41,8 @@ const QuizCard: React.FC<QuizCardProps> = ({
   onNextQuestion,
   isLastQuestion,
 }) => {
+  // TEAM_048: Buka Premium CTA on locked explanation — covers DRILLS + daily QUIZ.
+  const { openPaywall } = usePaywall();
   return (
     // TEAM_011: 35/65 desktop split. On mobile everything stacks and scrolls inside
     // the parent <main> (Instagram pattern) so the fixed BottomNav never overlaps.
@@ -121,6 +124,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
              {explanation.status === 'locked' && (
                <div className="flex items-center justify-between gap-md p-md border border-black bg-white">
                  <p className="text-sm font-medium">Fitur Premium. Tingkatkan akun untuk melihat pembahasan.</p>
+                 <CTA variant="primary" size="sm" onClick={() => openPaywall('drill_explanation_locked')}>
+                   Buka Premium
+                 </CTA>
                </div>
              )}
              {explanation.status === 'error' && (

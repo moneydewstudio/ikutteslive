@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { FOCUS } from './ui/Card';
 import { CTA } from './ui/CTA';
 import { createPayment, getEntitlements, type Offer } from '../services/payments';
+import { track } from '../services/analytics';
 
 type PaywallModalProps = {
   isOpen: boolean;
@@ -70,7 +71,10 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onPaymentC
       onPaymentCreated({ paymentId: p.paymentId, planType });
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      setError(msg === 'unauthenticated' ? 'unauthenticated' : 'create_failed');
+      const isUnauth = msg === 'unauthenticated';
+      // TEAM_048: funnel tracking — anonymous user hit paywall but blocked at payment.
+      if (isUnauth) track('paywall_blocked_unauth', { trigger: trigger ?? 'unknown' });
+      setError(isUnauth ? 'unauthenticated' : 'create_failed');
     } finally {
       setCreatingPlan(null);
     }

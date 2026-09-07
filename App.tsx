@@ -602,8 +602,6 @@ const renderContent = () => {
   return (
     <PaywallProvider
       onPremiumActivated={refreshPremium}
-      getIsGuest={() => isGuest}
-      onOpenSignup={(reason) => openSignup(reason)}
     >
       <OnboardingTourProvider>
         <AppWithPaywall
